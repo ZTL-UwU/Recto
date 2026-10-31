@@ -76,7 +76,8 @@
   <!-- The About dialog shows which build this is under the version: the commit (from the .NET SDK's
        Source Link), marked "-dirty" if the checkout had uncommitted changes, and a label. The label
        defaults to the checkout's folder name, which tells worktrees apart (CI builds show just the
-       commit); set it with -p:RectoBuildLabel=... or a RectoBuildLabel environment variable. -->
+       commit); set it with -p:RectoBuildLabel=... or a RectoBuildLabel environment variable, as
+       tools\dev.ps1 does with the branch. -->
   <Target Name="AddBuildInfo" BeforeTargets="GetAssemblyAttributes" DependsOnTargets="InitializeSourceControlInformation">
     <Exec Command="git status --porcelain" WorkingDirectory="$(MSBuildProjectDirectory)" ConsoleToMSBuild="true"
           StandardOutputImportance="low" IgnoreExitCode="true" ContinueOnError="true">
