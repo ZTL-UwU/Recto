@@ -104,6 +104,19 @@ public sealed record InkDrawing(Point[][] Strokes, Color Color, double Width, by
     public InkDrawing Moved(double dx, double dy) =>
         this with { Strokes = [.. Strokes.Select(stroke => stroke.Select(p => new Point(p.X + dx, p.Y + dy)).ToArray())] };
 
+    /// <summary>
+    /// Where a line that has reached <paramref name="line"/> goes as the pointer gets to <paramref name="pointer"/>: it trails
+    /// <paramref name="lag"/> behind, as if on a string. A mouse reports whole pixels, so its slow strokes are staircases,
+    /// which a line going straight to each point would show all along its edges.
+    /// </summary>
+    public static Point Follow(Point line, Point pointer, double lag)
+    {
+        double dx = pointer.X - line.X, dy = pointer.Y - line.Y, distance = Math.Sqrt(dx * dx + dy * dy);
+        if (distance <= lag) return line;
+        double pulled = 1 - lag / distance;
+        return new Point(line.X + dx * pulled, line.Y + dy * pulled);
+    }
+
     /// <summary>The area the strokes cover, with the width of their lines.</summary>
     public Rect Bounds()
     {

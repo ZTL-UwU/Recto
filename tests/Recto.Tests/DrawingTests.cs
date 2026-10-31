@@ -47,6 +47,24 @@ public sealed class DrawingTests : IDisposable
         Assert.Single(await document.GetAllAnnotationsAsync(CancellationToken.None));
 
     [Fact]
+    public void Line_FollowingThePointer_TrailsItByItsLag()
+    {
+        Assert.Equal(new Point(0, 0), InkDrawing.Follow(new Point(0, 0), new Point(3, 4), 5));
+        Assert.Equal(new Point(6, 8), InkDrawing.Follow(new Point(0, 0), new Point(9, 12), 5));
+    }
+
+    [Fact]
+    public void Line_FollowingAStaircase_IsAlmostStraight()
+    {
+        // A mouse moving along a shallow slope: runs of pixels with a step up between them.
+        var pointer = Enumerable.Range(0, 300).Select(x => new Point(x, Math.Round(x * 0.1))).ToList();
+        double Wobble(IEnumerable<Point> points) => points.Skip(30).Take(240).Max(p => Math.Abs(p.Y - (p.X * 0.1 - 0.3)));
+        var line = new List<Point> { pointer[0] };
+        foreach (var p in pointer) line.Add(InkDrawing.Follow(line[^1], p, 3));
+        Assert.True(Wobble(line) < Wobble(pointer) * 0.65, $"{Wobble(line)} against {Wobble(pointer)}");
+    }
+
+    [Fact]
     public async Task Ink_IsDrawnWhereItWasPut_InItsColor()
     {
         var (document, _) = await OpenAsync();

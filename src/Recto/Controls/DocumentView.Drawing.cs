@@ -30,6 +30,8 @@ public sealed partial class DocumentView
     public const byte HighlighterOpacity = 110;
     /// <summary>Strokes finished this soon after the last, in the same style, join its drawing, so a word or a signature is one annotation.</summary>
     private const long JoinStrokesMilliseconds = 1500;
+    /// <summary>How far a line being drawn trails the pointer, in device pixels: enough to even out a mouse's whole pixels, too little to see.</summary>
+    private const double StrokeLagPixels = 3;
     private const double DefaultTextBoxWidth = 240;
 
     private static readonly Color ErasedColor = Color.FromArgb(255, 128, 128, 128);
@@ -48,6 +50,8 @@ public sealed partial class DocumentView
         public double Width { get; } = width;
         public byte Opacity { get; } = opacity;
         public List<Point> Points { get; } = [];
+        /// <summary>Where the pointer is, which the line ends up at when it's let go.</summary>
+        public Point Pointer { get; set; }
     }
 
     /// <summary>Where a press on the eraser has gone. What's under that is wiped from the document when it's released.</summary>
@@ -230,12 +234,22 @@ public sealed partial class DocumentView
 
     private void ExtendStroke(Point display)
     {
-        if (_stroke is not { } stroke || !_views.TryGetValue(stroke.Page, out var view)) return;
+        if (_stroke is not { } stroke) return;
         display = ClampToPage(stroke.Page, display);
-        // Points closer than a device pixel only make the file larger.
-        if (stroke.Points.Count > 0 && Math.Abs(stroke.Points[^1].X - display.X) + Math.Abs(stroke.Points[^1].Y - display.Y) < 0.5 / Zoom) return;
+        stroke.Pointer = display;
+        if (stroke.Points.Count > 0)
+        {
+            display = InkDrawing.Follow(stroke.Points[^1], display, StrokeLagPixels / (Zoom * BaseScale * (XamlRoot?.RasterizationScale ?? 1)));
+            // Points closer than a device pixel only make the file larger.
+            if (Math.Abs(stroke.Points[^1].X - display.X) + Math.Abs(stroke.Points[^1].Y - display.Y) < 0.5 / Zoom) return;
+        }
+        AddStrokePoint(stroke, display);
+    }
+
+    private void AddStrokePoint(StrokeGesture stroke, Point display)
+    {
         stroke.Points.Add(display);
-        PageView.ExtendStroke(stroke.Preview, view.ToView(display));
+        if (_views.TryGetValue(stroke.Page, out var view)) PageView.ExtendStroke(stroke.Preview, view.ToView(display));
     }
 
     private void EraseAt(int page, Point display)
@@ -375,6 +389,7 @@ public sealed partial class DocumentView
 
     private void FinishStroke(StrokeGesture stroke)
     {
+        if (stroke.Points[^1] != stroke.Pointer) AddStrokePoint(stroke, stroke.Pointer);
         long finished = Environment.TickCount64;
         _ = QueueDrawingEdit(document => WriteStrokeAsync(document, stroke, finished));
     }
