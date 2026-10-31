@@ -188,9 +188,7 @@ public sealed unsafe partial class PdfDocument
 
     private static void WriteFreeText(IntPtr annot, FreeText text, PageTransform t, double pageHeight)
     {
-        double left = text.Bounds.Left + TextBoxInset;
-        var (operators, height) = TextOutline.Draw(text.Text, Math.Max(MinTextBoxWidth, text.Bounds.Width - 2 * TextBoxInset), text.FontSize,
-            (lines, x, y) => t.Invert(left + x, TextBoxTop(text.Bounds.Top, lines + 2 * TextBoxInset, pageHeight) + TextBoxInset + y));
+        var (operators, height) = DrawFreeText(text, pageHeight, p => t.Invert(p.X, p.Y));
         var box = new Rect(text.Bounds.Left, TextBoxTop(text.Bounds.Top, height + 2 * TextBoxInset, pageHeight), text.Bounds.Width, height + 2 * TextBoxInset);
         double minX = double.MaxValue, minY = double.MaxValue, maxX = double.MinValue, maxY = double.MinValue;
         foreach (var corner in new[] { new Point(box.Left, box.Top), new Point(box.Right, box.Top), new Point(box.Left, box.Bottom), new Point(box.Right, box.Bottom) })
@@ -208,6 +206,21 @@ public sealed unsafe partial class PdfDocument
         SetAnnotString(annot, KeyContents, text.Text);
         SetAppearance(annot, $"{ColorOperators(text.Color)} rg\n{operators}f\n");
     }
+
+    /// <summary>Lays a text box's text out. Its operators and height are as <see cref="TextOutline.Draw"/> gives them, placed by <paramref name="place"/> from display points.</summary>
+    private static (string Operators, double Height) DrawFreeText(FreeText text, double pageHeight, Func<Point, Point> place)
+    {
+        double left = text.Bounds.Left + TextBoxInset;
+        return TextOutline.Draw(text.Text, Math.Max(MinTextBoxWidth, text.Bounds.Width - 2 * TextBoxInset), text.FontSize,
+            (lines, x, y) => place(new Point(left + x, TextBoxTop(text.Bounds.Top, lines + 2 * TextBoxInset, pageHeight) + TextBoxInset + y)));
+    }
+
+    /// <summary>
+    /// A text box's text as XAML path markup, the same shapes the document draws, placed by <paramref name="place"/> from
+    /// display points. Empty if it has nothing to show.
+    /// </summary>
+    public static string TextBoxMarkup(FreeText text, double pageHeight, Func<Point, Point> place) =>
+        TextOutline.ToMarkup(DrawFreeText(text, pageHeight, place).Operators);
 
     /// <summary>Where a text box's top goes for all of it to be on the page, which shows nothing past its end. One taller than the page starts at the top.</summary>
     public static double TextBoxTop(double top, double height, double pageHeight) => Math.Max(0, Math.Min(top, pageHeight - height));

@@ -247,10 +247,10 @@ public sealed unsafe partial class PdfDocument : IDisposable
     /// <paramref name="token"/> also stops a render that has already started. <paramref name="printing"/>
     /// renders the page as it prints, which can hide or show some annotations; <paramref name="annotations"/>
     /// off leaves out annotations and form fields; <paramref name="grayscale"/> renders it grey the way
-    /// it's printed in black and white.
+    /// it's printed in black and white; <paramref name="without"/> leaves out one annotation.
     /// </summary>
     public Task<PixelBuffer?> RenderAsync(int index, double scale, int rotation, Windows.Graphics.RectInt32 region, bool invert,
-        WorkPriority priority, CancellationToken token, bool printing = false, bool annotations = true, bool grayscale = false)
+        WorkPriority priority, CancellationToken token, bool printing = false, bool annotations = true, bool grayscale = false, PdfAnnotation? without = null)
     {
         return PdfWorker.Run<PixelBuffer?>(() =>
         {
@@ -274,7 +274,15 @@ public sealed unsafe partial class PdfDocument : IDisposable
                 try
                 {
                     int flags = (annotations ? Native.FPDF_ANNOT : 0) | (printing ? Native.FPDF_PRINTING : 0) | (grayscale ? Native.FPDF_GRAYSCALE : 0);
-                    RenderOnto(bitmap, p, region.Width, region.Height, page, -region.X, -region.Y, sizeX, sizeY, quarter, flags, token);
+                    var hidden = without is null ? default : Hide(page, without);
+                    try
+                    {
+                        RenderOnto(bitmap, p, region.Width, region.Height, page, -region.X, -region.Y, sizeX, sizeY, quarter, flags, token);
+                    }
+                    finally
+                    {
+                        Show(hidden);
+                    }
                 }
                 finally
                 {
@@ -289,6 +297,27 @@ public sealed unsafe partial class PdfDocument : IDisposable
                 if (!done) buffer.Dispose();
             }
         }, priority, token);
+    }
+
+    /// <summary>
+    /// Hides an annotation for a render. It's shown again before anything else runs on the worker, so nothing that
+    /// reads or saves the document sees the change.
+    /// </summary>
+    private (IntPtr Annot, int Flags) Hide(IntPtr page, PdfAnnotation annotation)
+    {
+        int index = FindAnnotation(page, annotation);
+        IntPtr annot = index < 0 ? IntPtr.Zero : Native.FPDFPage_GetAnnot(page, index);
+        if (annot == IntPtr.Zero) return default;
+        int flags = Native.FPDFAnnot_GetFlags(annot);
+        Native.FPDFAnnot_SetFlags(annot, flags | 2 /* hidden */);
+        return (annot, flags);
+    }
+
+    private static void Show((IntPtr Annot, int Flags) hidden)
+    {
+        if (hidden.Annot == IntPtr.Zero) return;
+        Native.FPDFAnnot_SetFlags(hidden.Annot, hidden.Flags);
+        Native.FPDFPage_CloseAnnot(hidden.Annot);
     }
 
     /// <summary>

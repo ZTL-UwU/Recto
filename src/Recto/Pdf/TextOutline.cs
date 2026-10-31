@@ -132,6 +132,19 @@ internal static unsafe partial class TextOutline
         return sb.ToString();
     }
 
+    /// <summary>Operators from <see cref="Draw"/> as XAML path markup, with the fill rule of PDF's <c>f</c>. Empty if there are none.</summary>
+    public static string ToMarkup(string operators)
+    {
+        if (operators.Length == 0) return "";
+        var sb = new StringBuilder("F1", operators.Length + 2);
+        foreach (string line in operators.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+        {
+            // Operands come first in PDF and last in markup, where h is a horizontal line.
+            sb.Append(' ').Append(line == "h" ? 'Z' : char.ToUpperInvariant(line[^1])).Append(line.AsSpan(0, line.Length - 1));
+        }
+        return sb.ToString();
+    }
+
     /// <summary>A number as PDF content writes it.</summary>
     public static string Number(double value) => value.ToString("0.###", CultureInfo.InvariantCulture);
 }

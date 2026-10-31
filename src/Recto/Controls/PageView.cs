@@ -61,6 +61,8 @@ internal sealed partial class PageView : Canvas
     private int _version;
     /// <summary>The <see cref="_version"/> that <see cref="_base"/> shows.</summary>
     private int _baseVersion;
+    /// <summary>An annotation being moved, which is drawn over the page meanwhile.</summary>
+    private PdfAnnotation? _leftOut;
 
     public PageView(PdfDocument document, int pageIndex, bool framed)
     {
@@ -229,6 +231,13 @@ internal sealed partial class PageView : Canvas
         _staleTiles.UnionWith(_tileImages.Keys);
     }
 
+    /// <summary>Draws the page without <paramref name="annotation"/> from now on, or with all of them again if it's null.</summary>
+    public void LeaveOut(PdfAnnotation? annotation)
+    {
+        _leftOut = annotation;
+        Invalidate();
+    }
+
     private void CancelPendingTiles()
     {
         foreach (var batch in _pendingTiles.Values) batch.Cts.Cancel();
@@ -367,7 +376,7 @@ internal sealed partial class PageView : Canvas
         try
         {
             using var buffer = await _document.RenderAsync(PageIndex, scale, PageRotation, region, inverted,
-                isVisible ? WorkPriority.Visible : WorkPriority.Normal, cts.Token);
+                isVisible ? WorkPriority.Visible : WorkPriority.Normal, cts.Token, without: _leftOut);
             if (buffer is null || cts.IsCancellationRequested || version != _version) return;
             Rendered?.Invoke(this, EventArgs.Empty);
             var source = await ToSourceAsync(buffer);
@@ -410,7 +419,7 @@ internal sealed partial class PageView : Canvas
         var region = new RectInt32(x0, y0, Math.Min((batch.C1 + 1) * TileSize, maxW) - x0, Math.Min((batch.R1 + 1) * TileSize, maxH) - y0);
         try
         {
-            using var buffer = await _document.RenderAsync(PageIndex, pxPerPoint, PageRotation, region, inverted, WorkPriority.Visible, batch.Cts.Token);
+            using var buffer = await _document.RenderAsync(PageIndex, pxPerPoint, PageRotation, region, inverted, WorkPriority.Visible, batch.Cts.Token, without: _leftOut);
             bool IsStale() => batch.Cts.IsCancellationRequested || version != _version || Math.Abs(_tileScale - pxPerPoint) > 1e-9;
             if (buffer is null || IsStale())
             {
@@ -644,26 +653,71 @@ internal sealed partial class PageView : Canvas
         }
     }
 
-    // Strokes being drawn, and ones already in the document until the page has been drawn again with them on it.
-    // The version is the last one of the page they aren't in, which only a finished stroke has.
-    private readonly List<(Microsoft.UI.Xaml.Shapes.Polyline Line, int? Version)> _strokes = [];
+    // Strokes being drawn, drawings and text boxes being moved, and ones already in the document until the page has been drawn again
+    // with them on it. The version is the last one of the page they aren't in, which only a finished stroke has.
+    private readonly List<(Microsoft.UI.Xaml.Shapes.Shape Line, int? Version)> _strokes = [];
     private readonly List<(Action Action, int Version)> _whenRedrawn = [];
 
     /// <summary>Starts drawing a stroke over the page. <paramref name="width"/> is in points, its points in page-local layout DIPs.</summary>
-    public Microsoft.UI.Xaml.Shapes.Polyline AddStroke(Windows.UI.Color color, double width, double opacity)
+    public Microsoft.UI.Xaml.Shapes.Polyline AddStroke(Windows.UI.Color color, double width, double opacity) =>
+        AddLine(new Microsoft.UI.Xaml.Shapes.Polyline(), color, width, opacity);
+
+    /// <summary>
+    /// Draws a whole drawing over the page in <paramref name="color"/>, as what the document writes looks: curved, and as
+    /// one line, so its strokes don't show through each other where a highlighter's cross.
+    /// </summary>
+    public Microsoft.UI.Xaml.Shapes.Path AddDrawing(InkDrawing ink, Windows.UI.Color color)
     {
-        var line = new Microsoft.UI.Xaml.Shapes.Polyline
+        var markup = new StringBuilder();
+        void Add(string command, Point p) => markup.Append(CultureInfo.InvariantCulture, $" {command}{p.X:0.###},{p.Y:0.###}");
+        foreach (var stroke in ink.Strokes)
         {
-            Stroke = new SolidColorBrush(color),
-            StrokeThickness = width * LayoutScale,
-            Opacity = opacity,
-            StrokeLineJoin = PenLineJoin.Round,
-            StrokeStartLineCap = PenLineCap.Round,
-            StrokeEndLineCap = PenLineCap.Round,
-        };
-        _overlayLayers[(int)OverlayLayer.Strokes].Children.Add(line);
-        _strokes.Add((line, null));
-        return line;
+            Point[] points = [.. stroke.Select(ToView)];
+            Add("M", points[0]);
+            for (int i = 1; i < points.Length - 1; i++)
+            {
+                Add("Q", points[i]);
+                Add("", new Point((points[i].X + points[i + 1].X) / 2, (points[i].Y + points[i + 1].Y) / 2));
+            }
+            // A line needs two points, or a dot wouldn't show.
+            Add("L", points.Length > 1 ? points[^1] : new Point(points[0].X + 0.01, points[0].Y));
+        }
+        var data = (Geometry)XamlBindingHelper.ConvertValue(typeof(Geometry), markup.ToString());
+        return AddLine(new Microsoft.UI.Xaml.Shapes.Path { Data = data }, color, ink.Width, ink.Opacity / 255.0);
+    }
+
+    /// <summary>Draws the outlines of a text box over the page, from <see cref="PdfDocument.TextBoxMarkup"/>.</summary>
+    public Microsoft.UI.Xaml.Shapes.Path AddText(string markup, Windows.UI.Color color)
+    {
+        var text = new Microsoft.UI.Xaml.Shapes.Path { Fill = new SolidColorBrush(color) };
+        if (markup.Length > 0) text.Data = (Geometry)XamlBindingHelper.ConvertValue(typeof(Geometry), markup);
+        return AddShape(text);
+    }
+
+    private T AddLine<T>(T line, Windows.UI.Color color, double width, double opacity) where T : Microsoft.UI.Xaml.Shapes.Shape
+    {
+        line.Stroke = new SolidColorBrush(color);
+        line.StrokeThickness = width * LayoutScale;
+        line.Opacity = opacity;
+        line.StrokeLineJoin = PenLineJoin.Round;
+        line.StrokeStartLineCap = PenLineCap.Round;
+        line.StrokeEndLineCap = PenLineCap.Round;
+        return AddShape(line);
+    }
+
+    private T AddShape<T>(T shape) where T : Microsoft.UI.Xaml.Shapes.Shape
+    {
+        _overlayLayers[(int)OverlayLayer.Strokes].Children.Add(shape);
+        _strokes.Add((shape, null));
+        return shape;
+    }
+
+    /// <summary>Puts a line <paramref name="distance"/> away from where it was drawn, in display points.</summary>
+    public void OffsetStroke(Microsoft.UI.Xaml.Shapes.Shape line, Point distance)
+    {
+        Point from = ToView(default(Point)), to = ToView(distance);
+        SetLeft(line, to.X - from.X);
+        SetTop(line, to.Y - from.Y);
     }
 
     public static void ExtendStroke(Microsoft.UI.Xaml.Shapes.Polyline stroke, Point view)
@@ -674,13 +728,13 @@ internal sealed partial class PageView : Canvas
     }
 
     /// <summary>The stroke is in the document: it goes once the page has been drawn with it, which starts after this.</summary>
-    public void FinishStroke(Microsoft.UI.Xaml.Shapes.Polyline line)
+    public void FinishStroke(Microsoft.UI.Xaml.Shapes.Shape line)
     {
         int i = _strokes.FindIndex(s => s.Line == line);
         if (i >= 0) _strokes[i] = (line, _version);
     }
 
-    public void RemoveStroke(Microsoft.UI.Xaml.Shapes.Polyline line)
+    public void RemoveStroke(Microsoft.UI.Xaml.Shapes.Shape line)
     {
         _strokes.RemoveAll(s => s.Line == line);
         _overlayLayers[(int)OverlayLayer.Strokes].Children.Remove(line);

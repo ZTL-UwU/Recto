@@ -69,6 +69,8 @@ public sealed partial class DocumentView
         public Rect Original { get; } = bounds;
         public Rect Bounds { get; set; } = bounds;
         public bool Resizing { get; } = resizing;
+        /// <summary>The drawing or text as it follows the pointer, once it has left its place on the page.</summary>
+        public Shape? Preview { get; set; }
     }
 
     /// <summary>The box a text box is typed into, over the page where it will be drawn.</summary>
@@ -311,8 +313,49 @@ public sealed partial class DocumentView
             double x = Math.Clamp(r.Left + at.X - move.Start.X, Math.Min(0, r.Left), Math.Max(r.Left, size.Width - r.Width));
             double y = Math.Clamp(r.Top + at.Y - move.Start.Y, Math.Min(0, r.Top), Math.Max(r.Top, size.Height - r.Height));
             move.Bounds = new Rect(x, y, r.Width, r.Height);
+            CarryDrawing(move);
         }
         ShowFrame(move.Annotation.PageIndex, move.Bounds, move.Annotation.FreeText is not null);
+    }
+
+    /// <summary>
+    /// Keeps a drawing or text box being moved under the pointer. The page can't be drawn again as fast as that, so it
+    /// leaves the page when the move starts, and is drawn over it until it's put down.
+    /// </summary>
+    private void CarryDrawing(MoveGesture move)
+    {
+        if (!_views.TryGetValue(move.Annotation.PageIndex, out var view)) return;
+        if (move.Preview is null)
+        {
+            // A press that doesn't move anything leaves the page as it is.
+            if (move.Bounds == move.Original) return;
+            try
+            {
+                move.Preview = move.Annotation switch
+                {
+                    { Ink: { } ink } => view.AddDrawing(ink, ShownColor(ink.Color)),
+                    { FreeText: { } text } => view.AddText(PdfDocument.TextBoxMarkup(text, _document!.PageSizes[move.Annotation.PageIndex].Height, view.ToView), ShownColor(text.Color)),
+                    _ => null,
+                };
+            }
+            catch (InvalidOperationException)
+            {
+                // Text that can't be laid out only stays put until it's let go, when writing it reports that.
+            }
+            if (move.Preview is null) return;
+            view.LeaveOut(move.Annotation);
+            RefreshRendering();
+        }
+        view.OffsetStroke(move.Preview, new Point(move.Bounds.Left - move.Original.Left, move.Bounds.Top - move.Original.Top));
+    }
+
+    /// <summary>Has the page show what was being moved again, wherever the document has it. It's drawn over the page until then.</summary>
+    private void PutDownDrawing(MoveGesture move)
+    {
+        if (move.Preview is not { } preview || !_views.TryGetValue(move.Annotation.PageIndex, out var view)) return;
+        view.FinishStroke(preview);
+        view.LeaveOut(null);
+        RefreshRendering();
     }
 
     /// <summary>Ends a gesture when the pointer is released. False if none is under way.</summary>
@@ -334,10 +377,15 @@ public sealed partial class DocumentView
         if (_move is { } move)
         {
             _move = null;
-            if (move.Bounds == move.Original) return true;
+            if (move.Bounds == move.Original)
+            {
+                PutDownDrawing(move);
+                return true;
+            }
             double dx = move.Bounds.Left - move.Original.Left, dy = move.Bounds.Top - move.Original.Top;
             ChangeDrawing(move.Annotation, ink => ink.Moved(dx, dy),
-                text => text with { Bounds = new Rect(text.Bounds.Left + dx, text.Bounds.Top + dy, move.Bounds.Width, text.Bounds.Height) });
+                text => text with { Bounds = new Rect(text.Bounds.Left + dx, text.Bounds.Top + dy, move.Bounds.Width, text.Bounds.Height) },
+                () => PutDownDrawing(move));
             return true;
         }
         return false;
@@ -362,6 +410,9 @@ public sealed partial class DocumentView
         {
             _move = null;
             ShowFrame(move.Annotation.PageIndex, move.Original, move.Annotation.FreeText is not null);
+            move.Bounds = move.Original;
+            CarryDrawing(move);
+            PutDownDrawing(move);
         }
     }
 
@@ -489,11 +540,14 @@ public sealed partial class DocumentView
         new(annotation, document => document.SetInkAsync(annotation, before), document => document.SetInkAsync(annotation, after));
 
     /// <summary>Changes a drawing or text box, from how it is once the edits before this are done.</summary>
-    private void ChangeDrawing(PdfAnnotation annotation, Func<InkDrawing, InkDrawing> ink, Func<FreeText, FreeText> text) =>
-        _ = QueueDrawingEdit(document => ChangeDrawingAsync(document, annotation, ink, text));
+    private void ChangeDrawing(PdfAnnotation annotation, Func<InkDrawing, InkDrawing> ink, Func<FreeText, FreeText> text, Action? written = null) =>
+        _ = QueueDrawingEdit(document => ChangeDrawingAsync(document, annotation, ink, text, written));
 
-    /// <summary>Writes a new form of a drawing or text box, as a step that can be undone, and keeps it selected if it was.</summary>
-    private async Task ChangeDrawingAsync(PdfDocument document, PdfAnnotation annotation, Func<InkDrawing, InkDrawing> changeInk, Func<FreeText, FreeText> changeText)
+    /// <summary>
+    /// Writes a new form of a drawing or text box, as a step that can be undone, and keeps it selected if it was.
+    /// <paramref name="written"/> runs once that's done, or has failed, before the page is drawn again.
+    /// </summary>
+    private async Task ChangeDrawingAsync(PdfDocument document, PdfAnnotation annotation, Func<InkDrawing, InkDrawing> changeInk, Func<FreeText, FreeText> changeText, Action? written)
     {
         var page = await GetTextAsync(annotation.PageIndex);
         if (document != _document) return;
@@ -518,6 +572,7 @@ public sealed partial class DocumentView
             ReportEditFailure(document, ex, "The annotation couldn't be changed.");
         }
         if (document != _document) return;
+        written?.Invoke();
         if (change is null)
         {
             if (_selected?.Name == current.Name) Select(current);
@@ -703,6 +758,8 @@ public sealed partial class DocumentView
     private void RestyleDrafts()
     {
         if (_stroke is { } stroke) stroke.Preview.Stroke = new SolidColorBrush(ShownColor(stroke.Color));
+        if (_move is { Preview: { } moved, Annotation.Ink: { } ink }) moved.Stroke = new SolidColorBrush(ShownColor(ink.Color));
+        if (_move is { Preview: { } shown, Annotation.FreeText: { } text }) shown.Fill = new SolidColorBrush(ShownColor(text.Color));
         if (_textEdit is { } edit) StyleEditor(edit);
     }
 

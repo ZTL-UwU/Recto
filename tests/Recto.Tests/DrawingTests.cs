@@ -1,3 +1,4 @@
+using System.Globalization;
 using Recto.Pdf;
 using Windows.Foundation;
 using Windows.Graphics;
@@ -17,10 +18,10 @@ public sealed class DrawingTests : IDisposable
         new([[new Point(x1, y1), new Point(x2, y2)]], color ?? Red, width, opacity);
 
     /// <summary>The page drawn at one pixel per point, as (B, G, R) by position.</summary>
-    private static async Task<Func<int, int, (byte B, byte G, byte R)>> RenderAsync(PdfDocument document, int page = 0)
+    private static async Task<Func<int, int, (byte B, byte G, byte R)>> RenderAsync(PdfDocument document, int page = 0, PdfAnnotation? without = null)
     {
         var size = document.PageSizes[page];
-        using var buffer = await document.RenderAsync(page, 1, 0, new RectInt32(0, 0, (int)size.Width, (int)size.Height), false, WorkPriority.Visible, CancellationToken.None);
+        using var buffer = await document.RenderAsync(page, 1, 0, new RectInt32(0, 0, (int)size.Width, (int)size.Height), false, WorkPriority.Visible, CancellationToken.None, without: without);
         var pixels = buffer!.Span.ToArray();
         int stride = buffer.Stride;
         return (x, y) => (pixels[y * stride + x * 4], pixels[y * stride + x * 4 + 1], pixels[y * stride + x * 4 + 2]);
@@ -248,6 +249,67 @@ public sealed class DrawingTests : IDisposable
             Assert.Equal(new Point(20, 150), (await OnlyAnnotationAsync(document)).Ink!.Strokes[0][0]);
         }
     }
+
+    [Fact]
+    public async Task Render_WithoutADrawing_LeavesOnlyThatOneOut_AndDoesntChangeIt()
+    {
+        var (document, _) = await OpenAsync();
+        using (document)
+        {
+            var moving = await document.AddInkAsync(0, Line(20, 50, 180, 50));
+            await document.AddInkAsync(0, Line(20, 150, 180, 150));
+            await document.SaveAsync(Path.Combine(_temp.Path, "before.pdf"));
+
+            var pixel = await RenderAsync(document, without: moving);
+            Assert.True(IsWhite(pixel(100, 50)));
+            Assert.False(IsWhite(pixel(100, 150)));
+            Assert.False(document.IsModified);
+
+            pixel = await RenderAsync(document);
+            Assert.False(IsWhite(pixel(100, 50)));
+
+            string saved = Path.Combine(_temp.Path, "after.pdf");
+            await document.SaveAsync(saved);
+            using var reopened = await PdfDocument.OpenAsync(saved);
+            pixel = await RenderAsync(reopened);
+            Assert.False(IsWhite(pixel(100, 50)));
+        }
+    }
+
+    [Fact]
+    public async Task Render_WithoutATextBox_LeavesItOut()
+    {
+        var (document, _) = await OpenAsync();
+        using (document)
+        {
+            var box = await document.AddFreeTextAsync(0, new FreeText(new Rect(20, 40, 160, 0), "Hello", Red, 24));
+
+            Assert.True(HasInk(await RenderAsync(document), 20, 40, 180, 80));
+            Assert.False(HasInk(await RenderAsync(document, without: box), 20, 40, 180, 80));
+        }
+    }
+
+    [Fact]
+    public void TextBoxMarkup_IsWhereThePlacingPutsIt_AsMarkup()
+    {
+        var text = new FreeText(new Rect(20, 40, 160, 0), "Hi", Red, 24);
+
+        string markup = PdfDocument.TextBoxMarkup(text, 300, p => new Point(p.X + 1000, p.Y));
+
+        Assert.StartsWith("F1 M", markup);
+        Assert.Contains(" Z", markup);
+        Assert.DoesNotContain("h", markup);
+        var numbers = markup.Split([' ', 'M', 'L', 'C', 'Z', 'F'], StringSplitOptions.RemoveEmptyEntries)
+            .Skip(1).Select(n => double.Parse(n, CultureInfo.InvariantCulture)).ToList();
+        var xs = numbers.Where((_, i) => i % 2 == 0).ToList();
+        var ys = numbers.Where((_, i) => i % 2 == 1).ToList();
+        Assert.InRange(xs.Min(), 1020, 1180);
+        Assert.InRange(ys.Min(), 40, 80);
+    }
+
+    [Fact]
+    public void TextBoxMarkup_WithNothingToShow_IsEmpty() =>
+        Assert.Empty(PdfDocument.TextBoxMarkup(new FreeText(new Rect(20, 40, 160, 0), "   ", Red, 24), 300, p => p));
 
     [Fact]
     public async Task SettingInk_CanRecolorIt()
