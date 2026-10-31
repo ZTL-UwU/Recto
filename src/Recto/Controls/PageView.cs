@@ -26,6 +26,7 @@ internal enum OverlayLayer
     Search,
     CurrentHit,
     Selection,
+    Strokes,
 }
 
 /// <summary>
@@ -366,6 +367,7 @@ internal sealed partial class PageView : Canvas
             var old = _base.Source;
             _base.Source = source;
             (old as IDisposable)?.Dispose();
+            OnRedrawn(version);
         }
         catch (OperationCanceledException)
         {
@@ -379,8 +381,9 @@ internal sealed partial class PageView : Canvas
         catch (COMException)
         {
             // The upload failed; the page keeps the bitmap it had, and the next change of scale tries again. Without
-            // one it would stay blank until then, so the next Render (on scrolling) tries again at this scale.
-            if (_baseCts == cts && _base.Source is null) _baseScale = 0;
+            // one it would stay blank until then, so the next Render (on scrolling) tries again at this scale. So it
+            // does with drawing that stays over the page until the page shows it.
+            if (_baseCts == cts && (_base.Source is null || _strokes.Count > 0 || _whenRedrawn.Count > 0)) _baseScale = 0;
         }
     }
 
@@ -470,6 +473,8 @@ internal sealed partial class PageView : Canvas
         _baseCts?.Cancel();
         ClearTiles();
         Free(_base);
+        foreach (var (action, _) in _whenRedrawn) action();
+        _whenRedrawn.Clear();
     }
 
     internal static WriteableBitmap ToBitmap(PixelBuffer buffer)
@@ -622,6 +627,61 @@ internal sealed partial class PageView : Canvas
         {
             var geometry = (Geometry)XamlBindingHelper.ConvertValue(typeof(Geometry), markup.ToString());
             canvas.Children.Add(new Microsoft.UI.Xaml.Shapes.Path { Data = geometry, Fill = fill });
+        }
+    }
+
+    // Strokes being drawn, and ones already in the document until the page has been drawn again with them on it.
+    // The version is the last one of the page they aren't in, which only a finished stroke has.
+    private readonly List<(Microsoft.UI.Xaml.Shapes.Polyline Line, int? Version)> _strokes = [];
+    private readonly List<(Action Action, int Version)> _whenRedrawn = [];
+
+    /// <summary>Starts drawing a stroke over the page. <paramref name="width"/> is in points, its points in page-local layout DIPs.</summary>
+    public Microsoft.UI.Xaml.Shapes.Polyline AddStroke(Windows.UI.Color color, double width, double opacity)
+    {
+        var line = new Microsoft.UI.Xaml.Shapes.Polyline
+        {
+            Stroke = new SolidColorBrush(color),
+            StrokeThickness = width * LayoutScale,
+            Opacity = opacity,
+            StrokeLineJoin = PenLineJoin.Round,
+            StrokeStartLineCap = PenLineCap.Round,
+            StrokeEndLineCap = PenLineCap.Round,
+        };
+        _overlayLayers[(int)OverlayLayer.Strokes].Children.Add(line);
+        _strokes.Add((line, null));
+        return line;
+    }
+
+    public static void ExtendStroke(Microsoft.UI.Xaml.Shapes.Polyline stroke, Point view)
+    {
+        stroke.Points.Add(view);
+        // A line needs two points, or a click would leave no dot.
+        if (stroke.Points.Count == 1) stroke.Points.Add(new Point(view.X + 0.01, view.Y));
+    }
+
+    /// <summary>The stroke is in the document: it goes once the page has been drawn with it, which starts after this.</summary>
+    public void FinishStroke(Microsoft.UI.Xaml.Shapes.Polyline line)
+    {
+        int i = _strokes.FindIndex(s => s.Line == line);
+        if (i >= 0) _strokes[i] = (line, _version);
+    }
+
+    public void RemoveStroke(Microsoft.UI.Xaml.Shapes.Polyline line)
+    {
+        _strokes.RemoveAll(s => s.Line == line);
+        _overlayLayers[(int)OverlayLayer.Strokes].Children.Remove(line);
+    }
+
+    /// <summary>Runs <paramref name="action"/> once the page has been drawn again after the next <see cref="Invalidate"/>.</summary>
+    public void CallWhenRedrawn(Action action) => _whenRedrawn.Add((action, _version));
+
+    private void OnRedrawn(int version)
+    {
+        foreach (var (line, _) in _strokes.Where(s => s.Version < version).ToList()) RemoveStroke(line);
+        foreach (var call in _whenRedrawn.Where(c => c.Version < version).ToList())
+        {
+            _whenRedrawn.Remove(call);
+            call.Action();
         }
     }
 

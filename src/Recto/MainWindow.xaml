@@ -12,6 +12,29 @@
         AllowDrop="True"
         DragOver="OnDragOver"
         Drop="OnDrop">
+        <!--  A toggle that's on gets a neutral fill, not the accent color. High contrast keeps the system's colors  -->
+        <Grid.Resources>
+            <ResourceDictionary>
+                <ResourceDictionary.ThemeDictionaries>
+                    <ResourceDictionary x:Key="Light">
+                        <StaticResource x:Key="ToggleButtonBackgroundChecked" ResourceKey="ControlAltFillColorQuarternaryBrush" />
+                        <StaticResource x:Key="ToggleButtonBackgroundCheckedPointerOver" ResourceKey="ControlAltFillColorTertiaryBrush" />
+                        <StaticResource x:Key="ToggleButtonBackgroundCheckedPressed" ResourceKey="SubtleFillColorSecondaryBrush" />
+                        <StaticResource x:Key="ToggleButtonForegroundChecked" ResourceKey="TextFillColorPrimaryBrush" />
+                        <StaticResource x:Key="ToggleButtonForegroundCheckedPointerOver" ResourceKey="TextFillColorPrimaryBrush" />
+                        <StaticResource x:Key="ToggleButtonForegroundCheckedPressed" ResourceKey="TextFillColorSecondaryBrush" />
+                    </ResourceDictionary>
+                    <ResourceDictionary x:Key="Dark">
+                        <StaticResource x:Key="ToggleButtonBackgroundChecked" ResourceKey="ControlAltFillColorQuarternaryBrush" />
+                        <StaticResource x:Key="ToggleButtonBackgroundCheckedPointerOver" ResourceKey="ControlAltFillColorTertiaryBrush" />
+                        <StaticResource x:Key="ToggleButtonBackgroundCheckedPressed" ResourceKey="SubtleFillColorSecondaryBrush" />
+                        <StaticResource x:Key="ToggleButtonForegroundChecked" ResourceKey="TextFillColorPrimaryBrush" />
+                        <StaticResource x:Key="ToggleButtonForegroundCheckedPointerOver" ResourceKey="TextFillColorPrimaryBrush" />
+                        <StaticResource x:Key="ToggleButtonForegroundCheckedPressed" ResourceKey="TextFillColorSecondaryBrush" />
+                    </ResourceDictionary>
+                </ResourceDictionary.ThemeDictionaries>
+            </ResourceDictionary>
+        </Grid.Resources>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -36,6 +59,18 @@
                     VerticalAlignment="Center"
                     Orientation="Horizontal"
                     Spacing="4">
+
+                    <ToggleButton
+                        x:Name="AnnotateToggle"
+                        Width="34"
+                        Height="28"
+                        AutomationProperties.Name="Draw and add text"
+                        Click="OnToggleAnnotate"
+                        Style="{StaticResource ToolbarToggleStyle}"
+                        ToolTipService.ToolTip="Draw and add text (Ctrl+Shift+A)"
+                        Visibility="Collapsed">
+                        <FontIcon FontSize="16" Glyph="&#xE76D;" />
+                    </ToggleButton>
 
                     <StackPanel
                         x:Name="ZoomControls"
@@ -724,7 +759,7 @@
                             HorizontalAlignment="Center"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                             Style="{StaticResource CaptionTextBlockStyle}"
-                            Text="Select text to highlight it, or right-click a page to add a note."
+                            Text="Select text to highlight it, right-click a page to add a note, or draw and add text with the pen button at the top."
                             TextAlignment="Center"
                             TextWrapping="Wrap" />
                     </StackPanel>
@@ -903,6 +938,90 @@
                 <!--  Turns black while presenting  -->
                 <Grid x:Name="DocumentSurface">
                     <controls:DocumentView x:Name="Viewer" />
+                    <!--  Its buttons don't take focus, so a text box being typed stays open and takes the color and size chosen  -->
+                    <Border
+                        x:Name="AnnotateBar"
+                        Margin="0,0,0,16"
+                        Padding="4"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Bottom"
+                        CornerRadius="8"
+                        Style="{StaticResource FloatingBorderStyle}"
+                        Visibility="Collapsed">
+                        <StackPanel Orientation="Horizontal" Spacing="2">
+                            <ToggleButton
+                                x:Name="PenTool"
+                                AllowFocusOnInteraction="False"
+                                AutomationProperties.Name="Pen"
+                                Click="OnAnnotateToolClick"
+                                Style="{StaticResource ToolbarToggleStyle}"
+                                ToolTipService.ToolTip="Pen">
+                                <FontIcon FontSize="16" Glyph="&#xE76D;" />
+                            </ToggleButton>
+                            <ToggleButton
+                                x:Name="HighlighterTool"
+                                AllowFocusOnInteraction="False"
+                                AutomationProperties.Name="Highlighter"
+                                Click="OnAnnotateToolClick"
+                                Style="{StaticResource ToolbarToggleStyle}"
+                                ToolTipService.ToolTip="Highlighter">
+                                <FontIcon FontSize="16" Glyph="&#xE7E6;" />
+                            </ToggleButton>
+                            <ToggleButton
+                                x:Name="EraserTool"
+                                AllowFocusOnInteraction="False"
+                                AutomationProperties.Name="Eraser"
+                                Click="OnAnnotateToolClick"
+                                Style="{StaticResource ToolbarToggleStyle}"
+                                ToolTipService.ToolTip="Eraser">
+                                <FontIcon FontSize="16" Glyph="&#xE75C;" />
+                            </ToggleButton>
+                            <ToggleButton
+                                x:Name="TextTool"
+                                AllowFocusOnInteraction="False"
+                                AutomationProperties.Name="Text box"
+                                Click="OnAnnotateToolClick"
+                                Style="{StaticResource ToolbarToggleStyle}"
+                                ToolTipService.ToolTip="Text box">
+                                <FontIcon FontSize="16" Glyph="&#xE8D2;" />
+                            </ToggleButton>
+                            <AppBarSeparator x:Name="AnnotateStyleSeparator" />
+                            <StackPanel
+                                x:Name="AnnotateColors"
+                                Orientation="Horizontal"
+                                Spacing="2" />
+                            <DropDownButton
+                                x:Name="AnnotateSize"
+                                Height="32"
+                                MinWidth="64"
+                                AllowFocusOnInteraction="False"
+                                AutomationProperties.Name="Size"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                ToolTipService.ToolTip="Size">
+                                <DropDownButton.Flyout>
+                                    <MenuFlyout x:Name="AnnotateSizeMenu" Placement="Top" />
+                                </DropDownButton.Flyout>
+                            </DropDownButton>
+                            <AppBarSeparator />
+                            <Button
+                                AllowFocusOnInteraction="False"
+                                AutomationProperties.Name="Undo"
+                                Click="OnAnnotateUndo"
+                                Style="{StaticResource ToolbarButtonStyle}"
+                                ToolTipService.ToolTip="Undo (Ctrl+Z)">
+                                <FontIcon FontSize="16" Glyph="&#xE7A7;" />
+                            </Button>
+                            <Button
+                                AllowFocusOnInteraction="False"
+                                AutomationProperties.Name="Redo"
+                                Click="OnAnnotateRedo"
+                                Style="{StaticResource ToolbarButtonStyle}"
+                                ToolTipService.ToolTip="Redo (Ctrl+Y)">
+                                <FontIcon FontSize="16" Glyph="&#xE7A6;" />
+                            </Button>
+                        </StackPanel>
+                    </Border>
                     <ProgressRing
                         x:Name="LoadingRing"
                         Width="40"

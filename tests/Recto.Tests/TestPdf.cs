@@ -23,7 +23,8 @@ internal static class TestPdf
     /// Annotation dictionaries on the first page, as another program would have written them. <c>{appearance}</c> in one
     /// stands for a reference to an appearance stream, a filled square.
     /// </param>
-    public static byte[] Create(int pages = 1, string mediaBox = "0 0 200 300", string? userPassword = null, string marker = "", string? text = null, string[]? annots = null)
+    /// <param name="rotate">The /Rotate of every page.</param>
+    public static byte[] Create(int pages = 1, string mediaBox = "0 0 200 300", string? userPassword = null, string marker = "", string? text = null, string[]? annots = null, int rotate = 0)
     {
         var objects = new List<string>
         {
@@ -35,7 +36,7 @@ internal static class TestPdf
         for (int i = 0; i < pages; i++)
         {
             string annotations = i == 0 && annots is not null ? $" /Annots [{string.Join(" ", annots).Replace("{appearance}", $"{appearance} 0 R")}]" : "";
-            objects.Add($"<< /Type /Page /Parent 2 0 R /MediaBox [{mediaBox}]{resources}{annotations} >>");
+            objects.Add($"<< /Type /Page /Parent 2 0 R /MediaBox [{mediaBox}] /Rotate {rotate}{resources}{annotations} >>");
         }
         if (text is not null)
         {

@@ -22,7 +22,7 @@ To try a build as your PDF app, measure performance or rebuild the icon, see [To
 | Path | Purpose |
 | --- | --- |
 | `src/Recto/Pdf` | PDFium interop, the single-threaded work queue, and the document model |
-| `src/Recto/Controls/DocumentView.cs` | Virtualized, zoomable page surface (pages laid out at 100%; ScrollViewer zoom is the zoom level), selection, links, annotation flyouts |
+| `src/Recto/Controls/DocumentView.cs` | Virtualized, zoomable page surface (pages laid out at 100%; ScrollViewer zoom is the zoom level), selection, links, annotation flyouts; `DocumentView.Drawing.cs` has the drawing and text tools |
 | `src/Recto/Controls/PageView.cs` | One page: bitmap, zoomed-in tiles, highlight overlay |
 | `src/Recto/MainWindow.xaml` | Title bar, sidebar, start page |
 | `src/Recto/Printing`, `PrintDialog.xaml` | Print dialog, page layout on sheets (unit tested), printers and GDI print jobs |

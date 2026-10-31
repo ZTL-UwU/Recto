@@ -23,6 +23,9 @@ public readonly record struct PageTransform(double A, double B, double C, double
         var p2 = Apply(right, bottom);
         return new Rect(new Point(Math.Min(p1.X, p2.X), Math.Min(p1.Y, p2.Y)), new Point(Math.Max(p1.X, p2.X), Math.Max(p1.Y, p2.Y)));
     }
+
+    /// <summary>Display points per user space unit, for lengths such as a line's width.</summary>
+    public double Scale => Math.Sqrt(Math.Abs(A * D - B * C));
 }
 
 public sealed class PdfDestination
@@ -72,7 +75,61 @@ public sealed class PdfAnnotation
     public string Author { get; init; } = "";
     public DateTimeOffset? Modified { get; init; }
     public Color Color { get; init; } = Color.FromArgb(255, 255, 214, 10);
+    /// <summary>What a drawing Recto made is drawn from. Null for other programs' drawings, whose look only their appearance stream has.</summary>
+    public InkDrawing? Ink { get; init; }
+    /// <summary>What a text box Recto made is drawn from. Null for other programs' text boxes.</summary>
+    public FreeText? FreeText { get; init; }
 }
+
+/// <summary>Freehand strokes, in display points. Each stroke has at least one point.</summary>
+public sealed record InkDrawing(Point[][] Strokes, Color Color, double Width, byte Opacity = 255)
+{
+    /// <summary>The strokes whose line comes within <paramref name="reach"/> of <paramref name="point"/>.</summary>
+    public IEnumerable<int> StrokesAt(Point point, double reach)
+    {
+        double limit = Width / 2 + reach;
+        for (int s = 0; s < Strokes.Length; s++)
+        {
+            var stroke = Strokes[s];
+            for (int i = 0; i < stroke.Length; i++)
+            {
+                if (Distance(point, stroke[i], stroke[Math.Min(i + 1, stroke.Length - 1)]) > limit) continue;
+                yield return s;
+                break;
+            }
+        }
+    }
+
+    /// <summary>The same drawing <paramref name="dx"/>, <paramref name="dy"/> away.</summary>
+    public InkDrawing Moved(double dx, double dy) =>
+        this with { Strokes = [.. Strokes.Select(stroke => stroke.Select(p => new Point(p.X + dx, p.Y + dy)).ToArray())] };
+
+    /// <summary>The area the strokes cover, with the width of their lines.</summary>
+    public Rect Bounds()
+    {
+        double left = double.MaxValue, top = double.MaxValue, right = double.MinValue, bottom = double.MinValue;
+        foreach (var p in Strokes.SelectMany(s => s))
+        {
+            left = Math.Min(left, p.X); right = Math.Max(right, p.X);
+            top = Math.Min(top, p.Y); bottom = Math.Max(bottom, p.Y);
+        }
+        return left > right ? Rect.Empty : new Rect(left - Width / 2, top - Width / 2, right - left + Width, bottom - top + Width);
+    }
+
+    /// <summary>Distance from a point to the segment from <paramref name="a"/> to <paramref name="b"/>.</summary>
+    private static double Distance(Point p, Point a, Point b)
+    {
+        double dx = b.X - a.X, dy = b.Y - a.Y, length = dx * dx + dy * dy;
+        double t = length == 0 ? 0 : Math.Clamp(((p.X - a.X) * dx + (p.Y - a.Y) * dy) / length, 0, 1);
+        return Math.Sqrt(Math.Pow(p.X - a.X - t * dx, 2) + Math.Pow(p.Y - a.Y - t * dy, 2));
+    }
+}
+
+/// <summary>
+/// A box of text on a page. <paramref name="Bounds"/> is in display points; its height follows the text
+/// when it's written to the document.
+/// </summary>
+public sealed record FreeText(Rect Bounds, string Text, Color Color, double FontSize);
 
 /// <summary>A removed annotation, with what <see cref="PdfDocument.RestoreAnnotationAsync"/> needs to put it back.</summary>
 public sealed class AnnotationSnapshot
@@ -85,6 +142,8 @@ public sealed class AnnotationSnapshot
     internal int Flags { get; init; }
     /// <summary>Text entries such as /Contents and /NM, by their key with its terminating zero.</summary>
     internal (byte[] Key, string Value)[] Strings { get; init; } = [];
+    internal InkDrawing? Ink { get; init; }
+    internal FreeText? FreeText { get; init; }
 }
 
 public sealed class PageText

@@ -551,19 +551,25 @@ public sealed unsafe partial class PdfDocument : IDisposable
         if (Native.FPDFAnnot_GetRect(annot, &r) == 0) return null;
         uint cr = 255, cg = 214, cb = 10, ca = 255;
         Native.FPDFAnnot_GetColor(annot, Native.FPDFANNOT_COLORTYPE_Color, &cr, &cg, &cb, &ca);
+        string name = GetAnnotString(annot, KeyName);
+        var ink = subtype == Native.FPDF_ANNOT_INK && IsOwn(name) ? ReadInk(annot, transform) : null;
+        var freeText = subtype == Native.FPDF_ANNOT_FREETEXT && IsOwn(name) ? ReadFreeText(annot, transform) : null;
+        var drawn = ink?.Color ?? freeText?.Color;
         return new PdfAnnotation
         {
             PageIndex = index,
             Index = i,
             Subtype = subtype,
             UserRect = UserRect(r),
-            Name = GetAnnotString(annot, KeyName),
+            Name = name,
             Kind = kind.Value,
             Bounds = transform.ApplyRect(r.Left, r.Top, r.Right, r.Bottom),
             Contents = GetAnnotString(annot, KeyContents),
             Author = GetAnnotString(annot, KeyAuthor),
             Modified = ParsePdfDate(GetAnnotString(annot, KeyModified)),
-            Color = Color.FromArgb(255, (byte)cr, (byte)cg, (byte)cb),
+            Color = drawn ?? Color.FromArgb(255, (byte)cr, (byte)cg, (byte)cb),
+            Ink = ink,
+            FreeText = freeText,
         };
     }
 
@@ -728,7 +734,16 @@ public sealed unsafe partial class PdfDocument : IDisposable
             {
                 string previous = GetAnnotString(annot, KeyContents, exact: true);
                 if (previous == contents) return null;
-                SetAnnotString(annot, KeyContents, contents);
+                // A text box of Recto's draws its contents, so they change on the page too.
+                if (Native.FPDFAnnot_GetSubtype(annot) == Native.FPDF_ANNOT_FREETEXT && IsOwn(GetAnnotString(annot, KeyName))
+                    && ReadFreeText(annot, GetTransform(annotation.PageIndex)) is { } text)
+                {
+                    WriteFreeText(annot, text with { Text = contents }, GetTransform(annotation.PageIndex), PageSizes[annotation.PageIndex].Height);
+                }
+                else
+                {
+                    SetAnnotString(annot, KeyContents, contents);
+                }
                 SetAnnotString(annot, KeyModified, FormatPdfDate(DateTimeOffset.Now));
                 MarkEdited();
                 return previous;
@@ -762,12 +777,12 @@ public sealed unsafe partial class PdfDocument : IDisposable
 
     /// <summary>
     /// Kinds that can be put back once removed: PDFium can create them, and draw them from what a snapshot keeps.
-    /// Others, such as stamps and drawings, depend on their appearance stream and its resources.
+    /// Others, such as stamps and other programs' drawings, depend on their appearance stream and its resources.
     /// </summary>
     private static bool IsRestorable(int subtype) => subtype is Native.FPDF_ANNOT_TEXT or Native.FPDF_ANNOT_HIGHLIGHT
         or Native.FPDF_ANNOT_UNDERLINE or Native.FPDF_ANNOT_SQUIGGLY or Native.FPDF_ANNOT_STRIKEOUT;
 
-    private static AnnotationSnapshot? TakeSnapshot(int index, IntPtr page, int i)
+    private AnnotationSnapshot? TakeSnapshot(int index, IntPtr page, int i)
     {
         IntPtr annot = Native.FPDFPage_GetAnnot(page, i);
         if (annot == IntPtr.Zero) return null;
@@ -775,7 +790,12 @@ public sealed unsafe partial class PdfDocument : IDisposable
         {
             int subtype = Native.FPDFAnnot_GetSubtype(annot);
             FS_RECTF rect;
-            if (!IsRestorable(subtype) || Native.FPDFAnnot_GetRect(annot, &rect) == 0) return null;
+            // Recto can draw its own drawings and text boxes again.
+            bool own = IsOwn(GetAnnotString(annot, KeyName));
+            var t = GetTransform(index);
+            var ink = own && subtype == Native.FPDF_ANNOT_INK ? ReadInk(annot, t) : null;
+            var freeText = own && subtype == Native.FPDF_ANNOT_FREETEXT ? ReadFreeText(annot, t) : null;
+            if (!IsRestorable(subtype) && ink is null && freeText is null || Native.FPDFAnnot_GetRect(annot, &rect) == 0) return null;
             // PDFium only reads the color of an annotation without an appearance stream. This one is about to be
             // removed, and the one put back gets its appearance drawn anew from the color.
             Native.FPDFAnnot_SetAP(annot, Native.FPDF_ANNOT_APPEARANCEMODE_NORMAL, null);
@@ -797,6 +817,8 @@ public sealed unsafe partial class PdfDocument : IDisposable
                 Quads = [.. quads],
                 Flags = Native.FPDFAnnot_GetFlags(annot),
                 Strings = [.. RestoredKeys.Select(key => (key, GetAnnotString(annot, key, exact: true))).Where(s => s.Item2.Length > 0)],
+                Ink = ink,
+                FreeText = freeText,
             };
         }
         finally
@@ -820,7 +842,9 @@ public sealed unsafe partial class PdfDocument : IDisposable
             {
                 var rect = snapshot.Rect;
                 Native.FPDFAnnot_SetRect(annot, &rect);
-                if (snapshot.Color is { } c) Native.FPDFAnnot_SetColor(annot, Native.FPDFANNOT_COLORTYPE_Color, c.R, c.G, c.B, c.A);
+                if (snapshot.Ink is { } ink) WriteInk(annot, ink, GetTransform(snapshot.PageIndex));
+                else if (snapshot.FreeText is { } text) WriteFreeText(annot, text, GetTransform(snapshot.PageIndex), PageSizes[snapshot.PageIndex].Height);
+                else if (snapshot.Color is { } c) Native.FPDFAnnot_SetColor(annot, Native.FPDFANNOT_COLORTYPE_Color, c.R, c.G, c.B, c.A);
                 foreach (var q in snapshot.Quads)
                 {
                     var quad = q;

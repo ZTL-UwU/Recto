@@ -102,6 +102,7 @@ public sealed partial class DocumentView : UserControl
         UseSystemFocusVisuals = false;
         var accent = Application.Current.Resources.TryGetValue("SystemAccentColor", out var a) && a is Color c ? c : Color.FromArgb(255, 0, 103, 192);
         _selectionBrush = new SolidColorBrush(Color.FromArgb(0x55, accent.R, accent.G, accent.B));
+        _accentBrush = new SolidColorBrush(accent);
 
         _scroller = new ScrollViewer
         {
@@ -143,7 +144,13 @@ public sealed partial class DocumentView : UserControl
         _host.PointerPressed += OnPointerPressed;
         _host.PointerMoved += OnPointerMoved;
         _host.PointerReleased += OnPointerReleased;
-        _host.PointerCaptureLost += (_, _) => { _pointerDown = false; _dragging = false; StopAutoScroll(); };
+        _host.PointerCaptureLost += (_, e) =>
+        {
+            if (e.Pointer.PointerId == _gesturePointer) FinishToolGesture();
+            _pointerDown = false;
+            _dragging = false;
+            StopAutoScroll();
+        };
         _host.PointerExited += (_, _) => { if (!_pointerDown && !_middleScroll) { SetStatus(null); SetCursor(InputSystemCursorShape.Arrow); } };
         _host.RightTapped += OnRightTapped;
         AddHandler(PreviewKeyDownEvent, new KeyEventHandler(OnPreviewKeyDown), true);
@@ -212,16 +219,19 @@ public sealed partial class DocumentView : UserControl
     public bool IsInverted => _inverted;
     public bool IsPresenting => _presentation;
     public bool HasSelection => GetSelection() is { } s && s.Start.CompareTo(s.End) < 0;
-    /// <summary>Whether an open note has text that isn't in the document yet.</summary>
-    public bool HasPendingEdits => _noteEdits.Any(e => e.IsChanged);
-    /// <summary>Changes whenever the text of an open note does, to tell whether anything was typed since it was last read.</summary>
-    public int NoteTextVersion { get; private set; }
+    /// <summary>Whether an open note or text box has text that isn't in the document yet.</summary>
+    public bool HasDrafts => _noteEdits.Any(e => e.IsChanged) || _textEdit is { IsChanged: true };
+    /// <summary>Whether a draft, or a drawing still being written, isn't in the document yet.</summary>
+    public bool HasPendingEdits => HasDrafts || !_drawingEdits.IsCompleted;
+    /// <summary>Changes whenever an open note's or text box's text does or a drawing edit starts, to tell whether anything was done since it was last read.</summary>
+    public int DraftVersion { get; private set; }
 
     public void SetDocument(PdfDocument? document, RecentDocument? restore = null)
     {
         StopMiddleScroll();
         StopAutoScroll();
         StopKeyScroll();
+        ResetDrawing();
         _noteEdits.Clear();
         _undo.Clear();
         _redo.Clear();
@@ -296,6 +306,7 @@ public sealed partial class DocumentView : UserControl
         if (_inverted == value) return;
         _inverted = value;
         foreach (var view in _views.Values) view.SetPaperColor(value ? Color.FromArgb(255, 30, 30, 30) : Colors.White);
+        RestyleDrafts();
         RefreshRendering();
         ViewSettingsChanged?.Invoke(this, EventArgs.Empty);
     }
@@ -314,6 +325,7 @@ public sealed partial class DocumentView : UserControl
 
     private void RelayoutKeepingPage()
     {
+        AbandonGestures();
         int page = _currentPage;
         Relayout();
         UpdateLayout();
@@ -468,6 +480,10 @@ public sealed partial class DocumentView : UserControl
         int page = _currentPage;
         if (value)
         {
+            SetTool(AnnotationTool.None, _toolColor, _toolSize);
+            _ = CommitTextEditAsync();
+            Deselect();
+            HideFrame();
             _beforePresentation = (_continuous, _dual, _zoomMode, Zoom);
             _presentation = true;
             _zoomMode = ZoomMode.FitPage;
@@ -490,6 +506,8 @@ public sealed partial class DocumentView : UserControl
         foreach (var view in _views.Values) view.Release();
         _views.Clear();
         _host.Children.Clear();
+        // A text box that couldn't be saved stays open until it can be.
+        if (_textEdit is { } edit) _host.Children.Add(edit.Box);
         _currentRow = RowIndexOf(page);
         Relayout();
         UpdateLayout();
@@ -696,6 +714,7 @@ public sealed partial class DocumentView : UserControl
         }
         // In paged modes the scroll offset often stays the same, so no ViewChanged will follow.
         UpdateRealization(true);
+        PlaceOverlays();
     }
 
     private double FitWidthZoom()
@@ -778,6 +797,7 @@ public sealed partial class DocumentView : UserControl
             StopAutoScroll();
             StopKeyScroll();
             _lastZoom = zoom;
+            PlaceOverlays();
             ZoomChanged?.Invoke(this, EventArgs.Empty);
         }
         UpdateRealization(!e.IsIntermediate);
@@ -914,6 +934,7 @@ public sealed partial class DocumentView : UserControl
     private void RemoveView(int index)
     {
         if (!_views.Remove(index, out var view)) return;
+        if (_stroke?.Page == index || _move?.Annotation.PageIndex == index) AbandonGestures();
         view.Release();
         if (_textLoading.Remove(index, out var loading)) loading.Cts.Cancel();
         _host.Children.Remove(view);
@@ -1233,6 +1254,10 @@ public sealed partial class DocumentView : UserControl
         return VisibleContentRect().Contains(new Point(rect.X + view.X, rect.Y + view.Y));
     }
 
+    /// <summary>The link a click follows. A drawing or text box over one takes the click, to be selected.</summary>
+    private PdfLink? ClickableLinkAt(int page, Point display) =>
+        AnnotationAt(page, display) is { Ink: not null } or { FreeText: not null } ? null : LinkAt(page, display);
+
     private PdfLink? LinkAt(int page, Point display)
     {
         if (!_texts.TryGetValue(page, out var text)) return null;
@@ -1250,6 +1275,8 @@ public sealed partial class DocumentView : UserControl
         for (int i = text.Annotations.Length - 1; i >= 0; i--)
         {
             var a = text.Annotations[i];
+            // A drawing is only where its lines are: the rest of its bounds are for the text under it.
+            if (a.Ink is { } ink && ink.StrokesAt(display, 4 / Zoom).Any()) return a;
             if (a.Kind is AnnotationKind.Note or AnnotationKind.Highlight or AnnotationKind.Underline or AnnotationKind.StrikeOut or AnnotationKind.Squiggly or AnnotationKind.FreeText
                 && a.Bounds.Contains(display)) return a;
         }
@@ -1258,6 +1285,7 @@ public sealed partial class DocumentView : UserControl
 
     private void OnPointerPressed(object sender, PointerRoutedEventArgs e)
     {
+        bool typing = _textEdit is not null;
         Focus(FocusState.Pointer);
         // OnMiddleScrollPointerPressed ends middle-click scrolling instead.
         if (_middleScroll) return;
@@ -1269,9 +1297,46 @@ public sealed partial class DocumentView : UserControl
             e.Handled = true;
             return;
         }
-        if (!point.Properties.IsLeftButtonPressed) return;
+        if (!point.Properties.IsLeftButtonPressed && !point.Properties.IsEraser) return;
+        if (_gesturePointer is { } gesture)
+        {
+            if (gesture != e.Pointer.PointerId)
+            {
+                e.Handled = true;
+                return;
+            }
+            // The same pointer can only press again if its release was never seen.
+            FinishToolGesture();
+        }
+        // Pressing away from a text box being typed only closes it.
+        if (typing)
+        {
+            _ = CommitTextEditAsync();
+            e.Handled = true;
+            return;
+        }
         _selectUnit = 0;
         int clicks = CountClick(point.Position);
+        if (StartToolGesture(point, e.Pointer))
+        {
+            e.Handled = true;
+            return;
+        }
+        if (HitPage(point.Position) is { } onDrawing)
+        {
+            if (clicks >= 2 && AnnotationAt(onDrawing.Page, onDrawing.Display) is { FreeText: not null } box)
+            {
+                BeginTextEdit(box);
+                e.Handled = true;
+                return;
+            }
+            if (StartMove(onDrawing.Page, onDrawing.Display, point.Position, e.Pointer))
+            {
+                e.Handled = true;
+                return;
+            }
+        }
+        Deselect();
         if (clicks >= 2 && (e.KeyModifiers & VirtualKeyModifiers.Shift) == 0 && HitPage(point.Position) is { } unit
             && LinkAt(unit.Page, unit.Display) is null && SelectUnit(unit.Page, unit.Display, clicks))
         {
@@ -1295,7 +1360,7 @@ public sealed partial class DocumentView : UserControl
         // text under it; a click follows the link and leaves the selection alone.
         bool extend = (e.KeyModifiers & VirtualKeyModifiers.Shift) != 0 && _selectionAnchor is not null;
         var hit = HitPage(point.Position);
-        if (hit is { } h) _pressedLink = LinkAt(h.Page, h.Display);
+        if (hit is { } h) _pressedLink = ClickableLinkAt(h.Page, h.Display);
         var target = hit is null ? null : DragTarget(point.Position);
         if (extend)
         {
@@ -1319,6 +1384,13 @@ public sealed partial class DocumentView : UserControl
         if (_middleScroll) return;
         var point = e.GetCurrentPoint(_host);
         if (point.PointerDeviceType == PointerDeviceType.Touch || _presentation) return;
+        if (ContinueToolGesture(e, point.Position)) return;
+        if (Tool != AnnotationTool.None)
+        {
+            UpdateToolCursor();
+            SetStatus(null);
+            return;
+        }
 
         if (_pointerDown)
         {
@@ -1351,12 +1423,17 @@ public sealed partial class DocumentView : UserControl
         string? status = null;
         if (HitPage(point.Position) is { } h)
         {
-            if (LinkAt(h.Page, h.Display) is { } link)
+            if (ClickableLinkAt(h.Page, h.Display) is { } link)
             {
                 cursor = InputSystemCursorShape.Hand;
                 status = link.Destination.Uri is { } uri
                     ? LaunchPolicy.ParseExternalLink(uri) is { } parsed ? LaunchPolicy.DescribeLink(parsed) : "This link can't be opened"
                     : $"Go to page {_document!.GetPageLabel(link.Destination.PageIndex)}";
+            }
+            else if (_selected is { } selected && selected.PageIndex == h.Page && Inflate(selected.Bounds, 3 / Zoom).Contains(h.Display))
+            {
+                cursor = selected.FreeText is not null && IsOnGrip(h.Page, selected.Bounds, point.Position)
+                    ? InputSystemCursorShape.SizeNorthwestSoutheast : InputSystemCursorShape.SizeAll;
             }
             else if (AnnotationAt(h.Page, h.Display) is { } annotation)
             {
@@ -1460,6 +1537,8 @@ public sealed partial class DocumentView : UserControl
             e.Handled = true;
             return;
         }
+        // A press inside a text box being typed is for its text.
+        if (_textEdit is { } edit && IsInside(e.OriginalSource as DependencyObject, edit.Box)) return;
         // Presses on the pages focus the view already; the margins and scroll bars around them do too, so keys scroll it.
         if (_document is not null) Focus(FocusState.Pointer);
         if (point.PointerDeviceType != PointerDeviceType.Mouse || !point.Properties.IsMiddleButtonPressed || _document is null || _presentation) return;
@@ -1575,8 +1654,24 @@ public sealed partial class DocumentView : UserControl
         }
     }
 
+    private static bool IsInside(DependencyObject? element, DependencyObject ancestor)
+    {
+        for (; element is not null; element = VisualTreeHelper.GetParent(element))
+        {
+            if (element == ancestor) return true;
+        }
+        return false;
+    }
+
     private void OnPointerReleased(object sender, PointerRoutedEventArgs e)
     {
+        if (_gesturePointer is { } gesture && gesture != e.Pointer.PointerId) return;
+        if (FinishToolGesture())
+        {
+            _host.ReleasePointerCaptures();
+            e.Handled = true;
+            return;
+        }
         if (!_pointerDown) return;
         // Releasing capture raises PointerCaptureLost synchronously, which resets the drag state.
         bool dragging = _dragging;
@@ -1603,7 +1698,8 @@ public sealed partial class DocumentView : UserControl
             else if (HitPage(point.Position) is { } hit && AnnotationAt(hit.Page, hit.Display) is { } annotation && (e.KeyModifiers & VirtualKeyModifiers.Shift) == 0)
             {
                 ClearSelection();
-                ShowAnnotationFlyout(annotation, point.Position);
+                if (annotation.Ink is not null || annotation.FreeText is not null) Select(annotation);
+                else ShowAnnotationFlyout(annotation, point.Position);
             }
             else if ((e.KeyModifiers & VirtualKeyModifiers.Shift) == 0)
             {
@@ -1924,6 +2020,22 @@ public sealed partial class DocumentView : UserControl
                 ClearSelection();
                 e.Handled = true;
                 break;
+            case VirtualKey.Escape when _stroke is not null || _erase is not null || _move is not null:
+                AbandonGestures();
+                e.Handled = true;
+                break;
+            case VirtualKey.Escape when _selected is not null:
+                Deselect();
+                e.Handled = true;
+                break;
+            case VirtualKey.Escape when Tool != AnnotationTool.None:
+                SetTool(AnnotationTool.None, _toolColor, _toolSize);
+                e.Handled = true;
+                break;
+            case VirtualKey.Delete when _selected is { } selected:
+                DeleteAnnotation(selected);
+                e.Handled = true;
+                break;
             case VirtualKey.PageDown when plain && pageKeysTurn:
             case VirtualKey.Space when plain && !shift && pageKeysTurn:
             case VirtualKey.Enter when plain && paged:
@@ -2069,11 +2181,13 @@ public sealed partial class DocumentView : UserControl
             }
             if (AnnotationAt(h.Page, h.Display) is { } annotation)
             {
-                AddItem(menu, "Edit note", "\uE70F", () => ShowAnnotationFlyout(annotation, position));
+                if (annotation.FreeText is not null) AddItem(menu, "Edit text", "\uE70F", () => BeginTextEdit(annotation));
+                else if (!IsForeignText(annotation)) AddItem(menu, "Edit note", "\uE70F", () => ShowAnnotationFlyout(annotation, position));
                 AddItem(menu, "Delete annotation", "\uE74D", () => DeleteAnnotation(annotation));
                 menu.Items.Add(new MenuFlyoutSeparator());
             }
             AddItem(menu, "Add note here", "\uE70B", () => AddNote(h.Page, h.Display, position));
+            AddItem(menu, "Add text here", "\uE8D2", () => BeginTextEdit(h.Page, h.Display));
         }
         AddItem(menu, "Select all", "\uE8B3", SelectAll, VirtualKey.A);
         menu.Items.Add(new MenuFlyoutSeparator());
@@ -2182,10 +2296,17 @@ public sealed partial class DocumentView : UserControl
         if (note is not null) ShowAnnotationFlyout(note, hostPosition);
     }
 
-    public async void DeleteAnnotation(PdfAnnotation annotation)
+    public void DeleteAnnotation(PdfAnnotation annotation)
     {
-        if (_document is null) return;
-        var document = _document;
+        // Right away, so that a key held down doesn't delete it again.
+        if (_selected?.Name == annotation.Name && annotation.Name.Length > 0) Deselect();
+        _ = QueueDrawingEdit(document => DeleteAnnotationAsync(document, annotation));
+    }
+
+    private async Task DeleteAnnotationAsync(PdfDocument document, PdfAnnotation annotation)
+    {
+        _lastInk = null;
+        int edits = document.EditCount;
         AnnotationSnapshot? removed;
         try
         {
@@ -2198,7 +2319,7 @@ public sealed partial class DocumentView : UserControl
         }
         if (document != _document) return;
         if (removed is not null) Record(new PresenceChange(annotation, added: false, removed));
-        else
+        else if (document.EditCount != edits)
         {
             // A kind that can't be put back, such as a stamp: its deletion can't be undone, so Ctrl+Z doesn't take
             // back an older change instead, as if it were this one.
@@ -2228,9 +2349,18 @@ public sealed partial class DocumentView : UserControl
         var current = text?.Annotations.FirstOrDefault(a => a.Index == annotation.Index) ?? annotation;
         var r = _pageRects[annotation.PageIndex];
         if (r.IsEmpty) return;
+        if (current.Ink is not null || current.FreeText is not null)
+        {
+            ClearSelection();
+            Select(current);
+            return;
+        }
         var p = RotatedLayoutPoint(annotation.PageIndex, new Point(current.Bounds.Left, current.Bounds.Bottom));
         ShowAnnotationFlyout(current, new Point(r.X + p.X, r.Y + p.Y));
     }
+
+    /// <summary>Whether this is another program's text box, whose text is drawn from its appearance, which writing /Contents wouldn't change.</summary>
+    private static bool IsForeignText(PdfAnnotation annotation) => annotation is { Kind: AnnotationKind.FreeText, FreeText: null };
 
     private void ShowAnnotationFlyout(PdfAnnotation annotation, Point at)
     {
@@ -2244,7 +2374,8 @@ public sealed partial class DocumentView : UserControl
         var box = new TextBox
         {
             Text = annotation.Contents,
-            PlaceholderText = "Add a note",
+            PlaceholderText = IsForeignText(annotation) ? "" : "Add a note",
+            IsReadOnly = IsForeignText(annotation),
             AcceptsReturn = true,
             TextWrapping = TextWrapping.Wrap,
             MinHeight = 96,
@@ -2272,7 +2403,7 @@ public sealed partial class DocumentView : UserControl
         };
         if (string.IsNullOrEmpty(header.Text)) header.Visibility = Visibility.Collapsed;
         var edit = new NoteEdit(document, annotation, box, flyout);
-        box.TextChanged += (_, _) => NoteTextVersion++;
+        box.TextChanged += (_, _) => DraftVersion++;
         _noteEdits.Add(edit);
         delete.Click += async (_, _) =>
         {
@@ -2311,6 +2442,7 @@ public sealed partial class DocumentView : UserControl
     /// </summary>
     public async Task CommitPendingEditsAsync()
     {
+        await CommitTextEditAsync();
         foreach (var edit in _noteEdits.ToList()) await CommitNoteAsync(edit);
     }
 
@@ -2383,6 +2515,13 @@ public sealed partial class DocumentView : UserControl
         public override Task RedoAsync(PdfDocument document) => document.SetAnnotationContentsAsync(Annotation, after);
     }
 
+    /// <summary>A drawing or text box changed in place.</summary>
+    private sealed class DrawingChange(PdfAnnotation annotation, Func<PdfDocument, Task> undo, Func<PdfDocument, Task> redo) : AnnotationChange(annotation)
+    {
+        public override Task UndoAsync(PdfDocument document) => undo(document);
+        public override Task RedoAsync(PdfDocument document) => redo(document);
+    }
+
     /// <summary>Steps of annotation changes, each taken back or made again as a whole.</summary>
     private readonly Stack<AnnotationChange[]> _undo = new(), _redo = new();
     /// <summary>Changes whenever a step is recorded, to tell whether one was while an undo was being made.</summary>
@@ -2419,18 +2558,24 @@ public sealed partial class DocumentView : UserControl
     private async Task StepHistoryAsync(bool undo)
     {
         var document = _document;
-        if (document is null) return;
+        // The menu of sizes for a text box is open: undoing would close the box, which it's kept open not to.
+        if (document is null || _textEditHeld) return;
         await _historyTurn.WaitAsync();
         try
         {
+            // A stroke still being written is the latest edit, and what's taken back.
+            await _drawingEdits;
             // Text typed into a note that's still open is the latest edit. Undo writes it first, so it's what's
             // taken back. Redo has nothing to make again after it, just as writing it would drop the steps that
             // could be redone; the note stays open with its text.
-            bool drafting = _noteEdits.Any(e => e.IsChanged);
+            bool drafting = HasPendingEdits;
             if (undo ? _undo.Count == 0 && !drafting : _redo.Count == 0 || drafting) return;
             await CommitPendingEditsAsync();
-            // A draft that couldn't be written stays in its flyout, to be written when it closes.
-            if (_noteEdits.Any(e => e.IsChanged)) return;
+            // A draft that couldn't be written stays in its flyout or box, to be written when that closes.
+            if (HasDrafts) return;
+            // What was selected may be gone or elsewhere after this, and the next stroke starts a drawing of its own.
+            Deselect();
+            _lastInk = null;
             // The flyouts close, as they would show text the document no longer has.
             foreach (var edit in _noteEdits.ToList())
             {
