@@ -51,12 +51,16 @@ internal sealed partial class PageView : Canvas
     private readonly Border _paper = new() { IsHitTestVisible = false };
     private readonly Dictionary<(int Col, int Row), Image> _tileImages = [];
     private readonly Dictionary<(int Col, int Row), TileBatch> _pendingTiles = [];
+    /// <summary>Tiles from before the last <see cref="Invalidate"/>. They stay up until replaced: the bitmap under them is blurry.</summary>
+    private readonly HashSet<(int Col, int Row)> _staleTiles = [];
     private CancellationTokenSource? _baseCts;
     private double _baseScale;
     private double _tileScale;
     private int _renderedRotation = -1;
     private bool _renderedInverted;
     private int _version;
+    /// <summary>The <see cref="_version"/> that <see cref="_base"/> shows.</summary>
+    private int _baseVersion;
 
     public PageView(PdfDocument document, int pageIndex, bool framed)
     {
@@ -222,7 +226,7 @@ internal sealed partial class PageView : Canvas
         _version++;
         _baseScale = 0;
         CancelPendingTiles();
-        _tileScale = 0;
+        _staleTiles.UnionWith(_tileImages.Keys);
     }
 
     private void CancelPendingTiles()
@@ -262,6 +266,7 @@ internal sealed partial class PageView : Canvas
         if (!tiled)
         {
             ClearTiles();
+            OnRedrawn();
             return;
         }
         if (Math.Abs(_tileScale - pxPerPoint) / pxPerPoint > 0.001)
@@ -269,7 +274,12 @@ internal sealed partial class PageView : Canvas
             ClearTiles();
             _tileScale = pxPerPoint;
         }
-        if (!isVisible || visible.IsEmpty) return;
+        if (!isVisible || visible.IsEmpty)
+        {
+            foreach (var key in _staleTiles.ToList()) DropTile(key);
+            OnRedrawn();
+            return;
+        }
 
         int maxW = (int)Math.Ceiling(pw), maxH = (int)Math.Ceiling(ph);
         int c0 = Math.Max(0, (int)(visible.Left * pixelScale) / TileSize);
@@ -279,12 +289,8 @@ internal sealed partial class PageView : Canvas
 
         foreach (var key in _tileImages.Keys.ToList())
         {
-            if (key.Col < c0 - 1 || key.Col > c1 + 1 || key.Row < r0 - 1 || key.Row > r1 + 1)
-            {
-                _tileImages.Remove(key, out var image);
-                _tiles.Children.Remove(image);
-                Free(image!);
-            }
+            bool inView = key.Col >= c0 && key.Col <= c1 && key.Row >= r0 && key.Row <= r1;
+            if (key.Col < c0 - 1 || key.Col > c1 + 1 || key.Row < r0 - 1 || key.Row > r1 + 1 || (!inView && _staleTiles.Contains(key))) DropTile(key);
         }
         // Batches still partly in view finish; ones that scrolled away entirely stop.
         foreach (var batch in _pendingTiles.Values.Distinct().ToList())
@@ -300,9 +306,18 @@ internal sealed partial class PageView : Canvas
             foreach (var key in batch.Keys) _pendingTiles[key] = batch;
             RenderTiles(batch, pxPerPoint, pixelScale, inverted, maxW, maxH);
         }
+        OnRedrawn();
     }
 
-    private bool IsMissing(int c, int r) => !_tileImages.ContainsKey((c, r)) && !_pendingTiles.ContainsKey((c, r));
+    private bool IsMissing(int c, int r) => (!_tileImages.ContainsKey((c, r)) || _staleTiles.Contains((c, r))) && !_pendingTiles.ContainsKey((c, r));
+
+    private void DropTile((int Col, int Row) key)
+    {
+        _staleTiles.Remove(key);
+        if (!_tileImages.Remove(key, out var image)) return;
+        _tiles.Children.Remove(image);
+        Free(image);
+    }
 
     /// <summary>
     /// Covers the tiles in [c0, c1] x [r0, r1] that are neither shown nor pending with few
@@ -367,7 +382,8 @@ internal sealed partial class PageView : Canvas
             var old = _base.Source;
             _base.Source = source;
             (old as IDisposable)?.Dispose();
-            OnRedrawn(version);
+            _baseVersion = version;
+            OnRedrawn();
         }
         catch (OperationCanceledException)
         {
@@ -416,14 +432,11 @@ internal sealed partial class PageView : Canvas
             for (int i = 0; i < tiles.Count; i++)
             {
                 var (key, image) = (tiles[i].Key, images[i]);
-                if (_tileImages.Remove(key, out var old))
-                {
-                    _tiles.Children.Remove(old);
-                    Free(old);
-                }
+                DropTile(key);
                 _tileImages[key] = image;
                 _tiles.Children.Add(image);
             }
+            OnRedrawn();
         }
         catch (OperationCanceledException)
         {
@@ -465,6 +478,7 @@ internal sealed partial class PageView : Canvas
     {
         CancelPendingTiles();
         _tileImages.Clear();
+        _staleTiles.Clear();
         Clear(_tiles);
     }
 
@@ -675,10 +689,12 @@ internal sealed partial class PageView : Canvas
     /// <summary>Runs <paramref name="action"/> once the page has been drawn again after the next <see cref="Invalidate"/>.</summary>
     public void CallWhenRedrawn(Action action) => _whenRedrawn.Add((action, _version));
 
-    private void OnRedrawn(int version)
+    /// <summary>Takes down what stood in for a change once the page shows it: on the bitmap, with no older tiles over it.</summary>
+    private void OnRedrawn()
     {
-        foreach (var (line, _) in _strokes.Where(s => s.Version < version).ToList()) RemoveStroke(line);
-        foreach (var call in _whenRedrawn.Where(c => c.Version < version).ToList())
+        if (_staleTiles.Count > 0) return;
+        foreach (var (line, _) in _strokes.Where(s => s.Version < _baseVersion).ToList()) RemoveStroke(line);
+        foreach (var call in _whenRedrawn.Where(c => c.Version < _baseVersion).ToList())
         {
             _whenRedrawn.Remove(call);
             call.Action();
