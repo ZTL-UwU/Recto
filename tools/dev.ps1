@@ -4,13 +4,14 @@
 
 .DESCRIPTION
   Every checkout (the main clone or any git worktree) is registered under its own name, "Recto
-  Dev (<folder>)", so builds from several worktrees can be installed side by side without
-  replacing each other, and each runs as its own instance. Test one by passing PDFs to this
-  script, or from File Explorer: right-click a PDF > Open with > Recto Dev (<folder>). The About
-  dialog shows which checkout and commit a running build came from.
+  Dev (<branch>)", or the folder if it's on no branch, so builds from several worktrees can be
+  installed side by side without replacing each other, and each runs as its own instance. Test one
+  by passing PDFs to this script, or from File Explorer: right-click a PDF > Open with > Recto Dev
+  (<branch>). The About dialog shows which branch and commit a running build came from.
 
-  Registration is per user (HKCU) and needs no admin rights. Registrations of checkouts that no
-  longer exist are removed on every run.
+  Registration is per user (HKCU) and needs no admin rights. Every run renames the registered builds
+  after their checkouts' current branches, and removes the registrations of checkouts that no longer
+  exist and, if gh is installed, of branches whose pull request was merged or closed.
 
   Release (the default) publishes with Native AOT, as CI ships. Debug is a plain JIT build, which
   compiles faster.
@@ -45,8 +46,14 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+# Names a build after its branch, which says what it's for. Worktree folders are often just a hash.
+function Get-Label([string]$Checkout) {
+    $branch = git -C $Checkout branch --show-current
+    if ($branch) { $branch } else { Split-Path $Checkout -Leaf }
+}
+
 $checkout = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
-$label = Split-Path $checkout -Leaf
+$label = Get-Label $checkout
 $sha = [Security.Cryptography.SHA256]::Create()
 $id = -join ($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($checkout.ToUpperInvariant()))[0..3] | ForEach-Object { $_.ToString("x2") })
 $displayName = "Recto Dev ($label)"
@@ -72,6 +79,25 @@ function Remove-Registration([string]$Id) {
     Remove-ItemProperty "$classes\.pdf\OpenWithProgids" -Name "RectoDev.$Id" -ErrorAction SilentlyContinue
     Remove-ItemProperty $registeredApps -Name "RectoDev.$Id" -ErrorAction SilentlyContinue
     Remove-Item "$builds\$Id" -Recurse -Force -ErrorAction SilentlyContinue
+}
+
+function Set-DisplayName([string]$Id, [string]$Name) {
+    Set-Value "$classes\RectoDev.$Id\shell\open" "FriendlyAppName" $Name
+    Set-Value "$classes\RectoDev.$Id\Application" "ApplicationName" $Name
+    Set-Value "$builds\$Id" "Name" $Name
+    Set-Value "$builds\$Id\Capabilities" "ApplicationName" $Name
+}
+
+# The state of the pull request from a checkout's branch, if there is one. --head also matches forks'
+# branches of the same name, such as main.
+function Get-PullRequestState([string]$Checkout) {
+    if (-not (Get-Command gh -ErrorAction SilentlyContinue)) { return }
+    $branch = git -C $Checkout branch --show-current
+    if (-not $branch) { return }
+    Push-Location $Checkout
+    try { gh pr list --head $branch --state all --json state,isCrossRepository --jq "map(select(.isCrossRepository | not))[0].state" 2>$null }
+    catch { }
+    finally { Pop-Location }
 }
 
 # Explorer loads the thumbnail handler into a COM surrogate (dllhost.exe), which keeps it and the
@@ -167,6 +193,9 @@ Stop-ThumbnailSurrogates
 $installer = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer"
 if (-not (Get-Command vswhere.exe -ErrorAction SilentlyContinue) -and (Test-Path $installer)) { $env:PATH += ";$installer" }
 
+# Shown in the About dialog.
+$env:RectoBuildLabel = $label
+
 if ($Configuration -eq "Release") {
     # Publishing is what compiles with Native AOT; a Release build would still run on the JIT.
     dotnet publish $project -c Release -o $output --nologo @platform
@@ -195,6 +224,10 @@ foreach ($stale in @(Get-Registrations | Where-Object { -not (Test-Path (Join-Pa
     Remove-Registration $stale.Id
     Write-Host "Removed the registration of $($stale.Checkout), which no longer exists."
 }
+foreach ($finished in @(Get-Registrations | Where-Object { $_.Id -ne $id -and (Get-PullRequestState $_.Checkout) -in "MERGED", "CLOSED" })) {
+    Remove-Registration $finished.Id
+    Write-Host "Removed the registration of $($finished.Name), as its pull request was merged or closed."
+}
 
 $progId = "$classes\RectoDev.$id"
 $command = "`"$exe`" `"%1`""
@@ -202,9 +235,7 @@ $icon = "`"$exe`",0"
 Set-Value $progId "(default)" "PDF Document"
 Set-Value $progId "FriendlyTypeName" "PDF Document"
 Set-Value "$progId\DefaultIcon" "(default)" $icon
-Set-Value "$progId\shell\open" "FriendlyAppName" $displayName
 Set-Value "$progId\shell\open\command" "(default)" $command
-Set-Value "$progId\Application" "ApplicationName" $displayName
 Set-Value "$progId\Application" "ApplicationIcon" $icon
 # The thumbnail handler, which this build's DLL now provides to every registered build, and the badge
 # Explorer draws in the corner of the thumbnails: each build's own icon.
@@ -219,14 +250,16 @@ if (-not (Test-Path "$classes\.pdf\OpenWithProgids")) { New-Item "$classes\.pdf\
 New-ItemProperty "$classes\.pdf\OpenWithProgids" -Name "RectoDev.$id" -PropertyType None -Value ([byte[]]@()) -Force | Out-Null
 
 $build = "$builds\$id"
-Set-Value $build "Name" $displayName
 Set-Value $build "Checkout" $checkout
 Set-Value $build "Exe" $exe
-Set-Value "$build\Capabilities" "ApplicationName" $displayName
 Set-Value "$build\Capabilities" "ApplicationDescription" "Development build of Recto from $checkout"
 Set-Value "$build\Capabilities" "ApplicationIcon" $icon
 Set-Value "$build\Capabilities\FileAssociations" ".pdf" "RectoDev.$id"
 Set-Value $registeredApps "RectoDev.$id" "Software\RectoDev\$id\Capabilities"
+# Every build's, not just this one's: another checkout's branch may have been renamed or switched.
+foreach ($registration in @(Get-Registrations)) {
+    Set-DisplayName $registration.Id "Recto Dev ($(Get-Label $registration.Checkout))"
+}
 Send-AssociationsChanged
 Write-Host "Registered $displayName -> $exe"
 
