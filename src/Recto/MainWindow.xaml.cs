@@ -901,8 +901,7 @@ public sealed partial class MainWindow : Window
         bool showingDocument = _document is not null && !_settingsOpen;
         bool searching = SearchPanel.Visibility == Visibility.Visible;
         var visibility = showingDocument ? Visibility.Visible : Visibility.Collapsed;
-        ZoomControls.Visibility = visibility;
-        HeaderSeparator.Visibility = visibility;
+        ZoomButton.Visibility = visibility;
         AnnotateToggle.Visibility = visibility;
         if (!showingDocument) SetAnnotateOpen(false);
         AppTitleBar.IsPaneToggleButtonVisible = showingDocument && !searching;
@@ -1807,8 +1806,6 @@ public sealed partial class MainWindow : Window
 
     // ================================================================ zoom
 
-    private void OnZoomIn(object sender, RoutedEventArgs e) => Viewer.ZoomIn();
-    private void OnZoomOut(object sender, RoutedEventArgs e) => Viewer.ZoomOut();
     private void OnFitPage(object sender, RoutedEventArgs e) => Viewer.SetZoomMode(ZoomMode.FitPage);
     private void OnFitWidth(object sender, RoutedEventArgs e) => Viewer.SetZoomMode(ZoomMode.FitWidth);
 
