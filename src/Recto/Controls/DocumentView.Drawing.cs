@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.UI;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
@@ -33,14 +34,14 @@ public sealed partial class DocumentView
     /// <summary>How far a line being drawn trails the pointer, in device pixels: enough to even out a mouse's whole pixels, too little to see.</summary>
     private const double StrokeLagPixels = 3;
     private const double DefaultTextBoxWidth = 240;
+    /// <summary>How long showing a text box's new lines can take before the next is held back: a frame.</summary>
+    private static readonly TimeSpan WrapPause = TimeSpan.FromMilliseconds(16);
 
     private static readonly Color ErasedColor = Color.FromArgb(255, 128, 128, 128);
 
     private Color _toolColor = Colors.Black;
     private double _toolSize = 2;
-    private readonly Brush _accentBrush;
-    private readonly Rectangle _frame = new() { IsHitTestVisible = false, Visibility = Visibility.Collapsed, StrokeDashArray = [4, 3] };
-    private readonly Rectangle _grip = new() { IsHitTestVisible = false, Visibility = Visibility.Collapsed };
+    private readonly SelectionFrame _frame;
 
     private sealed class StrokeGesture(int page, Polyline preview, Color color, double width, byte opacity)
     {
@@ -71,6 +72,10 @@ public sealed partial class DocumentView
         public bool Resizing { get; } = resizing;
         /// <summary>The drawing or text as it follows the pointer, once it has left its place on the page.</summary>
         public Shape? Preview { get; set; }
+        /// <summary>What <see cref="Preview"/> shows of a text box being resized.</summary>
+        public string? Markup { get; set; }
+        /// <summary>Whether a text box being resized is being wrapped, which picks up the width it has reached by the end of that.</summary>
+        public bool Wrapping { get; set; }
     }
 
     /// <summary>The box a text box is typed into, over the page where it will be drawn.</summary>
@@ -304,8 +309,9 @@ public sealed partial class DocumentView
         var r = move.Original;
         if (move.Resizing)
         {
-            double width = Math.Clamp(at.X - r.Left, PdfDocument.MinTextBoxWidth + 2 * PdfDocument.TextBoxInset, Math.Max(r.Width, size.Width - r.Left));
-            move.Bounds = new Rect(r.Left, r.Top, width, r.Height);
+            double width = Math.Clamp(r.Width + at.X - move.Start.X, PdfDocument.MinTextBoxWidth + 2 * PdfDocument.TextBoxInset, Math.Max(r.Width, size.Width - r.Left));
+            // Until it's wrapped to that width, it stays as tall as it was.
+            move.Bounds = width == r.Width ? r : new Rect(r.Left, move.Bounds.Top, width, move.Bounds.Height);
         }
         else
         {
@@ -313,18 +319,24 @@ public sealed partial class DocumentView
             double x = Math.Clamp(r.Left + at.X - move.Start.X, Math.Min(0, r.Left), Math.Max(r.Left, size.Width - r.Width));
             double y = Math.Clamp(r.Top + at.Y - move.Start.Y, Math.Min(0, r.Top), Math.Max(r.Top, size.Height - r.Height));
             move.Bounds = new Rect(x, y, r.Width, r.Height);
-            CarryDrawing(move);
         }
+        CarryDrawing(move);
         ShowFrame(move.Annotation.PageIndex, move.Bounds, move.Annotation.FreeText is not null);
     }
 
     /// <summary>
-    /// Keeps a drawing or text box being moved under the pointer. The page can't be drawn again as fast as that, so it
-    /// leaves the page when the move starts, and is drawn over it until it's put down.
+    /// Keeps a drawing or text box being moved under the pointer, and a text box being resized wrapped to its width. The
+    /// page can't be drawn again as fast as that, so it leaves the page when the gesture starts, and is drawn over it until
+    /// it's put down.
     /// </summary>
     private void CarryDrawing(MoveGesture move)
     {
         if (!_views.TryGetValue(move.Annotation.PageIndex, out var view)) return;
+        if (move.Resizing)
+        {
+            _ = WrapResizedTextAsync(move, view);
+            return;
+        }
         if (move.Preview is null)
         {
             // A press that doesn't move anything leaves the page as it is.
@@ -347,6 +359,74 @@ public sealed partial class DocumentView
             RefreshRendering();
         }
         view.OffsetStroke(move.Preview, new Point(move.Bounds.Left - move.Original.Left, move.Bounds.Top - move.Original.Top));
+    }
+
+    /// <summary>
+    /// Wraps a text box to the width it's being resized to, and fits the frame to the lines that makes. A long text takes
+    /// many frames to lay out, so that's left to another thread, and text that lags keeps up with the width it has reached.
+    /// </summary>
+    private async Task WrapResizedTextAsync(MoveGesture move, PageView view)
+    {
+        // A press that doesn't move anything leaves the page as it is.
+        if (move.Wrapping || (move.Preview is null && move.Bounds == move.Original)) return;
+        move.Wrapping = true;
+        var original = move.Original;
+        double pageHeight = _document!.PageSizes[move.Annotation.PageIndex].Height;
+        double width;
+        do
+        {
+            width = move.Bounds.Width;
+            var text = move.Annotation.FreeText! with { Bounds = new Rect(original.Left, original.Top, width, original.Height) };
+            string markup;
+            double height;
+            try
+            {
+                (markup, height) = await Task.Run(() => PdfDocument.LayOutTextBox(text, pageHeight, view.ToView));
+            }
+            catch (InvalidOperationException)
+            {
+                // Text that can't be laid out only keeps its lines until it's let go, when writing it reports that.
+                break;
+            }
+            if (_move != move) return;
+            long shown = Stopwatch.GetTimestamp();
+            if (move.Preview is null)
+            {
+                if (move.Bounds == original) continue;
+                move.Preview = view.AddText(markup, ShownColor(text.Color));
+                view.LeaveOut(move.Annotation);
+                RefreshRendering();
+            }
+            // Most of a drag crosses no line break.
+            else if (markup != move.Markup)
+            {
+                PageView.SetText((Microsoft.UI.Xaml.Shapes.Path)move.Preview, markup);
+            }
+            move.Markup = markup;
+            // Back at its width it's as it was, rather than a rounding away from that.
+            if (move.Bounds == original) continue;
+            move.Bounds = new Rect(original.Left, PdfDocument.TextBoxTop(original.Top, height, pageHeight), move.Bounds.Width, height);
+            ShowFrame(move.Annotation.PageIndex, move.Bounds, true);
+            // The outlines of a long text hold up this thread while it takes them in, and everything else gets as long in between.
+            var taken = Stopwatch.GetElapsedTime(shown);
+            if (taken > WrapPause) await Task.Delay(taken);
+        }
+        while (move.Bounds.Width != width);
+        move.Wrapping = false;
+    }
+
+    /// <summary>Gives a text box whose resizing was called off its lines back, for the moment until the page shows them.</summary>
+    private void UnwrapResizedText(MoveGesture move)
+    {
+        if (move.Preview is not Microsoft.UI.Xaml.Shapes.Path preview || !_views.TryGetValue(move.Annotation.PageIndex, out var view)) return;
+        try
+        {
+            PageView.SetText(preview, PdfDocument.TextBoxMarkup(move.Annotation.FreeText!, _document!.PageSizes[move.Annotation.PageIndex].Height, view.ToView));
+        }
+        catch (InvalidOperationException)
+        {
+            // It was laid out to get here, and goes as soon as the page has been drawn.
+        }
     }
 
     /// <summary>Has the page show what was being moved again, wherever the document has it. It's drawn over the page until then.</summary>
@@ -411,7 +491,8 @@ public sealed partial class DocumentView
             _move = null;
             ShowFrame(move.Annotation.PageIndex, move.Original, move.Annotation.FreeText is not null);
             move.Bounds = move.Original;
-            CarryDrawing(move);
+            if (move.Resizing) UnwrapResizedText(move);
+            else CarryDrawing(move);
             PutDownDrawing(move);
         }
     }
@@ -613,7 +694,7 @@ public sealed partial class DocumentView
         if (_selected is not { } selected || selected.PageIndex != page) return false;
         var bounds = selected.Bounds;
         bool grip = selected.FreeText is not null && IsOnGrip(page, bounds, content);
-        if (!grip && !Inflate(bounds, 3 / Zoom).Contains(display)) return false;
+        if (!grip && !Inflate(bounds, SelectionFrame.Gap / Zoom).Contains(display)) return false;
         _move = new MoveGesture(selected, display, bounds, grip);
         CaptureForGesture(pointer);
         return true;
@@ -642,31 +723,10 @@ public sealed partial class DocumentView
             HideFrame();
             return;
         }
-        if (_frame.Parent is null)
-        {
-            Canvas.SetZIndex(_frame, 1000);
-            Canvas.SetZIndex(_grip, 1001);
-            _frame.Stroke = _accentBrush;
-            _grip.Fill = _accentBrush;
-            _host.Children.Add(_frame);
-            _host.Children.Add(_grip);
-        }
-        double z = Math.Max(0.01, Zoom), gap = 3 / z;
-        _frame.StrokeThickness = 1.5 / z;
-        _frame.Width = area.Width + 2 * gap;
-        _frame.Height = area.Height + 2 * gap;
-        Canvas.SetLeft(_frame, area.Left - gap);
-        Canvas.SetTop(_frame, area.Top - gap);
-        _frame.Visibility = Visibility.Visible;
-        _grip.Visibility = grip ? Visibility.Visible : Visibility.Collapsed;
-        if (!grip) return;
-        var corner = GripPoint(page, bounds);
-        _grip.Width = _grip.Height = 9 / z;
-        Canvas.SetLeft(_grip, corner.X - 4.5 / z);
-        Canvas.SetTop(_grip, corner.Y - 4.5 / z);
+        _frame.Show(_host, area, grip ? GripPoint(page, bounds) : null, Math.Max(0.01, Zoom), XamlRoot?.RasterizationScale ?? 1);
     }
 
-    private void HideFrame() => _frame.Visibility = _grip.Visibility = Visibility.Collapsed;
+    private void HideFrame() => _frame.Hide();
 
     /// <summary>Puts what floats over the pages back on them after they were laid out or the zoom changed.</summary>
     private void PlaceOverlays()
@@ -757,6 +817,7 @@ public sealed partial class DocumentView
     /// <summary>Gives what's being drawn or typed the colors of night mode, or takes them away.</summary>
     private void RestyleDrafts()
     {
+        _frame.SetPage(_inverted);
         if (_stroke is { } stroke) stroke.Preview.Stroke = new SolidColorBrush(ShownColor(stroke.Color));
         if (_move is { Preview: { } moved, Annotation.Ink: { } ink }) moved.Stroke = new SolidColorBrush(ShownColor(ink.Color));
         if (_move is { Preview: { } shown, Annotation.FreeText: { } text }) shown.Fill = new SolidColorBrush(ShownColor(text.Color));

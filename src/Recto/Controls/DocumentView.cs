@@ -102,7 +102,7 @@ public sealed partial class DocumentView : UserControl
         UseSystemFocusVisuals = false;
         var accent = Application.Current.Resources.TryGetValue("SystemAccentColor", out var a) && a is Color c ? c : Color.FromArgb(255, 0, 103, 192);
         _selectionBrush = new SolidColorBrush(Color.FromArgb(0x55, accent.R, accent.G, accent.B));
-        _accentBrush = new SolidColorBrush(accent);
+        _frame = new SelectionFrame(accent);
 
         _scroller = new ScrollViewer
         {
@@ -1430,7 +1430,7 @@ public sealed partial class DocumentView : UserControl
                     ? LaunchPolicy.ParseExternalLink(uri) is { } parsed ? LaunchPolicy.DescribeLink(parsed) : "This link can't be opened"
                     : $"Go to page {_document!.GetPageLabel(link.Destination.PageIndex)}";
             }
-            else if (_selected is { } selected && selected.PageIndex == h.Page && Inflate(selected.Bounds, 3 / Zoom).Contains(h.Display))
+            else if (_selected is { } selected && selected.PageIndex == h.Page && Inflate(selected.Bounds, SelectionFrame.Gap / Zoom).Contains(h.Display))
             {
                 cursor = selected.FreeText is not null && IsOnGrip(h.Page, selected.Bounds, point.Position)
                     ? InputSystemCursorShape.SizeNorthwestSoutheast : InputSystemCursorShape.SizeAll;

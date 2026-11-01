@@ -220,7 +220,14 @@ public sealed unsafe partial class PdfDocument
     /// display points. Empty if it has nothing to show.
     /// </summary>
     public static string TextBoxMarkup(FreeText text, double pageHeight, Func<Point, Point> place) =>
-        TextOutline.ToMarkup(DrawFreeText(text, pageHeight, place).Operators);
+        LayOutTextBox(text, pageHeight, place).Markup;
+
+    /// <summary>A text box's text as <see cref="TextBoxMarkup"/> gives it, and the height of the box around it, as the document would have them.</summary>
+    public static (string Markup, double Height) LayOutTextBox(FreeText text, double pageHeight, Func<Point, Point> place)
+    {
+        var (operators, height) = DrawFreeText(text, pageHeight, place);
+        return (TextOutline.ToMarkup(operators), height + 2 * TextBoxInset);
+    }
 
     /// <summary>Where a text box's top goes for all of it to be on the page, which shows nothing past its end. One taller than the page starts at the top.</summary>
     public static double TextBoxTop(double top, double height, double pageHeight) => Math.Max(0, Math.Min(top, pageHeight - height));

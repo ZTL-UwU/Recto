@@ -308,6 +308,24 @@ public sealed class DrawingTests : IDisposable
     }
 
     [Fact]
+    public async Task LayOutTextBox_GivesTheHeightTheDocumentDoes()
+    {
+        var (document, _) = await OpenAsync();
+        using (document)
+        {
+            var wide = new FreeText(new Rect(20, 40, 160, 0), "Several words wrapped to a width", Red, 12);
+            var narrow = wide with { Bounds = new Rect(20, 40, 60, 0) };
+            var added = await document.AddFreeTextAsync(0, narrow);
+
+            double wideHeight = PdfDocument.LayOutTextBox(wide, 300, p => p).Height;
+            double narrowHeight = PdfDocument.LayOutTextBox(narrow, 300, p => p).Height;
+
+            Assert.True(narrowHeight > wideHeight);
+            Assert.Equal(added.Bounds.Height, narrowHeight, 1);
+        }
+    }
+
+    [Fact]
     public void TextBoxMarkup_WithNothingToShow_IsEmpty() =>
         Assert.Empty(PdfDocument.TextBoxMarkup(new FreeText(new Rect(20, 40, 160, 0), "   ", Red, 24), 300, p => p));
 

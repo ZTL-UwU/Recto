@@ -690,9 +690,13 @@ internal sealed partial class PageView : Canvas
     public Microsoft.UI.Xaml.Shapes.Path AddText(string markup, Windows.UI.Color color)
     {
         var text = new Microsoft.UI.Xaml.Shapes.Path { Fill = new SolidColorBrush(color) };
-        if (markup.Length > 0) text.Data = (Geometry)XamlBindingHelper.ConvertValue(typeof(Geometry), markup);
+        SetText(text, markup);
         return AddShape(text);
     }
+
+    /// <summary>Changes what <see cref="AddText"/> drew to other outlines of a text box.</summary>
+    public static void SetText(Microsoft.UI.Xaml.Shapes.Path text, string markup) =>
+        text.Data = markup.Length > 0 ? (Geometry)XamlBindingHelper.ConvertValue(typeof(Geometry), markup) : null;
 
     private T AddLine<T>(T line, Windows.UI.Color color, double width, double opacity) where T : Microsoft.UI.Xaml.Shapes.Shape
     {
