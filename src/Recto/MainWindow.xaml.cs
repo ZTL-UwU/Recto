@@ -169,6 +169,7 @@ public sealed partial class MainWindow : Window
         Viewer.AnnotationsChanged += (_, page) => OnAnnotationsChanged(page);
         Viewer.EditFailed += (_, message) => ShowMessage("Unable to change annotations", message, InfoBarSeverity.Error);
         Viewer.SearchRequested += async (_, _) => await SearchForSelectionAsync();
+        SetupAnnotateBar();
 
         // The mouse back button leaves Settings, as in other apps.
         SettingsView.PointerPressed += (_, e) =>
@@ -309,10 +310,10 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    /// <summary>How far the document on screen, and the notes being typed on it, had been edited at some point.</summary>
-    private readonly record struct EditStamp(PdfDocument? Document, int Edits, int NoteText);
+    /// <summary>How far the document on screen, and what's being typed or drawn on it, had been edited at some point.</summary>
+    private readonly record struct EditStamp(PdfDocument? Document, int Edits, int Drafts);
 
-    private EditStamp TakeEditStamp() => new(_document, _document?.EditCount ?? 0, Viewer.NoteTextVersion);
+    private EditStamp TakeEditStamp() => new(_document, _document?.EditCount ?? 0, Viewer.DraftVersion);
 
     /// <summary>Whether the document on screen has unsaved edits made since <paramref name="stamp"/>, which the user hasn't been asked about.</summary>
     private bool EditedSince(EditStamp stamp) =>
@@ -900,8 +901,9 @@ public sealed partial class MainWindow : Window
         bool showingDocument = _document is not null && !_settingsOpen;
         bool searching = SearchPanel.Visibility == Visibility.Visible;
         var visibility = showingDocument ? Visibility.Visible : Visibility.Collapsed;
-        ZoomControls.Visibility = visibility;
-        HeaderSeparator.Visibility = visibility;
+        ZoomButton.Visibility = visibility;
+        AnnotateToggle.Visibility = visibility;
+        if (!showingDocument) SetAnnotateOpen(false);
         AppTitleBar.IsPaneToggleButtonVisible = showingDocument && !searching;
         AppTitleBar.IsBackButtonVisible = _settingsOpen || showingDocument && searching;
         foreach (var item in new MenuFlyoutItemBase[]
@@ -1804,8 +1806,6 @@ public sealed partial class MainWindow : Window
 
     // ================================================================ zoom
 
-    private void OnZoomIn(object sender, RoutedEventArgs e) => Viewer.ZoomIn();
-    private void OnZoomOut(object sender, RoutedEventArgs e) => Viewer.ZoomOut();
     private void OnFitPage(object sender, RoutedEventArgs e) => Viewer.SetZoomMode(ZoomMode.FitPage);
     private void OnFitWidth(object sender, RoutedEventArgs e) => Viewer.SetZoomMode(ZoomMode.FitWidth);
 
@@ -1844,6 +1844,11 @@ public sealed partial class MainWindow : Window
         if (_document is null) return false;
         await Viewer.CommitPendingEditsAsync();
         if (_document is null) return false;
+        if (Viewer.HasDrafts)
+        {
+            ShowMessage("Unable to save", "A note or text box couldn't be written to the document. Nothing was saved.", InfoBarSeverity.Warning);
+            return false;
+        }
         var document = _document;
         var picker = new FileSavePicker(AppWindow.Id)
         {
@@ -2062,6 +2067,7 @@ public sealed partial class MainWindow : Window
         if (value)
         {
             SetFullscreen(true);
+            SetAnnotateOpen(false);
             Viewer.SetPresentation(true);
             DocumentSurface.Background = new SolidColorBrush(Colors.Black);
             ShowHint("Press Esc to end the presentation");
@@ -2296,6 +2302,7 @@ public sealed partial class MainWindow : Window
         Add(VirtualKey.R, Ctrl, () => _ = ReloadIfAllowedAsync(), true);
         Add(VirtualKey.Enter, VirtualKeyModifiers.Menu, () => OnProperties(this, new RoutedEventArgs()), true);
         Add(VirtualKey.H, Ctrl, () => Viewer.HighlightSelection(), false);
+        Add(VirtualKey.A, Ctrl | Shift, () => { if (!_presenting) SetAnnotateOpen(AnnotateBar.Visibility != Visibility.Visible); }, false);
         // Text boxes keep these for their own text.
         Add(VirtualKey.Z, Ctrl, Viewer.Undo, false);
         Add(VirtualKey.Y, Ctrl, Viewer.Redo, false);
