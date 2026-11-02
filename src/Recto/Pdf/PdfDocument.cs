@@ -796,27 +796,27 @@ public sealed unsafe partial class PdfDocument : IDisposable
     /// Removes <paramref name="annotation"/>. Returns what <see cref="RestoreAnnotationAsync"/> needs to put it back, or
     /// null if it was gone already or is of a kind that can't be put back.
     /// </summary>
-    public async Task<AnnotationSnapshot?> RemoveAnnotationAsync(PdfAnnotation annotation) =>
-        (await TryRemoveAnnotationAsync(annotation).ConfigureAwait(false)).Snapshot;
+    public Task<AnnotationSnapshot?> RemoveAnnotationAsync(PdfAnnotation annotation) =>
+        PdfWorker.Run(() => RemoveAnnotation(annotation).Snapshot, WorkPriority.Visible);
 
     /// <summary>
     /// Removes <paramref name="annotation"/>, as <see cref="RemoveAnnotationAsync"/> does, and also tells whether it was
     /// removed, which it was without a snapshot if it's of a kind that can't be put back.
     /// </summary>
-    public Task<(bool Removed, AnnotationSnapshot? Snapshot)> TryRemoveAnnotationAsync(PdfAnnotation annotation)
+    public Task<(bool Removed, AnnotationSnapshot? Snapshot)> TryRemoveAnnotationAsync(PdfAnnotation annotation) =>
+        PdfWorker.Run(() => RemoveAnnotation(annotation), WorkPriority.Visible);
+
+    private (bool Removed, AnnotationSnapshot? Snapshot) RemoveAnnotation(PdfAnnotation annotation)
     {
-        return PdfWorker.Run<(bool, AnnotationSnapshot?)>(() =>
-        {
-            IntPtr page = GetPage(annotation.PageIndex);
-            int index = FindAnnotation(page, annotation);
-            if (index < 0) return (false, null);
-            var snapshot = TakeSnapshot(annotation.PageIndex, page, index);
-            if (Native.FPDFPage_RemoveAnnot(page, index) == 0) return (false, null);
-            MarkEdited();
-            // Force PDFium to rebuild the page's cached annotation list.
-            EvictPage(annotation.PageIndex);
-            return (true, snapshot);
-        }, WorkPriority.Visible);
+        IntPtr page = GetPage(annotation.PageIndex);
+        int index = FindAnnotation(page, annotation);
+        if (index < 0) return (false, null);
+        var snapshot = TakeSnapshot(annotation.PageIndex, page, index);
+        if (Native.FPDFPage_RemoveAnnot(page, index) == 0) return (false, null);
+        MarkEdited();
+        // Force PDFium to rebuild the page's cached annotation list.
+        EvictPage(annotation.PageIndex);
+        return (true, snapshot);
     }
 
     /// <summary>
