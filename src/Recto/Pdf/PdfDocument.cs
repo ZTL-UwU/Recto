@@ -621,7 +621,7 @@ public sealed unsafe partial class PdfDocument : IDisposable
             try
             {
                 Native.FPDFAnnot_SetColor(annot, Native.FPDFANNOT_COLORTYPE_Color, color.R, color.G, color.B, 255);
-                double minX = double.MaxValue, minY = double.MaxValue, maxX = double.MinValue, maxY = double.MinValue;
+                var corners = new List<Point>(rects.Count * 4);
                 foreach (var rect in rects)
                 {
                     var tl = t.Invert(rect.Left, rect.Top);
@@ -634,13 +634,9 @@ public sealed unsafe partial class PdfDocument : IDisposable
                         X3 = (float)bl.X, Y3 = (float)bl.Y, X4 = (float)br.X, Y4 = (float)br.Y,
                     };
                     Native.FPDFAnnot_AppendAttachmentPoints(annot, &quad);
-                    foreach (var p in new[] { tl, tr, bl, br })
-                    {
-                        minX = Math.Min(minX, p.X); maxX = Math.Max(maxX, p.X);
-                        minY = Math.Min(minY, p.Y); maxY = Math.Max(maxY, p.Y);
-                    }
+                    corners.AddRange([tl, tr, bl, br]);
                 }
-                var bounds = new FS_RECTF { Left = (float)minX, Bottom = (float)minY, Right = (float)maxX, Top = (float)maxY };
+                var bounds = BoundsOf(corners);
                 Native.FPDFAnnot_SetRect(annot, &bounds);
                 Native.FPDFAnnot_SetFlags(annot, 4 /* print */);
                 StampAnnotation(annot, "");
@@ -697,6 +693,18 @@ public sealed unsafe partial class PdfDocument : IDisposable
     }
 
     private static Rect UserRect(FS_RECTF r) => new(new Point(r.Left, r.Bottom), new Point(r.Right, r.Top));
+
+    /// <summary>The rect around points in user space, <paramref name="margin"/> past them on every side.</summary>
+    private static FS_RECTF BoundsOf(IEnumerable<Point> points, float margin = 0)
+    {
+        double minX = double.MaxValue, minY = double.MaxValue, maxX = double.MinValue, maxY = double.MinValue;
+        foreach (var p in points)
+        {
+            minX = Math.Min(minX, p.X); maxX = Math.Max(maxX, p.X);
+            minY = Math.Min(minY, p.Y); maxY = Math.Max(maxY, p.Y);
+        }
+        return new FS_RECTF { Left = (float)minX - margin, Bottom = (float)minY - margin, Right = (float)maxX + margin, Top = (float)maxY + margin };
+    }
 
     private static bool IsSameAnnotation(IntPtr annot, PdfAnnotation annotation)
     {
@@ -788,19 +796,26 @@ public sealed unsafe partial class PdfDocument : IDisposable
     /// Removes <paramref name="annotation"/>. Returns what <see cref="RestoreAnnotationAsync"/> needs to put it back, or
     /// null if it was gone already or is of a kind that can't be put back.
     /// </summary>
-    public Task<AnnotationSnapshot?> RemoveAnnotationAsync(PdfAnnotation annotation)
+    public async Task<AnnotationSnapshot?> RemoveAnnotationAsync(PdfAnnotation annotation) =>
+        (await TryRemoveAnnotationAsync(annotation).ConfigureAwait(false)).Snapshot;
+
+    /// <summary>
+    /// Removes <paramref name="annotation"/>, as <see cref="RemoveAnnotationAsync"/> does, and also tells whether it was
+    /// removed, which it was without a snapshot if it's of a kind that can't be put back.
+    /// </summary>
+    public Task<(bool Removed, AnnotationSnapshot? Snapshot)> TryRemoveAnnotationAsync(PdfAnnotation annotation)
     {
-        return PdfWorker.Run(() =>
+        return PdfWorker.Run<(bool, AnnotationSnapshot?)>(() =>
         {
             IntPtr page = GetPage(annotation.PageIndex);
             int index = FindAnnotation(page, annotation);
-            if (index < 0) return null;
+            if (index < 0) return (false, null);
             var snapshot = TakeSnapshot(annotation.PageIndex, page, index);
-            if (Native.FPDFPage_RemoveAnnot(page, index) == 0) return null;
+            if (Native.FPDFPage_RemoveAnnot(page, index) == 0) return (false, null);
             MarkEdited();
             // Force PDFium to rebuild the page's cached annotation list.
             EvictPage(annotation.PageIndex);
-            return snapshot;
+            return (true, snapshot);
         }, WorkPriority.Visible);
     }
 

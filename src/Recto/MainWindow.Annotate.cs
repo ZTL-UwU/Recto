@@ -50,7 +50,6 @@ public sealed partial class MainWindow
         AnnotateSizeMenu.Closed += (_, _) => Viewer.HoldTextEdit(false);
     }
 
-    private static Color ToColor(int rgb) => Color.FromArgb(255, (byte)(rgb >> 16), (byte)(rgb >> 8), (byte)rgb);
     private static int ToRgb(Color color) => color.R << 16 | color.G << 8 | color.B;
 
     private static (int Rgb, double Size) StyleOf(AnnotationTool tool)
@@ -68,7 +67,7 @@ public sealed partial class MainWindow
     {
         if (tool is not (AnnotationTool.None or AnnotationTool.Eraser)) _styledTool = tool;
         var (rgb, size) = StyleOf(tool);
-        Viewer.SetTool(tool, ToColor(rgb), size);
+        Viewer.SetTool(tool, DocumentView.ColorFromRgb(rgb), size);
         UpdateAnnotateBar();
     }
 
@@ -97,8 +96,10 @@ public sealed partial class MainWindow
     private void UpdateAnnotateBar()
     {
         var tool = Viewer.Tool;
-        // The bar shows the selected drawing's style, and what's picked on it changes that.
-        if (Viewer.SelectedDrawing is { } drawing)
+        // The bar shows the style of the text box being typed or the selected drawing, and what's picked on it changes that.
+        if (Viewer.TypingStyle is not null)
+            _styledTool = AnnotationTool.Text;
+        else if (Viewer.SelectedDrawing is { } drawing)
             _styledTool = drawing.FreeText is not null ? AnnotationTool.Text : drawing.Ink is { Opacity: < 255 } ? AnnotationTool.Highlighter : AnnotationTool.Pen;
         else if (tool is not (AnnotationTool.None or AnnotationTool.Eraser)) _styledTool = tool;
         PenTool.IsChecked = tool == AnnotationTool.Pen;
@@ -112,7 +113,12 @@ public sealed partial class MainWindow
         if (!styled) return;
 
         var (rgb, size) = StyleOf(_styledTool);
-        if (Viewer.SelectedDrawing is { } selected)
+        if (Viewer.TypingStyle is { } typing)
+        {
+            rgb = ToRgb(typing.Color);
+            size = typing.FontSize;
+        }
+        else if (Viewer.SelectedDrawing is { } selected)
         {
             rgb = ToRgb(selected.Color);
             size = selected.FreeText?.FontSize ?? selected.Ink?.Width ?? size;
@@ -138,7 +144,7 @@ public sealed partial class MainWindow
                 {
                     Width = 16,
                     Height = 16,
-                    Fill = new SolidColorBrush(ToColor(rgb)),
+                    Fill = new SolidColorBrush(DocumentView.ColorFromRgb(rgb)),
                     // Keeps black and white apart from the bar in either theme.
                     Stroke = new SolidColorBrush(Color.FromArgb(0x66, 128, 128, 128)),
                     StrokeThickness = 1,
@@ -174,7 +180,7 @@ public sealed partial class MainWindow
         else if (_styledTool == AnnotationTool.Text) prefs.TextColor = rgb;
         else prefs.PenColor = rgb;
         AppState.Save();
-        Viewer.ApplyStyle(ToColor(rgb), null);
+        Viewer.ApplyStyle(DocumentView.ColorFromRgb(rgb), null);
         UpdateStyle();
     }
 
@@ -193,7 +199,7 @@ public sealed partial class MainWindow
     private void UpdateStyle()
     {
         var (rgb, size) = StyleOf(Viewer.Tool);
-        Viewer.SetTool(Viewer.Tool, ToColor(rgb), size);
+        Viewer.SetTool(Viewer.Tool, DocumentView.ColorFromRgb(rgb), size);
         UpdateAnnotateBar();
     }
 }

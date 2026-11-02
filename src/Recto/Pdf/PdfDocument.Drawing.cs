@@ -43,7 +43,16 @@ public sealed unsafe partial class PdfDocument
             if (annot == IntPtr.Zero) throw new InvalidOperationException("The annotation could not be created.");
             try
             {
-                write(annot);
+                try
+                {
+                    write(annot);
+                }
+                catch
+                {
+                    // Not left half-made on the page, where it would be saved and listed.
+                    Native.FPDFPage_RemoveAnnot(page, Native.FPDFPage_GetAnnotCount(page) - 1);
+                    throw;
+                }
                 Native.FPDFAnnot_SetFlags(annot, 4 /* print */);
                 string contents = GetAnnotString(annot, KeyContents, exact: true);
                 StampAnnotation(annot, contents);
@@ -108,24 +117,16 @@ public sealed unsafe partial class PdfDocument
         Native.FPDFAnnot_SetBorder(annot, 0, 0, width);
         Native.FPDFAnnot_RemoveInkList(annot);
 
-        double minX = double.MaxValue, minY = double.MaxValue, maxX = double.MinValue, maxY = double.MinValue;
-        var strokes = new List<FS_POINTF[]>(ink.Strokes.Length);
-        foreach (var stroke in ink.Strokes)
+        var user = ink.Strokes.Select(stroke => stroke.Select(p => t.Invert(p.X, p.Y)).ToArray()).ToArray();
+        var strokes = new List<FS_POINTF[]>(user.Length);
+        foreach (var stroke in user)
         {
-            var points = new FS_POINTF[stroke.Length];
-            for (int i = 0; i < stroke.Length; i++)
-            {
-                var p = t.Invert(stroke[i].X, stroke[i].Y);
-                points[i] = new FS_POINTF { X = (float)p.X, Y = (float)p.Y };
-                minX = Math.Min(minX, p.X); maxX = Math.Max(maxX, p.X);
-                minY = Math.Min(minY, p.Y); maxY = Math.Max(maxY, p.Y);
-            }
+            FS_POINTF[] points = [.. stroke.Select(p => new FS_POINTF { X = (float)p.X, Y = (float)p.Y })];
             strokes.Add(points);
             fixed (FS_POINTF* p = points) Native.FPDFAnnot_AddInkStroke(annot, p, (nuint)points.Length);
         }
         // Past the caps at the ends of the strokes, which the appearance would otherwise be cut off at.
-        float margin = width / 2 + 1;
-        var bounds = new FS_RECTF { Left = (float)minX - margin, Bottom = (float)minY - margin, Right = (float)maxX + margin, Top = (float)maxY + margin };
+        var bounds = BoundsOf(user.SelectMany(s => s), width / 2 + 1);
         Native.FPDFAnnot_SetRect(annot, &bounds);
         SetAnnotString(annot, KeyDefaultAppearance, $"{ColorOperators(ink.Color)} rg");
         SetAppearance(annot, InkAppearance(strokes, ink.Color, width, ink.Opacity < 255));
@@ -190,15 +191,9 @@ public sealed unsafe partial class PdfDocument
     {
         var (operators, height) = DrawFreeText(text, pageHeight, p => t.Invert(p.X, p.Y));
         var box = new Rect(text.Bounds.Left, TextBoxTop(text.Bounds.Top, height + 2 * TextBoxInset, pageHeight), text.Bounds.Width, height + 2 * TextBoxInset);
-        double minX = double.MaxValue, minY = double.MaxValue, maxX = double.MinValue, maxY = double.MinValue;
-        foreach (var corner in new[] { new Point(box.Left, box.Top), new Point(box.Right, box.Top), new Point(box.Left, box.Bottom), new Point(box.Right, box.Bottom) })
-        {
-            var p = t.Invert(corner.X, corner.Y);
-            minX = Math.Min(minX, p.X); maxX = Math.Max(maxX, p.X);
-            minY = Math.Min(minY, p.Y); maxY = Math.Max(maxY, p.Y);
-        }
+        var bounds = BoundsOf(new[] { new Point(box.Left, box.Top), new Point(box.Right, box.Top), new Point(box.Left, box.Bottom), new Point(box.Right, box.Bottom) }
+            .Select(corner => t.Invert(corner.X, corner.Y)));
         Native.FPDFAnnot_SetAP(annot, Native.FPDF_ANNOT_APPEARANCEMODE_NORMAL, null);
-        var bounds = new FS_RECTF { Left = (float)minX, Bottom = (float)minY, Right = (float)maxX, Top = (float)maxY };
         Native.FPDFAnnot_SetRect(annot, &bounds);
         // No border, for viewers that draw the box anew from these entries.
         Native.FPDFAnnot_SetBorder(annot, 0, 0, 0);

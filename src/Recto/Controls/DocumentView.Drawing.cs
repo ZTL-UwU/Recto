@@ -92,7 +92,7 @@ public sealed partial class DocumentView
         /// <summary>TextBox ends lines with \r.</summary>
         public string Text => Box.Text.ReplaceLineEndings("\n");
         public bool IsChanged => Annotation?.FreeText is { } text
-            ? text.Text != Text || text.Color != Color || text.FontSize != FontSize
+            ? text.Text != Text.TrimEnd() || text.Color != Color || text.FontSize != FontSize
             : Text.Trim().Length > 0;
     }
 
@@ -114,11 +114,13 @@ public sealed partial class DocumentView
     private (PdfAnnotation Annotation, InkDrawing Ink, long Time)? _lastInk;
 
     public event EventHandler? ToolChanged;
-    /// <summary>Raised when another drawing or text box is selected, or none is.</summary>
+    /// <summary>Raised when another drawing or text box is selected, or none is, and when a text box opens for typing or closes.</summary>
     public event EventHandler? SelectedDrawingChanged;
 
     public AnnotationTool Tool { get; private set; }
     internal PdfAnnotation? SelectedDrawing => _selected;
+    /// <summary>The color and font size of the text box being typed, if one is.</summary>
+    internal (Color Color, double FontSize)? TypingStyle => _textEdit is { } edit ? (edit.Color, edit.FontSize) : null;
 
     /// <summary>
     /// Picks what pressing on a page does, and the color and size it does that with: a line's width or a font size,
@@ -170,13 +172,20 @@ public sealed partial class DocumentView
     private void ResetDrawing()
     {
         CancelGestures();
-        if (_textEdit is { } edit) _host.Children.Remove(edit.Box);
-        _textEdit = null;
+        if (_textEdit is { } edit)
+        {
+            _host.Children.Remove(edit.Box);
+            _textEdit = null;
+            SelectedDrawingChanged?.Invoke(this, EventArgs.Empty);
+        }
         _lastInk = null;
         _textEditHeld = false;
         _drawingEdits = Task.CompletedTask;
         Deselect();
     }
+
+    /// <summary>An opaque color from 0xRRGGBB, as <see cref="AnnotatePreferences"/> keeps them.</summary>
+    internal static Color ColorFromRgb(int rgb) => Color.FromArgb(255, (byte)(rgb >> 16), (byte)(rgb >> 8), (byte)rgb);
 
     /// <summary>The color a page shows <paramref name="color"/> in, which night mode changes the same way as what PDFium draws.</summary>
     private Color ShownColor(Color color)
@@ -309,7 +318,9 @@ public sealed partial class DocumentView
         var r = move.Original;
         if (move.Resizing)
         {
-            double width = Math.Clamp(r.Width + at.X - move.Start.X, PdfDocument.MinTextBoxWidth + 2 * PdfDocument.TextBoxInset, Math.Max(r.Width, size.Width - r.Left));
+            double narrowest = PdfDocument.MinTextBoxWidth + 2 * PdfDocument.TextBoxInset;
+            // A box from a file can be narrower than that, at the page's edge.
+            double width = Math.Clamp(r.Width + at.X - move.Start.X, narrowest, Math.Max(narrowest, Math.Max(r.Width, size.Width - r.Left)));
             // Until it's wrapped to that width, it stays as tall as it was.
             move.Bounds = width == r.Width ? r : new Rect(r.Left, move.Bounds.Top, width, move.Bounds.Height);
         }
@@ -753,7 +764,7 @@ public sealed partial class DocumentView
         double width = Math.Clamp(size.Width - display.X - 8, 2 * PdfDocument.MinTextBoxWidth, DefaultTextBoxWidth);
         var prefs = AppState.Preferences.Annotate;
         double fontSize = Math.Clamp(prefs.TextSize, 4, 144);
-        var color = Color.FromArgb(255, (byte)(prefs.TextColor >> 16), (byte)(prefs.TextColor >> 8), (byte)prefs.TextColor);
+        var color = ColorFromRgb(prefs.TextColor);
         // With the first line level with the point.
         var bounds = new Rect(Math.Min(display.X, Math.Max(0, size.Width - width)), Math.Max(0, display.Y - fontSize * 0.7), width, 0);
         OpenEditor(new TextEdit(document, page, null, CreateEditor(), bounds, color, fontSize));
@@ -804,6 +815,8 @@ public sealed partial class DocumentView
         }), true);
         StyleEditor(edit);
         PlaceEditor(edit);
+        // The bar shows the text box's style while it's typed, and what's picked on it changes that.
+        SelectedDrawingChanged?.Invoke(this, EventArgs.Empty);
     }
 
     private void StyleEditor(TextEdit edit)
@@ -845,6 +858,7 @@ public sealed partial class DocumentView
         if (_textEdit is not { } edit) return _drawingEdits;
         _textEdit = null;
         edit.Box.IsHitTestVisible = false;
+        SelectedDrawingChanged?.Invoke(this, EventArgs.Empty);
         return QueueDrawingEdit(_ => CommitAsync(edit));
     }
 
@@ -891,6 +905,7 @@ public sealed partial class DocumentView
                 edit.Box.IsHitTestVisible = true;
                 if (edit.Box.Parent is null) _host.Children.Add(edit.Box);
                 if (!_pageRects[edit.Page].IsEmpty) PlaceEditor(edit);
+                SelectedDrawingChanged?.Invoke(this, EventArgs.Empty);
             }
             else
             {

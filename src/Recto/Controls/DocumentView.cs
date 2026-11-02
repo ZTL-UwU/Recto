@@ -1255,8 +1255,11 @@ public sealed partial class DocumentView : UserControl
     }
 
     /// <summary>The link a click follows. A drawing or text box over one takes the click, to be selected.</summary>
-    private PdfLink? ClickableLinkAt(int page, Point display) =>
-        AnnotationAt(page, display) is { Ink: not null } or { FreeText: not null } ? null : LinkAt(page, display);
+    private PdfLink? ClickableLinkAt(int page, Point display) => ClickableLinkAt(page, display, AnnotationAt(page, display));
+
+    /// <summary>The link a click follows, given the annotation <see cref="AnnotationAt"/> found there.</summary>
+    private PdfLink? ClickableLinkAt(int page, Point display, PdfAnnotation? under) =>
+        under is { Ink: not null } or { FreeText: not null } ? null : LinkAt(page, display);
 
     private PdfLink? LinkAt(int page, Point display)
     {
@@ -1423,7 +1426,8 @@ public sealed partial class DocumentView : UserControl
         string? status = null;
         if (HitPage(point.Position) is { } h)
         {
-            if (ClickableLinkAt(h.Page, h.Display) is { } link)
+            var under = AnnotationAt(h.Page, h.Display);
+            if (ClickableLinkAt(h.Page, h.Display, under) is { } link)
             {
                 cursor = InputSystemCursorShape.Hand;
                 status = link.Destination.Uri is { } uri
@@ -1435,7 +1439,7 @@ public sealed partial class DocumentView : UserControl
                 cursor = selected.FreeText is not null && IsOnGrip(h.Page, selected.Bounds, point.Position)
                     ? InputSystemCursorShape.SizeNorthwestSoutheast : InputSystemCursorShape.SizeAll;
             }
-            else if (AnnotationAt(h.Page, h.Display) is { } annotation)
+            else if (under is { } annotation)
             {
                 cursor = InputSystemCursorShape.Hand;
                 status = string.IsNullOrWhiteSpace(annotation.Contents) ? null : annotation.Contents.ReplaceLineEndings(" ");
@@ -2306,11 +2310,11 @@ public sealed partial class DocumentView : UserControl
     private async Task DeleteAnnotationAsync(PdfDocument document, PdfAnnotation annotation)
     {
         _lastInk = null;
-        int edits = document.EditCount;
+        bool deleted;
         AnnotationSnapshot? removed;
         try
         {
-            removed = await document.RemoveAnnotationAsync(annotation);
+            (deleted, removed) = await document.TryRemoveAnnotationAsync(annotation);
         }
         catch (Exception ex) when (IsEditFailure(ex))
         {
@@ -2319,7 +2323,7 @@ public sealed partial class DocumentView : UserControl
         }
         if (document != _document) return;
         if (removed is not null) Record(new PresenceChange(annotation, added: false, removed));
-        else if (document.EditCount != edits)
+        else if (deleted)
         {
             // A kind that can't be put back, such as a stamp: its deletion can't be undone, so Ctrl+Z doesn't take
             // back an older change instead, as if it were this one.
@@ -2442,7 +2446,8 @@ public sealed partial class DocumentView : UserControl
     /// </summary>
     public async Task CommitPendingEditsAsync()
     {
-        await CommitTextEditAsync();
+        // Waits for the drawing edits before it too; one that failed doesn't stop the rest.
+        await CommitTextEditAsync().ConfigureAwait(ConfigureAwaitOptions.ContinueOnCapturedContext | ConfigureAwaitOptions.SuppressThrowing);
         foreach (var edit in _noteEdits.ToList()) await CommitNoteAsync(edit);
     }
 
@@ -2563,8 +2568,8 @@ public sealed partial class DocumentView : UserControl
         await _historyTurn.WaitAsync();
         try
         {
-            // A stroke still being written is the latest edit, and what's taken back.
-            await _drawingEdits;
+            // A stroke still being written is the latest edit, and what's taken back. One that failed was reported already.
+            await _drawingEdits.ConfigureAwait(ConfigureAwaitOptions.ContinueOnCapturedContext | ConfigureAwaitOptions.SuppressThrowing);
             // Text typed into a note that's still open is the latest edit. Undo writes it first, so it's what's
             // taken back. Redo has nothing to make again after it, just as writing it would drop the steps that
             // could be redone; the note stays open with its text.
