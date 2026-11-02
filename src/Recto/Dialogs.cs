@@ -223,7 +223,9 @@ internal static class Dialogs
                 ("Ctrl+C", "Copy selected text"), ("Ctrl+A", "Select all"),
             ]),
             ("Annotations", [
-                ("Ctrl+H", "Highlight selection"), ("Ctrl+Z", "Undo"), ("Ctrl+Y / Ctrl+Shift+Z", "Redo"),
+                ("Ctrl+H", "Highlight selection"), ("Ctrl+Shift+A", "Show or hide the drawing and text tools"),
+                ("Esc", "Leave the current tool"), ("Delete", "Delete the selected drawing or text box"),
+                ("Ctrl+Z", "Undo"), ("Ctrl+Y / Ctrl+Shift+Z", "Redo"),
             ]),
             ("View", [
                 ("Ctrl+Plus / Ctrl+Minus", "Zoom in / out"), ("Ctrl+0", "Actual size"), ("Ctrl+Wheel", "Zoom"),

@@ -26,6 +26,7 @@ internal enum OverlayLayer
     Search,
     CurrentHit,
     Selection,
+    Strokes,
 }
 
 /// <summary>
@@ -50,12 +51,18 @@ internal sealed partial class PageView : Canvas
     private readonly Border _paper = new() { IsHitTestVisible = false };
     private readonly Dictionary<(int Col, int Row), Image> _tileImages = [];
     private readonly Dictionary<(int Col, int Row), TileBatch> _pendingTiles = [];
+    /// <summary>Tiles from before the last <see cref="Invalidate"/>. They stay up until replaced: the bitmap under them is blurry.</summary>
+    private readonly HashSet<(int Col, int Row)> _staleTiles = [];
     private CancellationTokenSource? _baseCts;
     private double _baseScale;
     private double _tileScale;
     private int _renderedRotation = -1;
     private bool _renderedInverted;
     private int _version;
+    /// <summary>The <see cref="_version"/> that <see cref="_base"/> shows.</summary>
+    private int _baseVersion;
+    /// <summary>An annotation being moved, which is drawn over the page meanwhile.</summary>
+    private PdfAnnotation? _leftOut;
 
     public PageView(PdfDocument document, int pageIndex, bool framed)
     {
@@ -221,7 +228,14 @@ internal sealed partial class PageView : Canvas
         _version++;
         _baseScale = 0;
         CancelPendingTiles();
-        _tileScale = 0;
+        _staleTiles.UnionWith(_tileImages.Keys);
+    }
+
+    /// <summary>Draws the page without <paramref name="annotation"/> from now on, or with all of them again if it's null.</summary>
+    public void LeaveOut(PdfAnnotation? annotation)
+    {
+        _leftOut = annotation;
+        Invalidate();
     }
 
     private void CancelPendingTiles()
@@ -261,6 +275,7 @@ internal sealed partial class PageView : Canvas
         if (!tiled)
         {
             ClearTiles();
+            OnRedrawn();
             return;
         }
         if (Math.Abs(_tileScale - pxPerPoint) / pxPerPoint > 0.001)
@@ -268,7 +283,12 @@ internal sealed partial class PageView : Canvas
             ClearTiles();
             _tileScale = pxPerPoint;
         }
-        if (!isVisible || visible.IsEmpty) return;
+        if (!isVisible || visible.IsEmpty)
+        {
+            foreach (var key in _staleTiles.ToList()) DropTile(key);
+            OnRedrawn();
+            return;
+        }
 
         int maxW = (int)Math.Ceiling(pw), maxH = (int)Math.Ceiling(ph);
         int c0 = Math.Max(0, (int)(visible.Left * pixelScale) / TileSize);
@@ -278,12 +298,8 @@ internal sealed partial class PageView : Canvas
 
         foreach (var key in _tileImages.Keys.ToList())
         {
-            if (key.Col < c0 - 1 || key.Col > c1 + 1 || key.Row < r0 - 1 || key.Row > r1 + 1)
-            {
-                _tileImages.Remove(key, out var image);
-                _tiles.Children.Remove(image);
-                Free(image!);
-            }
+            bool inView = key.Col >= c0 && key.Col <= c1 && key.Row >= r0 && key.Row <= r1;
+            if (key.Col < c0 - 1 || key.Col > c1 + 1 || key.Row < r0 - 1 || key.Row > r1 + 1 || (!inView && _staleTiles.Contains(key))) DropTile(key);
         }
         // Batches still partly in view finish; ones that scrolled away entirely stop.
         foreach (var batch in _pendingTiles.Values.Distinct().ToList())
@@ -299,9 +315,18 @@ internal sealed partial class PageView : Canvas
             foreach (var key in batch.Keys) _pendingTiles[key] = batch;
             RenderTiles(batch, pxPerPoint, pixelScale, inverted, maxW, maxH);
         }
+        OnRedrawn();
     }
 
-    private bool IsMissing(int c, int r) => !_tileImages.ContainsKey((c, r)) && !_pendingTiles.ContainsKey((c, r));
+    private bool IsMissing(int c, int r) => (!_tileImages.ContainsKey((c, r)) || _staleTiles.Contains((c, r))) && !_pendingTiles.ContainsKey((c, r));
+
+    private void DropTile((int Col, int Row) key)
+    {
+        _staleTiles.Remove(key);
+        if (!_tileImages.Remove(key, out var image)) return;
+        _tiles.Children.Remove(image);
+        Free(image);
+    }
 
     /// <summary>
     /// Covers the tiles in [c0, c1] x [r0, r1] that are neither shown nor pending with few
@@ -351,7 +376,7 @@ internal sealed partial class PageView : Canvas
         try
         {
             using var buffer = await _document.RenderAsync(PageIndex, scale, PageRotation, region, inverted,
-                isVisible ? WorkPriority.Visible : WorkPriority.Normal, cts.Token);
+                isVisible ? WorkPriority.Visible : WorkPriority.Normal, cts.Token, without: _leftOut);
             if (buffer is null || cts.IsCancellationRequested || version != _version) return;
             Rendered?.Invoke(this, EventArgs.Empty);
             var source = await ToSourceAsync(buffer);
@@ -366,6 +391,8 @@ internal sealed partial class PageView : Canvas
             var old = _base.Source;
             _base.Source = source;
             (old as IDisposable)?.Dispose();
+            _baseVersion = version;
+            OnRedrawn();
         }
         catch (OperationCanceledException)
         {
@@ -379,8 +406,9 @@ internal sealed partial class PageView : Canvas
         catch (COMException)
         {
             // The upload failed; the page keeps the bitmap it had, and the next change of scale tries again. Without
-            // one it would stay blank until then, so the next Render (on scrolling) tries again at this scale.
-            if (_baseCts == cts && _base.Source is null) _baseScale = 0;
+            // one it would stay blank until then, so the next Render (on scrolling) tries again at this scale. So it
+            // does with drawing that stays over the page until the page shows it.
+            if (_baseCts == cts && (_base.Source is null || _strokes.Count > 0 || _whenRedrawn.Count > 0)) _baseScale = 0;
         }
     }
 
@@ -391,7 +419,7 @@ internal sealed partial class PageView : Canvas
         var region = new RectInt32(x0, y0, Math.Min((batch.C1 + 1) * TileSize, maxW) - x0, Math.Min((batch.R1 + 1) * TileSize, maxH) - y0);
         try
         {
-            using var buffer = await _document.RenderAsync(PageIndex, pxPerPoint, PageRotation, region, inverted, WorkPriority.Visible, batch.Cts.Token);
+            using var buffer = await _document.RenderAsync(PageIndex, pxPerPoint, PageRotation, region, inverted, WorkPriority.Visible, batch.Cts.Token, without: _leftOut);
             bool IsStale() => batch.Cts.IsCancellationRequested || version != _version || Math.Abs(_tileScale - pxPerPoint) > 1e-9;
             if (buffer is null || IsStale())
             {
@@ -413,14 +441,11 @@ internal sealed partial class PageView : Canvas
             for (int i = 0; i < tiles.Count; i++)
             {
                 var (key, image) = (tiles[i].Key, images[i]);
-                if (_tileImages.Remove(key, out var old))
-                {
-                    _tiles.Children.Remove(old);
-                    Free(old);
-                }
+                DropTile(key);
                 _tileImages[key] = image;
                 _tiles.Children.Add(image);
             }
+            OnRedrawn();
         }
         catch (OperationCanceledException)
         {
@@ -462,6 +487,7 @@ internal sealed partial class PageView : Canvas
     {
         CancelPendingTiles();
         _tileImages.Clear();
+        _staleTiles.Clear();
         Clear(_tiles);
     }
 
@@ -470,6 +496,8 @@ internal sealed partial class PageView : Canvas
         _baseCts?.Cancel();
         ClearTiles();
         Free(_base);
+        foreach (var (action, _) in _whenRedrawn) action();
+        _whenRedrawn.Clear();
     }
 
     internal static WriteableBitmap ToBitmap(PixelBuffer buffer)
@@ -622,6 +650,112 @@ internal sealed partial class PageView : Canvas
         {
             var geometry = (Geometry)XamlBindingHelper.ConvertValue(typeof(Geometry), markup.ToString());
             canvas.Children.Add(new Microsoft.UI.Xaml.Shapes.Path { Data = geometry, Fill = fill });
+        }
+    }
+
+    // Strokes being drawn, drawings and text boxes being moved, and ones already in the document until the page has been drawn again
+    // with them on it. The version is the last one of the page they aren't in, which only a finished stroke has.
+    private readonly List<(Microsoft.UI.Xaml.Shapes.Shape Line, int? Version)> _strokes = [];
+    private readonly List<(Action Action, int Version)> _whenRedrawn = [];
+
+    /// <summary>Starts drawing a stroke over the page. <paramref name="width"/> is in points, its points in page-local layout DIPs.</summary>
+    public Microsoft.UI.Xaml.Shapes.Polyline AddStroke(Windows.UI.Color color, double width, double opacity) =>
+        AddLine(new Microsoft.UI.Xaml.Shapes.Polyline(), color, width, opacity);
+
+    /// <summary>
+    /// Draws a whole drawing over the page in <paramref name="color"/>, as what the document writes looks: curved, and as
+    /// one line, so its strokes don't show through each other where a highlighter's cross.
+    /// </summary>
+    public Microsoft.UI.Xaml.Shapes.Path AddDrawing(InkDrawing ink, Windows.UI.Color color)
+    {
+        var markup = new StringBuilder();
+        void Add(string command, Point p) => markup.Append(CultureInfo.InvariantCulture, $" {command}{p.X:0.###},{p.Y:0.###}");
+        foreach (var stroke in ink.Strokes)
+        {
+            Point[] points = [.. stroke.Select(ToView)];
+            Add("M", points[0]);
+            for (int i = 1; i < points.Length - 1; i++)
+            {
+                Add("Q", points[i]);
+                Add("", new Point((points[i].X + points[i + 1].X) / 2, (points[i].Y + points[i + 1].Y) / 2));
+            }
+            // A line needs two points, or a dot wouldn't show.
+            Add("L", points.Length > 1 ? points[^1] : new Point(points[0].X + 0.01, points[0].Y));
+        }
+        var data = (Geometry)XamlBindingHelper.ConvertValue(typeof(Geometry), markup.ToString());
+        return AddLine(new Microsoft.UI.Xaml.Shapes.Path { Data = data }, color, ink.Width, ink.Opacity / 255.0);
+    }
+
+    /// <summary>Draws the outlines of a text box over the page, from <see cref="PdfDocument.TextBoxMarkup"/>.</summary>
+    public Microsoft.UI.Xaml.Shapes.Path AddText(string markup, Windows.UI.Color color)
+    {
+        var text = new Microsoft.UI.Xaml.Shapes.Path { Fill = new SolidColorBrush(color) };
+        SetText(text, markup);
+        return AddShape(text);
+    }
+
+    /// <summary>Changes what <see cref="AddText"/> drew to other outlines of a text box.</summary>
+    public static void SetText(Microsoft.UI.Xaml.Shapes.Path text, string markup) =>
+        text.Data = markup.Length > 0 ? (Geometry)XamlBindingHelper.ConvertValue(typeof(Geometry), markup) : null;
+
+    private T AddLine<T>(T line, Windows.UI.Color color, double width, double opacity) where T : Microsoft.UI.Xaml.Shapes.Shape
+    {
+        line.Stroke = new SolidColorBrush(color);
+        line.StrokeThickness = width * LayoutScale;
+        line.Opacity = opacity;
+        line.StrokeLineJoin = PenLineJoin.Round;
+        line.StrokeStartLineCap = PenLineCap.Round;
+        line.StrokeEndLineCap = PenLineCap.Round;
+        return AddShape(line);
+    }
+
+    private T AddShape<T>(T shape) where T : Microsoft.UI.Xaml.Shapes.Shape
+    {
+        _overlayLayers[(int)OverlayLayer.Strokes].Children.Add(shape);
+        _strokes.Add((shape, null));
+        return shape;
+    }
+
+    /// <summary>Puts a line <paramref name="distance"/> away from where it was drawn, in display points.</summary>
+    public void OffsetStroke(Microsoft.UI.Xaml.Shapes.Shape line, Point distance)
+    {
+        Point from = ToView(default(Point)), to = ToView(distance);
+        SetLeft(line, to.X - from.X);
+        SetTop(line, to.Y - from.Y);
+    }
+
+    public static void ExtendStroke(Microsoft.UI.Xaml.Shapes.Polyline stroke, Point view)
+    {
+        stroke.Points.Add(view);
+        // A line needs two points, or a click would leave no dot.
+        if (stroke.Points.Count == 1) stroke.Points.Add(new Point(view.X + 0.01, view.Y));
+    }
+
+    /// <summary>The stroke is in the document: it goes once the page has been drawn with it, which starts after this.</summary>
+    public void FinishStroke(Microsoft.UI.Xaml.Shapes.Shape line)
+    {
+        int i = _strokes.FindIndex(s => s.Line == line);
+        if (i >= 0) _strokes[i] = (line, _version);
+    }
+
+    public void RemoveStroke(Microsoft.UI.Xaml.Shapes.Shape line)
+    {
+        _strokes.RemoveAll(s => s.Line == line);
+        _overlayLayers[(int)OverlayLayer.Strokes].Children.Remove(line);
+    }
+
+    /// <summary>Runs <paramref name="action"/> once the page has been drawn again after the next <see cref="Invalidate"/>.</summary>
+    public void CallWhenRedrawn(Action action) => _whenRedrawn.Add((action, _version));
+
+    /// <summary>Takes down what stood in for a change once the page shows it: on the bitmap, with no older tiles over it.</summary>
+    private void OnRedrawn()
+    {
+        if (_staleTiles.Count > 0) return;
+        foreach (var (line, _) in _strokes.Where(s => s.Version < _baseVersion).ToList()) RemoveStroke(line);
+        foreach (var call in _whenRedrawn.Where(c => c.Version < _baseVersion).ToList())
+        {
+            _whenRedrawn.Remove(call);
+            call.Action();
         }
     }
 
