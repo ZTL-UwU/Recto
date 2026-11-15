@@ -58,6 +58,18 @@ public sealed class Preferences
     public int WindowHeight { get; set; } = 820;
     public bool WindowMaximized { get; set; }
     public PrintPreferences Print { get; set; } = new();
+    public AnnotatePreferences Annotate { get; set; } = new();
+}
+
+/// <summary>The color (as 0xRRGGBB) and size, in points, each annotation tool was last used with.</summary>
+public sealed class AnnotatePreferences
+{
+    public int PenColor { get; set; }
+    public double PenWidth { get; set; } = 2;
+    public int HighlighterColor { get; set; } = 0xFFDD33;
+    public double HighlighterWidth { get; set; } = 14;
+    public int TextColor { get; set; }
+    public double TextSize { get; set; } = 12;
 }
 
 /// <summary>Choices from the last print job, offered again for the same printer.</summary>
@@ -240,6 +252,7 @@ public static class AppState
                 // An explicit null (a file edited by hand) skips the defaults the properties start with.
                 state.Preferences ??= new();
                 state.Preferences.Print ??= new();
+                state.Preferences.Annotate ??= new();
                 state.Recent = state.Recent?.Where(r => r is not null && !string.IsNullOrEmpty(r.Path)).ToList() ?? [];
                 foreach (var r in state.Recent) r.Title ??= "";
                 return state;

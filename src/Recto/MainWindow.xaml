@@ -12,6 +12,29 @@
         AllowDrop="True"
         DragOver="OnDragOver"
         Drop="OnDrop">
+        <!--  A toggle that's on gets a neutral fill, not the accent color. High contrast keeps the system's colors  -->
+        <Grid.Resources>
+            <ResourceDictionary>
+                <ResourceDictionary.ThemeDictionaries>
+                    <ResourceDictionary x:Key="Light">
+                        <StaticResource x:Key="ToggleButtonBackgroundChecked" ResourceKey="ControlAltFillColorQuarternaryBrush" />
+                        <StaticResource x:Key="ToggleButtonBackgroundCheckedPointerOver" ResourceKey="ControlAltFillColorTertiaryBrush" />
+                        <StaticResource x:Key="ToggleButtonBackgroundCheckedPressed" ResourceKey="SubtleFillColorSecondaryBrush" />
+                        <StaticResource x:Key="ToggleButtonForegroundChecked" ResourceKey="TextFillColorPrimaryBrush" />
+                        <StaticResource x:Key="ToggleButtonForegroundCheckedPointerOver" ResourceKey="TextFillColorPrimaryBrush" />
+                        <StaticResource x:Key="ToggleButtonForegroundCheckedPressed" ResourceKey="TextFillColorSecondaryBrush" />
+                    </ResourceDictionary>
+                    <ResourceDictionary x:Key="Dark">
+                        <StaticResource x:Key="ToggleButtonBackgroundChecked" ResourceKey="ControlAltFillColorQuarternaryBrush" />
+                        <StaticResource x:Key="ToggleButtonBackgroundCheckedPointerOver" ResourceKey="ControlAltFillColorTertiaryBrush" />
+                        <StaticResource x:Key="ToggleButtonBackgroundCheckedPressed" ResourceKey="SubtleFillColorSecondaryBrush" />
+                        <StaticResource x:Key="ToggleButtonForegroundChecked" ResourceKey="TextFillColorPrimaryBrush" />
+                        <StaticResource x:Key="ToggleButtonForegroundCheckedPointerOver" ResourceKey="TextFillColorPrimaryBrush" />
+                        <StaticResource x:Key="ToggleButtonForegroundCheckedPressed" ResourceKey="TextFillColorSecondaryBrush" />
+                    </ResourceDictionary>
+                </ResourceDictionary.ThemeDictionaries>
+            </ResourceDictionary>
+        </Grid.Resources>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -37,94 +60,84 @@
                     Orientation="Horizontal"
                     Spacing="4">
 
-                    <StackPanel
-                        x:Name="ZoomControls"
-                        Margin="8,0,0,0"
+                    <DropDownButton
+                        x:Name="ZoomButton"
+                        Height="28"
+                        MinWidth="64"
+                        Padding="8,2,8,3"
                         VerticalAlignment="Center"
-                        Orientation="Horizontal"
-                        Spacing="2"
+                        AutomationProperties.Name="Zoom"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Content="100%"
+                        ToolTipService.ToolTip="Zoom (Ctrl+Plus, Ctrl+Minus)"
                         Visibility="Collapsed">
-                        <Button
-                            AutomationProperties.Name="Zoom out"
-                            Click="OnZoomOut"
-                            Style="{StaticResource TitleBarButtonStyle}"
-                            ToolTipService.ToolTip="Zoom out (Ctrl+Minus)">
-                            <FontIcon FontSize="16" Glyph="&#xE738;" />
-                        </Button>
-                        <Button
-                            x:Name="ZoomButton"
-                            Height="28"
-                            MinWidth="64"
-                            Padding="8,2,8,3"
-                            AutomationProperties.Name="Zoom"
-                            Background="Transparent"
-                            BorderThickness="0"
-                            Content="100%"
-                            ToolTipService.ToolTip="Zoom">
-                            <Button.Flyout>
-                                <MenuFlyout x:Name="ZoomMenu" Placement="Bottom">
-                                    <RadioMenuFlyoutItem
-                                        x:Name="FitPageItem"
-                                        Click="OnFitPage"
-                                        GroupName="zoom"
-                                        Text="Fit page">
-                                        <RadioMenuFlyoutItem.Icon>
-                                            <FontIcon Glyph="&#xE9A6;" />
-                                        </RadioMenuFlyoutItem.Icon>
-                                    </RadioMenuFlyoutItem>
-                                    <RadioMenuFlyoutItem
-                                        x:Name="FitWidthItem"
-                                        Click="OnFitWidth"
-                                        GroupName="zoom"
-                                        Text="Fit width">
-                                        <RadioMenuFlyoutItem.Icon>
-                                            <!--  Segoe Fluent has no fit-width glyph; this is the E9A6 frame with a ↔ arrow.  -->
-                                            <PathIcon Data="M2,2H14A2,2,0,0,1,16,4V12A2,2,0,0,1,14,14H2A2,2,0,0,1,0,12V4A2,2,0,0,1,2,2Z M2,3A1,1,0,0,0,1,4V12A1,1,0,0,0,2,13H14A1,1,0,0,0,15,12V4A1,1,0,0,0,14,3Z M3.146,7.646L5.146,5.646A0.5,0.5,0,0,1,5.854,6.354L4.707,7.5H11.293L10.146,6.354A0.5,0.5,0,0,1,10.854,5.646L12.854,7.646A0.5,0.5,0,0,1,12.854,8.354L10.854,10.354A0.5,0.5,0,0,1,10.146,9.646L11.293,8.5H4.707L5.854,9.646A0.5,0.5,0,0,1,5.146,10.354L3.146,8.354A0.5,0.5,0,0,1,3.146,7.646Z" />
-                                        </RadioMenuFlyoutItem.Icon>
-                                    </RadioMenuFlyoutItem>
-                                    <MenuFlyoutSeparator />
-                                    <MenuFlyoutItem
-                                        Click="OnZoomPreset"
-                                        Tag="0.5"
-                                        Text="50%" />
-                                    <MenuFlyoutItem
-                                        Click="OnZoomPreset"
-                                        Tag="0.75"
-                                        Text="75%" />
-                                    <MenuFlyoutItem
-                                        Click="OnZoomPreset"
-                                        KeyboardAcceleratorTextOverride="Ctrl+0"
-                                        Tag="1"
-                                        Text="100%" />
-                                    <MenuFlyoutItem
-                                        Click="OnZoomPreset"
-                                        Tag="1.25"
-                                        Text="125%" />
-                                    <MenuFlyoutItem
-                                        Click="OnZoomPreset"
-                                        Tag="1.5"
-                                        Text="150%" />
-                                    <MenuFlyoutItem
-                                        Click="OnZoomPreset"
-                                        Tag="2"
-                                        Text="200%" />
-                                    <MenuFlyoutItem
-                                        Click="OnZoomPreset"
-                                        Tag="4"
-                                        Text="400%" />
-                                </MenuFlyout>
-                            </Button.Flyout>
-                        </Button>
-                        <Button
-                            AutomationProperties.Name="Zoom in"
-                            Click="OnZoomIn"
-                            Style="{StaticResource TitleBarButtonStyle}"
-                            ToolTipService.ToolTip="Zoom in (Ctrl+Plus)">
-                            <FontIcon FontSize="16" Glyph="&#xE710;" />
-                        </Button>
-                    </StackPanel>
+                        <DropDownButton.Flyout>
+                            <MenuFlyout x:Name="ZoomMenu" Placement="Bottom">
+                                <RadioMenuFlyoutItem
+                                    x:Name="FitPageItem"
+                                    Click="OnFitPage"
+                                    GroupName="zoom"
+                                    Text="Fit page">
+                                    <RadioMenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE9A6;" />
+                                    </RadioMenuFlyoutItem.Icon>
+                                </RadioMenuFlyoutItem>
+                                <RadioMenuFlyoutItem
+                                    x:Name="FitWidthItem"
+                                    Click="OnFitWidth"
+                                    GroupName="zoom"
+                                    Text="Fit width">
+                                    <RadioMenuFlyoutItem.Icon>
+                                        <!--  Segoe Fluent has no fit-width glyph; this is the E9A6 frame with a ↔ arrow.  -->
+                                        <PathIcon Data="M2,2H14A2,2,0,0,1,16,4V12A2,2,0,0,1,14,14H2A2,2,0,0,1,0,12V4A2,2,0,0,1,2,2Z M2,3A1,1,0,0,0,1,4V12A1,1,0,0,0,2,13H14A1,1,0,0,0,15,12V4A1,1,0,0,0,14,3Z M3.146,7.646L5.146,5.646A0.5,0.5,0,0,1,5.854,6.354L4.707,7.5H11.293L10.146,6.354A0.5,0.5,0,0,1,10.854,5.646L12.854,7.646A0.5,0.5,0,0,1,12.854,8.354L10.854,10.354A0.5,0.5,0,0,1,10.146,9.646L11.293,8.5H4.707L5.854,9.646A0.5,0.5,0,0,1,5.146,10.354L3.146,8.354A0.5,0.5,0,0,1,3.146,7.646Z" />
+                                    </RadioMenuFlyoutItem.Icon>
+                                </RadioMenuFlyoutItem>
+                                <MenuFlyoutSeparator />
+                                <MenuFlyoutItem
+                                    Click="OnZoomPreset"
+                                    Tag="0.5"
+                                    Text="50%" />
+                                <MenuFlyoutItem
+                                    Click="OnZoomPreset"
+                                    Tag="0.75"
+                                    Text="75%" />
+                                <MenuFlyoutItem
+                                    Click="OnZoomPreset"
+                                    KeyboardAcceleratorTextOverride="Ctrl+0"
+                                    Tag="1"
+                                    Text="100%" />
+                                <MenuFlyoutItem
+                                    Click="OnZoomPreset"
+                                    Tag="1.25"
+                                    Text="125%" />
+                                <MenuFlyoutItem
+                                    Click="OnZoomPreset"
+                                    Tag="1.5"
+                                    Text="150%" />
+                                <MenuFlyoutItem
+                                    Click="OnZoomPreset"
+                                    Tag="2"
+                                    Text="200%" />
+                                <MenuFlyoutItem
+                                    Click="OnZoomPreset"
+                                    Tag="4"
+                                    Text="400%" />
+                            </MenuFlyout>
+                        </DropDownButton.Flyout>
+                    </DropDownButton>
 
-                    <AppBarSeparator x:Name="HeaderSeparator" Visibility="Collapsed" />
+                    <ToggleButton
+                        x:Name="AnnotateToggle"
+                        Width="34"
+                        Height="28"
+                        AutomationProperties.Name="Draw and add text"
+                        Click="OnToggleAnnotate"
+                        Style="{StaticResource ToolbarToggleStyle}"
+                        ToolTipService.ToolTip="Draw and add text (Ctrl+Shift+A)"
+                        Visibility="Collapsed">
+                        <FontIcon FontSize="14" Glyph="&#xE70F;" />
+                    </ToggleButton>
 
                     <Button
                         x:Name="MoreButton"
@@ -724,7 +737,7 @@
                             HorizontalAlignment="Center"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                             Style="{StaticResource CaptionTextBlockStyle}"
-                            Text="Select text to highlight it, or right-click a page to add a note."
+                            Text="Select text to highlight it, right-click a page to add a note, or draw and add text with the pen button at the top."
                             TextAlignment="Center"
                             TextWrapping="Wrap" />
                     </StackPanel>
@@ -903,6 +916,90 @@
                 <!--  Turns black while presenting  -->
                 <Grid x:Name="DocumentSurface">
                     <controls:DocumentView x:Name="Viewer" />
+                    <!--  Its buttons don't take focus, so a text box being typed stays open and takes the color and size chosen  -->
+                    <Border
+                        x:Name="AnnotateBar"
+                        Margin="0,0,0,16"
+                        Padding="4"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Bottom"
+                        CornerRadius="8"
+                        Style="{StaticResource FloatingBorderStyle}"
+                        Visibility="Collapsed">
+                        <StackPanel Orientation="Horizontal" Spacing="2">
+                            <ToggleButton
+                                x:Name="PenTool"
+                                AllowFocusOnInteraction="False"
+                                AutomationProperties.Name="Pen"
+                                Click="OnAnnotateToolClick"
+                                Style="{StaticResource ToolbarToggleStyle}"
+                                ToolTipService.ToolTip="Pen">
+                                <FontIcon FontSize="16" Glyph="&#xE76D;" />
+                            </ToggleButton>
+                            <ToggleButton
+                                x:Name="HighlighterTool"
+                                AllowFocusOnInteraction="False"
+                                AutomationProperties.Name="Highlighter"
+                                Click="OnAnnotateToolClick"
+                                Style="{StaticResource ToolbarToggleStyle}"
+                                ToolTipService.ToolTip="Highlighter">
+                                <FontIcon FontSize="16" Glyph="&#xE7E6;" />
+                            </ToggleButton>
+                            <ToggleButton
+                                x:Name="EraserTool"
+                                AllowFocusOnInteraction="False"
+                                AutomationProperties.Name="Eraser"
+                                Click="OnAnnotateToolClick"
+                                Style="{StaticResource ToolbarToggleStyle}"
+                                ToolTipService.ToolTip="Eraser">
+                                <FontIcon FontSize="16" Glyph="&#xE75C;" />
+                            </ToggleButton>
+                            <ToggleButton
+                                x:Name="TextTool"
+                                AllowFocusOnInteraction="False"
+                                AutomationProperties.Name="Text box"
+                                Click="OnAnnotateToolClick"
+                                Style="{StaticResource ToolbarToggleStyle}"
+                                ToolTipService.ToolTip="Text box">
+                                <FontIcon FontSize="16" Glyph="&#xE8D2;" />
+                            </ToggleButton>
+                            <AppBarSeparator x:Name="AnnotateStyleSeparator" />
+                            <StackPanel
+                                x:Name="AnnotateColors"
+                                Orientation="Horizontal"
+                                Spacing="2" />
+                            <DropDownButton
+                                x:Name="AnnotateSize"
+                                Height="32"
+                                MinWidth="64"
+                                AllowFocusOnInteraction="False"
+                                AutomationProperties.Name="Size"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                ToolTipService.ToolTip="Size">
+                                <DropDownButton.Flyout>
+                                    <MenuFlyout x:Name="AnnotateSizeMenu" Placement="Top" />
+                                </DropDownButton.Flyout>
+                            </DropDownButton>
+                            <AppBarSeparator />
+                            <Button
+                                AllowFocusOnInteraction="False"
+                                AutomationProperties.Name="Undo"
+                                Click="OnAnnotateUndo"
+                                Style="{StaticResource ToolbarButtonStyle}"
+                                ToolTipService.ToolTip="Undo (Ctrl+Z)">
+                                <FontIcon FontSize="16" Glyph="&#xE7A7;" />
+                            </Button>
+                            <Button
+                                AllowFocusOnInteraction="False"
+                                AutomationProperties.Name="Redo"
+                                Click="OnAnnotateRedo"
+                                Style="{StaticResource ToolbarButtonStyle}"
+                                ToolTipService.ToolTip="Redo (Ctrl+Y)">
+                                <FontIcon FontSize="16" Glyph="&#xE7A6;" />
+                            </Button>
+                        </StackPanel>
+                    </Border>
                     <ProgressRing
                         x:Name="LoadingRing"
                         Width="40"

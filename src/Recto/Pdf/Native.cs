@@ -9,6 +9,12 @@ internal struct FS_RECTF
 }
 
 [StructLayout(LayoutKind.Sequential)]
+internal struct FS_POINTF
+{
+    public float X, Y;
+}
+
+[StructLayout(LayoutKind.Sequential)]
 internal struct FS_SIZEF
 {
     public float Width, Height;
@@ -171,6 +177,13 @@ internal static unsafe partial class Native
     [LibraryImport(Lib)] public static partial nuint FPDFAnnot_CountAttachmentPoints(IntPtr annot);
     [LibraryImport(Lib)] public static partial int FPDFAnnot_GetAttachmentPoints(IntPtr annot, nuint index, FS_QUADPOINTSF* quad);
     [LibraryImport(Lib)] public static partial int FPDFAnnot_SetAP(IntPtr annot, int appearanceMode, char* value);
+    [LibraryImport(Lib)] public static partial int FPDFAnnot_AddInkStroke(IntPtr annot, FS_POINTF* points, nuint count);
+    [LibraryImport(Lib)] public static partial int FPDFAnnot_RemoveInkList(IntPtr annot);
+    [LibraryImport(Lib)] public static partial uint FPDFAnnot_GetInkListCount(IntPtr annot);
+    [LibraryImport(Lib)] public static partial uint FPDFAnnot_GetInkListPath(IntPtr annot, uint path, FS_POINTF* buffer, uint length);
+    [LibraryImport(Lib)] public static partial int FPDFAnnot_SetBorder(IntPtr annot, float horizontalRadius, float verticalRadius, float width);
+    [LibraryImport(Lib)] public static partial int FPDFAnnot_GetBorder(IntPtr annot, float* horizontalRadius, float* verticalRadius, float* width);
+    [LibraryImport(Lib)] public static partial int FPDFAnnot_GetNumberValue(IntPtr annot, byte* key, float* value);
 
     /// <summary>Longest document string <see cref="ReadUtf16"/> reads; anything longer comes back empty.</summary>
     private const uint MaxStringBytes = 16 << 20;
