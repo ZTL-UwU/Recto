@@ -74,9 +74,9 @@
                 <!--  A hairline around the paper, outside it, so the paper is exactly the size it's drawn at  -->
                 <Border
                     x:Name="Sheet"
+                    x:Uid="PreviewSheet"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    AutomationProperties.Name="Print preview"
                     BorderBrush="#26000000"
                     BorderThickness="1"
                     Visibility="Collapsed">
@@ -101,10 +101,9 @@
                 Spacing="4">
                 <Button
                     x:Name="PreviousSheetButton"
-                    AutomationProperties.Name="Previous sheet"
+                    x:Uid="PreviousSheetButton"
                     Click="OnPreviousSheet"
-                    Style="{StaticResource ToolbarButtonStyle}"
-                    ToolTipService.ToolTip="Previous sheet">
+                    Style="{StaticResource ToolbarButtonStyle}">
                     <FontIcon FontSize="12" Glyph="&#xE76B;" />
                 </Button>
                 <TextBlock
@@ -114,10 +113,9 @@
                     TextAlignment="Center" />
                 <Button
                     x:Name="NextSheetButton"
-                    AutomationProperties.Name="Next sheet"
+                    x:Uid="NextSheetButton"
                     Click="OnNextSheet"
-                    Style="{StaticResource ToolbarButtonStyle}"
-                    ToolTipService.ToolTip="Next sheet">
+                    Style="{StaticResource ToolbarButtonStyle}">
                     <FontIcon FontSize="12" Glyph="&#xE76C;" />
                 </Button>
             </StackPanel>
@@ -140,10 +138,10 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <TextBlock
+                x:Uid="PrintTitle"
                 Margin="24,0,24,0"
                 AutomationProperties.HeadingLevel="Level1"
-                Style="{StaticResource SubtitleTextBlockStyle}"
-                Text="Print" />
+                Style="{StaticResource SubtitleTextBlockStyle}" />
             <TextBlock
                 x:Name="Summary"
                 Grid.Row="1"
@@ -163,8 +161,7 @@
                     <StackPanel Spacing="4">
                         <ComboBox
                             x:Name="PrinterBox"
-                            Header="Printer"
-                            PlaceholderText="Looking for printers…"
+                            x:Uid="PrinterBox"
                             SelectionChanged="OnPrinterChanged" />
                         <TextBlock
                             x:Name="PrinterStatus"
@@ -179,7 +176,7 @@
                         </Grid.ColumnDefinitions>
                         <NumberBox
                             x:Name="CopiesBox"
-                            Header="Copies"
+                            x:Uid="CopiesBox"
                             LargeChange="10"
                             Maximum="999"
                             Minimum="1"
@@ -189,27 +186,25 @@
                             Value="1" />
                         <CheckBox
                             x:Name="CollateBox"
+                            x:Uid="CollateBox"
                             Grid.Column="1"
                             MinWidth="0"
                             VerticalAlignment="Bottom"
                             Click="OnCountChanged"
-                            Content="Collate"
                             IsChecked="True"
-                            IsEnabled="False"
-                            ToolTipService.ToolTip="Print whole copies one after another, rather than all copies of each page together" />
+                            IsEnabled="False" />
                     </Grid>
 
                     <StackPanel Spacing="8">
                         <ComboBox
                             x:Name="PagesBox"
+                            x:Uid="PagesBox"
                             DropDownClosed="OnPagesDropDownClosed"
-                            Header="Pages"
                             ItemTemplate="{StaticResource ChoiceTemplate}"
                             SelectionChanged="OnPagesChanged" />
                         <TextBox
                             x:Name="RangeBox"
-                            AutomationProperties.Name="Pages to print"
-                            PlaceholderText="For example 1-5, 8, 11-13"
+                            x:Uid="RangeBox"
                             TextChanged="OnRangeChanged"
                             Visibility="Collapsed" />
                         <TextBlock
@@ -221,19 +216,19 @@
 
                     <ComboBox
                         x:Name="OrientationBox"
-                        Header="Orientation"
+                        x:Uid="OrientationBox"
                         ItemTemplate="{StaticResource ChoiceTemplate}"
                         SelectionChanged="OnLayoutChanged" />
 
                     <ComboBox
                         x:Name="ColorBox"
-                        Header="Color"
+                        x:Uid="ColorBox"
                         ItemTemplate="{StaticResource ChoiceTemplate}"
                         SelectionChanged="OnAppearanceChanged" />
 
                     <ComboBox
                         x:Name="DuplexBox"
-                        Header="Print on both sides"
+                        x:Uid="DuplexBox"
                         ItemTemplate="{StaticResource ChoiceTemplate}"
                         SelectionChanged="OnCountChanged" />
 
@@ -242,10 +237,10 @@
                         <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" />
                         <Button
                             x:Name="MoreButton"
+                            x:Uid="MoreSettingsButton"
                             Padding="24,14,24,14"
                             HorizontalAlignment="Stretch"
                             HorizontalContentAlignment="Stretch"
-                            AutomationProperties.Name="More settings"
                             Click="OnToggleMore"
                             CornerRadius="0"
                             Style="{StaticResource SubtleButtonStyle}">
@@ -254,7 +249,7 @@
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock VerticalAlignment="Center" Text="More settings" />
+                                <TextBlock x:Uid="MoreSettingsText" VerticalAlignment="Center" />
                                 <!--
                                     The combo boxes' chevron: same glyph, colour and inset, so they line up. Its own
                                     animation can't be sped up, so it stays pointing down and the border turns it
@@ -291,21 +286,20 @@
                         Visibility="Collapsed">
                         <ComboBox
                             x:Name="PaperBox"
-                            Header="Paper size"
-                            PlaceholderText="Set by the printer"
+                            x:Uid="PaperBox"
                             SelectionChanged="OnPaperChanged" />
                         <ComboBox
                             x:Name="PerSheetBox"
-                            Header="Pages per sheet"
+                            x:Uid="PerSheetBox"
                             SelectionChanged="OnLayoutChanged" />
                         <StackPanel Spacing="8">
                             <ComboBox
                                 x:Name="ScaleBox"
-                                Header="Scale"
+                                x:Uid="ScaleBox"
                                 SelectionChanged="OnScaleChanged" />
                             <NumberBox
                                 x:Name="ScalePercentBox"
-                                AutomationProperties.Name="Scale in percent"
+                                x:Uid="ScalePercentBox"
                                 LargeChange="25"
                                 Maximum="400"
                                 Minimum="10"
@@ -317,32 +311,29 @@
                         </StackPanel>
                         <ComboBox
                             x:Name="SubsetBox"
-                            Header="Include"
+                            x:Uid="SubsetBox"
                             SelectionChanged="OnLayoutChanged" />
                         <StackPanel>
                             <CheckBox
                                 x:Name="ReverseBox"
-                                Click="OnLayoutChanged"
-                                Content="Reverse order" />
+                                x:Uid="ReverseBox"
+                                Click="OnLayoutChanged" />
                             <CheckBox
                                 x:Name="AnnotationsBox"
+                                x:Uid="AnnotationsBox"
                                 Click="OnAppearanceChanged"
-                                Content="Annotations and form fields"
                                 IsChecked="True" />
-                            <CheckBox
-                                x:Name="ImageBox"
-                                Content="Print as image"
-                                ToolTipService.ToolTip="Slower and less sharp, but can help when pages print incorrectly" />
+                            <CheckBox x:Name="ImageBox" x:Uid="ImageBox" />
                         </StackPanel>
                     </StackPanel>
 
                     <StackPanel x:Name="LinksPanel" Margin="-11,0,0,0">
                         <HyperlinkButton
                             x:Name="PropertiesButton"
+                            x:Uid="PrinterPropertiesButton"
                             Click="OnPrinterProperties"
-                            Content="Printer properties…"
                             IsEnabled="False" />
-                        <HyperlinkButton Click="OnSystemDialog" Content="Print using the system dialog…" />
+                        <HyperlinkButton x:Uid="SystemDialogButton" Click="OnSystemDialog" />
                     </StackPanel>
                 </StackPanel>
             </ScrollViewer>
@@ -365,16 +356,16 @@
                 </Grid.ColumnDefinitions>
                 <Button
                     x:Name="PrintButton"
+                    x:Uid="PrintButton"
                     HorizontalAlignment="Stretch"
                     Click="OnPrintClick"
-                    Content="Print"
                     IsEnabled="False"
                     Style="{StaticResource AccentButtonStyle}" />
                 <Button
+                    x:Uid="CancelButton"
                     Grid.Column="1"
                     HorizontalAlignment="Stretch"
-                    Click="OnCancelClick"
-                    Content="Cancel" />
+                    Click="OnCancelClick" />
             </Grid>
         </Grid>
     </Grid>

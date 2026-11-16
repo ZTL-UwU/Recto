@@ -25,7 +25,7 @@ internal sealed class DevMode
 
     public DevMode(byte[] data)
     {
-        if (data.Length < MinSize) throw new ArgumentException("The printer settings are incomplete.", nameof(data));
+        if (data.Length < MinSize) throw new ArgumentException(Strings.Get("PrinterSettingsIncomplete"), nameof(data));
         _data = data;
     }
 
@@ -305,16 +305,16 @@ internal static unsafe partial class Printers
     private static (string Text, bool Problem) DescribeStatus(uint status, uint attributes, uint jobs)
     {
         const uint PRINTER_ATTRIBUTE_WORK_OFFLINE = 0x400;
-        (uint Flag, string Text)[] problems =
+        (uint Flag, string Key)[] problems =
         [
-            (0x80, "Offline"), (0x1000, "Not available"), (0x1, "Paused"), (0x8, "Paper jam"), (0x10, "Out of paper"),
-            (0x40, "Paper problem"), (0x40000, "Out of toner or ink"), (0x400000, "Door open"), (0x100000, "Needs attention"),
-            (0x2, "Error"),
+            (0x80, "PrinterOffline"), (0x1000, "PrinterNotAvailable"), (0x1, "PrinterPaused"), (0x8, "PrinterPaperJam"), (0x10, "PrinterOutOfPaper"),
+            (0x40, "PrinterPaperProblem"), (0x40000, "PrinterNoToner"), (0x400000, "PrinterDoorOpen"), (0x100000, "PrinterNeedsAttention"),
+            (0x2, "PrinterError"),
         ];
-        string? problem = (attributes & PRINTER_ATTRIBUTE_WORK_OFFLINE) != 0 ? "Offline" : null;
-        problem ??= problems.FirstOrDefault(p => (status & p.Flag) != 0).Text;
-        string text = problem ?? ((status & 0x20000) != 0 ? "Ready, toner or ink is low" : "Ready");
-        if (jobs > 0) text += jobs == 1 ? " · 1 document waiting" : $" · {jobs} documents waiting";
+        string? problem = (attributes & PRINTER_ATTRIBUTE_WORK_OFFLINE) != 0 ? "PrinterOffline" : null;
+        problem ??= problems.FirstOrDefault(p => (status & p.Flag) != 0).Key;
+        string text = Strings.Get(problem ?? ((status & 0x20000) != 0 ? "PrinterTonerLow" : "PrinterReady"));
+        if (jobs > 0) text += " · " + Strings.Count("DocumentsWaiting", jobs);
         return (text, problem is not null);
     }
 

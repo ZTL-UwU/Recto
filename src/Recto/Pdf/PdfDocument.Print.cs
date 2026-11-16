@@ -73,7 +73,7 @@ public sealed unsafe partial class PdfDocument
         using var buffer = new PixelBuffer(width, height);
         byte* p = buffer.Pointer;
         IntPtr bitmap = Native.FPDFBitmap_CreateEx(width, height, Native.FPDFBitmap_BGRA, p, buffer.Stride);
-        if (bitmap == IntPtr.Zero) throw new InvalidDataException("There isn't enough memory to print the page.");
+        if (bitmap == IntPtr.Zero) throw new InvalidDataException(Strings.Get("PrintPageNoMemory"));
         try
         {
             RenderOnto(bitmap, p, width, height, page, x, y, sizeX, sizeY, quarter, flags, token);
@@ -94,7 +94,7 @@ public sealed unsafe partial class PdfDocument
         SetStretchBltMode(dc, HALFTONE);
         SetBrushOrgEx(dc, 0, 0, IntPtr.Zero);
         if (StretchDIBits(dc, left, top, right - left, bottom - top, 0, 0, width, height, p, &info, DIB_RGB_COLORS, SRCCOPY) == 0)
-            throw new InvalidDataException("The printer didn't accept the page.");
+            throw new InvalidDataException(Strings.Get("PrinterRejectedPage"));
     }
 
     /// <summary>Turns BGRA pixels grey, by perceived brightness.</summary>

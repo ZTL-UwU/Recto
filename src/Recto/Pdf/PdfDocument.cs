@@ -106,7 +106,7 @@ public sealed unsafe partial class PdfDocument : IDisposable
     {
         using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 1, FileOptions.SequentialScan);
         long size = stream.Length;
-        if (size > MaxFileBytes) throw new InvalidDataException($"The file is too large to open. Recto opens documents up to {MaxFileBytes >> 30} GB.");
+        if (size > MaxFileBytes) throw new InvalidDataException(Strings.Format("PdfTooLarge", MaxFileBytes >> 30));
         byte* buffer;
         try
         {
@@ -114,7 +114,7 @@ public sealed unsafe partial class PdfDocument : IDisposable
         }
         catch (OutOfMemoryException)
         {
-            throw new InvalidDataException("There isn't enough memory to open the file.");
+            throw new InvalidDataException(Strings.Get("PdfOpenNoMemory"));
         }
         try
         {
@@ -122,7 +122,7 @@ public sealed unsafe partial class PdfDocument : IDisposable
             while (done < size)
             {
                 int read = stream.Read(new Span<byte>(buffer + done, (int)Math.Min(size - done, 1 << 30)));
-                if (read == 0) throw new IOException("The file changed while it was being read.");
+                if (read == 0) throw new IOException(Strings.Get("PdfChangedWhileReading"));
                 done += read;
             }
             return ((IntPtr)buffer, size);
@@ -150,15 +150,15 @@ public sealed unsafe partial class PdfDocument : IDisposable
             {
                 uint error = Native.FPDF_GetLastError();
                 if (error == Native.FPDF_ERR_PASSWORD) throw new PdfPasswordException(password is not null);
-                throw new InvalidDataException(error switch
+                throw new InvalidDataException(Strings.Get(error switch
                 {
-                    2 => "The file could not be found or opened.",
-                    3 => "The file is not a PDF document or it is damaged.",
-                    5 => "The document uses an unsupported security scheme.",
-                    _ => "The document could not be loaded.",
-                });
+                    2 => "PdfNotFound",
+                    3 => "PdfDamaged",
+                    5 => "PdfUnsupportedSecurity",
+                    _ => "PdfLoadFailed",
+                }));
             }
-            if (Native.FPDF_GetPageCount(handle) <= 0) throw new InvalidDataException("The document has no pages.");
+            if (Native.FPDF_GetPageCount(handle) <= 0) throw new InvalidDataException(Strings.Get("PdfNoPages"));
             return new PdfDocument(path, handle, buffer, size);
         }
         catch
@@ -190,7 +190,7 @@ public sealed unsafe partial class PdfDocument : IDisposable
             }
         }
         IntPtr page = Native.FPDF_LoadPage(_handle, index);
-        if (page == IntPtr.Zero) throw new InvalidDataException($"Page {index + 1} could not be loaded.");
+        if (page == IntPtr.Zero) throw new InvalidDataException(Strings.Format("PdfPageLoadFailed", index + 1));
         if (_form != IntPtr.Zero) Native.FORM_OnAfterLoadPage(page, _form);
         _pages.AddFirst((index, page));
         while (_pages.Count > PageCacheSize)
@@ -605,7 +605,7 @@ public sealed unsafe partial class PdfDocument : IDisposable
     /// <summary>Reads the annotation just added to the end of <paramref name="page"/>'s /Annots.</summary>
     private PdfAnnotation ReadCreated(int index, IntPtr page, IntPtr annot) =>
         ReadAnnotation(index, Native.FPDFPage_GetAnnotCount(page) - 1, annot, GetTransform(index))
-        ?? throw new InvalidOperationException("The annotation could not be read back.");
+        ?? throw new InvalidOperationException(Strings.Get("PdfAnnotationReadFailed"));
 
     private PdfAnnotation[] ReadAnnotations(int index) => _disposed ? [] : ReadAnnotations(index, GetPage(index), GetTransform(index));
 
@@ -617,7 +617,7 @@ public sealed unsafe partial class PdfDocument : IDisposable
             IntPtr page = GetPage(index);
             var t = GetTransform(index);
             IntPtr annot = Native.FPDFPage_CreateAnnot(page, Native.FPDF_ANNOT_HIGHLIGHT);
-            if (annot == IntPtr.Zero) throw new InvalidOperationException("The highlight could not be created.");
+            if (annot == IntPtr.Zero) throw new InvalidOperationException(Strings.Get("PdfHighlightCreateFailed"));
             try
             {
                 Native.FPDFAnnot_SetColor(annot, Native.FPDFANNOT_COLORTYPE_Color, color.R, color.G, color.B, 255);
@@ -658,7 +658,7 @@ public sealed unsafe partial class PdfDocument : IDisposable
             IntPtr page = GetPage(index);
             var t = GetTransform(index);
             IntPtr annot = Native.FPDFPage_CreateAnnot(page, Native.FPDF_ANNOT_TEXT);
-            if (annot == IntPtr.Zero) throw new InvalidOperationException("The note could not be created.");
+            if (annot == IntPtr.Zero) throw new InvalidOperationException(Strings.Get("PdfNoteCreateFailed"));
             try
             {
                 var p1 = t.Invert(at.X, at.Y);
@@ -881,7 +881,7 @@ public sealed unsafe partial class PdfDocument : IDisposable
         {
             IntPtr page = GetPage(snapshot.PageIndex);
             IntPtr annot = Native.FPDFPage_CreateAnnot(page, snapshot.Subtype);
-            if (annot == IntPtr.Zero) throw new InvalidOperationException("The annotation could not be put back.");
+            if (annot == IntPtr.Zero) throw new InvalidOperationException(Strings.Get("PdfAnnotationRestoreFailed"));
             try
             {
                 var rect = snapshot.Rect;
@@ -1037,7 +1037,7 @@ public sealed unsafe partial class PdfDocument : IDisposable
                 string name = Native.ReadUtf16((b, l) => Native.FPDFAttachment_GetName(a, (void*)b, l));
                 uint size = 0;
                 Native.FPDFAttachment_GetFile(a, null, 0, &size);
-                list.Add(new PdfAttachment { Index = i, Name = string.IsNullOrEmpty(name) ? $"Attachment {i + 1}" : name, Size = size });
+                list.Add(new PdfAttachment { Index = i, Name = string.IsNullOrEmpty(name) ? Strings.Format("AttachmentName", i + 1) : name, Size = size });
             }
             return list;
         }, WorkPriority.Normal);
@@ -1050,11 +1050,11 @@ public sealed unsafe partial class PdfDocument : IDisposable
             ObjectDisposedException.ThrowIf(_disposed, this);
             IntPtr a = Native.FPDFDoc_GetAttachment(_handle, attachment.Index);
             // Not an empty file: the caller would write it out as the attachment.
-            if (a == IntPtr.Zero) throw new IOException("The attachment couldn't be found in the document.");
+            if (a == IntPtr.Zero) throw new IOException(Strings.Get("PdfAttachmentNotFound"));
             uint size = 0;
             // Fails, leaving the size alone, when the embedded file's data can't be read.
-            if (Native.FPDFAttachment_GetFile(a, null, 0, &size) == 0) throw new IOException("The attachment couldn't be read from the document.");
-            if (size > MaxAttachmentBytes) throw new IOException("The attachment is too large to extract. Recto extracts files up to 2 GB.");
+            if (Native.FPDFAttachment_GetFile(a, null, 0, &size) == 0) throw new IOException(Strings.Get("PdfAttachmentReadFailed"));
+            if (size > MaxAttachmentBytes) throw new IOException(Strings.Get("PdfAttachmentTooLarge"));
             byte[] data;
             try
             {
@@ -1062,12 +1062,12 @@ public sealed unsafe partial class PdfDocument : IDisposable
             }
             catch (OutOfMemoryException)
             {
-                throw new IOException("There isn't enough memory to extract the attachment.");
+                throw new IOException(Strings.Get("PdfAttachmentNoMemory"));
             }
             uint read = 0;
             fixed (byte* p = data)
             {
-                if (Native.FPDFAttachment_GetFile(a, p, size, &read) == 0 || read != size) throw new IOException("The attachment couldn't be read from the document.");
+                if (Native.FPDFAttachment_GetFile(a, p, size, &read) == 0 || read != size) throw new IOException(Strings.Get("PdfAttachmentReadFailed"));
             }
             return data;
         }, WorkPriority.Visible);
@@ -1177,7 +1177,7 @@ public sealed unsafe partial class PdfDocument : IDisposable
                     {
                         var writer = new FPDF_FILEWRITE { Version = 1, WriteBlock = &WriteBlock };
                         if (Native.FPDF_SaveAsCopy(_handle, &writer, Native.FPDF_INCREMENTAL) == 0)
-                            throw new IOException("The document could not be saved.");
+                            throw new IOException(Strings.Get("PdfSaveFailed"));
                     }
                     finally
                     {

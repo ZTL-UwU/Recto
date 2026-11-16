@@ -17,6 +17,7 @@ public static class Program
         IsPrimary = SingleInstance.TryBecomePrimary();
         // Hand the files to the running instance. If it doesn't answer (it may be closing), carry on alone.
         if (!IsPrimary && SingleInstance.TryForward(StartupFiles)) return;
+        Languages.Initialize();
         XamlGeneratedProgram.XamlGeneratedMain();
     }
 

@@ -12,6 +12,7 @@ namespace Recto;
 // The bar of drawing and text tools over the document.
 public sealed partial class MainWindow
 {
+    // Names are keys of Strings: Color<name>.
     private static readonly (string Name, int Rgb)[] InkColors =
     [
         ("Black", 0x000000),
@@ -150,8 +151,9 @@ public sealed partial class MainWindow
                     StrokeThickness = 1,
                 },
             };
-            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(swatch, name);
-            ToolTipService.SetToolTip(swatch, name);
+            string label = Strings.Get("Color" + name);
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(swatch, label);
+            ToolTipService.SetToolTip(swatch, label);
             swatch.Click += (_, _) => PickColor(rgb);
             AnnotateColors.Children.Add(swatch);
         }

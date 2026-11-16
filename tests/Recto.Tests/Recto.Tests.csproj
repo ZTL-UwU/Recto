@@ -15,6 +15,8 @@
     <Compile Include="..\..\src\Recto\Pdf\*.cs" Link="App\Pdf\%(Filename)%(Extension)" />
     <Compile Include="..\..\src\Recto\Services\LaunchPolicy.cs" Link="App\Services\LaunchPolicy.cs" />
     <Compile Include="..\..\src\Recto\Printing\PrintLayout.cs" Link="App\Printing\PrintLayout.cs" />
+    <!-- Their messages come through Strings, which the tests point at the English resources (LocalizationTests.cs). -->
+    <Compile Include="..\..\src\Recto\Strings.cs" Link="App\Strings.cs" />
     <!-- So is the thumbnail handler, which ships as a Native AOT DLL. -->
     <Compile Include="..\..\src\Recto.Thumbnails\*.cs" Link="Thumbnails\%(Filename)%(Extension)" />
   </ItemGroup>

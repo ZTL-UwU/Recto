@@ -26,10 +26,17 @@ To try a build as your PDF app, measure performance or rebuild the icon, see [To
 | `src/Recto/Controls/PageView.cs` | One page: bitmap, zoomed-in tiles, highlight overlay |
 | `src/Recto/MainWindow.xaml` | Title bar, sidebar, start page |
 | `src/Recto/Printing`, `PrintDialog.xaml` | Print dialog, page layout on sheets (unit tested), printers and GDI print jobs |
-| `src/Recto/Services` | Persisted state, the Windows print dialog, single-instance handoff, link and attachment policy |
+| `src/Recto/Services` | Persisted state, the language, the Windows print dialog, single-instance handoff, link and attachment policy |
+| `src/Recto/Strings` | The text of the UI, one `Resources.resw` per language ([Translations](#translations)) |
 | `src/Recto/Package.appxmanifest`, `Assets/Package` | MSIX manifest and logos |
 | `src/Recto/Program.cs` | Entry point; forwards files to a running instance |
 | `src/Recto.Thumbnails` | File Explorer thumbnail handler (Native AOT COM DLL, MSIX and dev builds only) |
 | `tests/Recto.Tests` | xUnit tests |
 | `tools` | Developer tools: build-and-try script, benchmark, icon build ([Tools](tools.md)) |
 | `LICENSE`, `licenses/`, `THIRD-PARTY-NOTICES.md` | License texts, copied into the build output |
+
+## Translations
+
+Every piece of text the UI shows is in `src/Recto/Strings/en-US/Resources.resw`, with a copy per language (`fr-FR`). XAML elements get theirs with `x:Uid="Name"`, from keys such as `Name.Text` or `Name.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name`; code asks with `Strings.Get("Key")`, `Strings.Format("Key", values)` or, for a count, `Strings.Count("Key", n)`, which picks `Key_One` or `Key_Other`. Add new text to every language's file: the tests (`LocalizationTests`) fail on a key that's missing from one, unused, or whose `{0}` placeholders differ.
+
+Windows picks the closest language to the user's, falling back to English, unless one is chosen in Settings; Recto applies that choice at startup (`Services/Languages.cs`). To add a language, copy the `en-US` folder under its tag, translate it, and add it to `Languages.Available`, the `PluralRule` its plurals follow in `Strings.Count`, and `Package.appxmanifest`.

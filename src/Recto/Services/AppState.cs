@@ -36,6 +36,8 @@ public sealed class RecentDocument
 public sealed class Preferences
 {
     public AppTheme Theme { get; set; }
+    /// <summary>The language tag chosen in Settings (see <see cref="Languages"/>); null or empty follows Windows.</summary>
+    public string? Language { get; set; }
     /// <summary>Round the corners of pages in the viewer, like Windows 11 cards; off gives square paper.</summary>
     public bool RoundedPageCorners { get; set; } = true;
     /// <summary>Keep a list of opened documents, with the page each was left on, for the start page.</summary>
