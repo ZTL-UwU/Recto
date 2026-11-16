@@ -122,6 +122,7 @@ public sealed partial class DocumentView : UserControl
         _prefetchTimer.IsRepeating = false;
         _scroller.SizeChanged += (_, _) => OnViewportSizeChanged();
         ScrollBarHideFix.Attach(_scroller);
+        _scroller.Loaded += (_, _) => AttachWheelZoom();
         _root.Children.Add(_scroller);
         _root.Children.Add(_middleScrollMarker);
 
@@ -189,6 +190,7 @@ public sealed partial class DocumentView : UserControl
         _xamlRoot = null;
         _prefetchTimer.Stop();
         _prefetchTimer.Tick -= OnPrefetchTimerTick;
+        StopWheelZoom();
     }
 
     private void OnPrefetchTimerTick(Microsoft.UI.Dispatching.DispatcherQueueTimer sender, object args) => UpdateRealization(true);
@@ -242,6 +244,7 @@ public sealed partial class DocumentView : UserControl
         foreach (var loading in _textLoading.Values) loading.Cts.Cancel();
         _textLoading.Clear();
         _lastVisible = Rect.Empty;
+        StopWheelZoom();
         _searchHits.Clear();
         _currentHit = null;
         ClearSelection();
@@ -336,6 +339,7 @@ public sealed partial class DocumentView : UserControl
 
     public void SetZoomMode(ZoomMode mode)
     {
+        StopWheelZoom();
         _zoomMode = mode;
         ApplyZoomMode();
         ZoomChanged?.Invoke(this, EventArgs.Empty);
@@ -352,8 +356,103 @@ public sealed partial class DocumentView : UserControl
         return ZoomSteps.LastOrDefault(s => s < current * 0.99, MinZoom);
     }
 
+    // ---------------------------------------------------------------- Ctrl+wheel zoom
+
+    // The scroller zooms with Ctrl+wheel itself, but with momentum: turned the other way, it went on zooming the old
+    // way for several notches, as each notch only slowed it down. This zoom heads for where the notches add up to, so it
+    // turns as soon as the wheel does, and eases there.
+    private const double WheelZoomPerNotch = 1.1;
+    /// <summary>In milliseconds: after this long, the zoom has gone about two thirds of the way to the target.</summary>
+    private const double WheelZoomEasing = 40;
+    /// <summary>The zoom the wheel is heading for, or null when it isn't zooming.</summary>
+    private double? _wheelTarget;
+    /// <summary>The zoom it has got to, and the scroll offsets that go with it, which the scroller's lag behind.</summary>
+    private double _wheelZoom;
+    private Point _wheelOffset;
+    /// <summary>The pointer, in the viewport, and the point of the content kept under it.</summary>
+    private Point _wheelAnchor, _wheelContent;
+    private TimeSpan? _wheelFrameTime;
+    private bool _wheelZoomAttached;
+
+    private void AttachWheelZoom()
+    {
+        if (_wheelZoomAttached || _scroller.FindDescendant<ScrollContentPresenter>() is not { } presenter) return;
+        _wheelZoomAttached = true;
+        // Wheel input over the empty view around narrow content would go past the presenter to the scroller.
+        presenter.Background ??= new SolidColorBrush(Colors.Transparent);
+        // Below the scroller, so this gets the wheel before it does.
+        presenter.AddHandler(PointerWheelChangedEvent, new PointerEventHandler(OnWheelZoom), false);
+    }
+
+    private void OnWheelZoom(object sender, PointerRoutedEventArgs e)
+    {
+        if ((e.KeyModifiers & VirtualKeyModifiers.Control) == 0 || _document is null) return;
+        var point = e.GetCurrentPoint(_scroller);
+        if (point.Properties.IsHorizontalMouseWheel) return;
+        e.Handled = true;
+        int delta = point.Properties.MouseWheelDelta;
+        if (delta == 0) return;
+        if (_wheelTarget is null)
+        {
+            double z = Zoom;
+            _wheelZoom = z;
+            _wheelOffset = new Point(_pendingContentX is { } x ? x * z : _scroller.HorizontalOffset, _pendingContentY is { } y ? y * z : _scroller.VerticalOffset);
+            _wheelFrameTime = null;
+            CompositionTarget.Rendering += OnWheelZoomFrame;
+        }
+        // Taken again on every notch, in case the pointer moved.
+        var anchor = point.Position;
+        var gap = CenteringGap(_wheelZoom);
+        _wheelAnchor = anchor;
+        _wheelContent = new Point((_wheelOffset.X + anchor.X - gap.X) / _wheelZoom, (_wheelOffset.Y + anchor.Y - gap.Y) / _wheelZoom);
+        _wheelTarget = Math.Clamp((_wheelTarget ?? _wheelZoom) * Math.Pow(WheelZoomPerNotch, delta / 120.0), MinZoom, MaxZoom);
+        _zoomMode = ZoomMode.Custom;
+    }
+
+    private void OnWheelZoomFrame(object? sender, object e)
+    {
+        if (_wheelTarget is not { } target)
+        {
+            StopWheelZoom();
+            return;
+        }
+        var time = ((RenderingEventArgs)e).RenderingTime;
+        double dt = _wheelFrameTime is { } last ? (time - last).TotalMilliseconds : 16;
+        // Rendering can be raised more than once a frame.
+        if (dt <= 0) return;
+        _wheelFrameTime = time;
+        // Eased in log space, so zooming in and out by the same factor take as long.
+        double z = Math.Exp(Math.Log(_wheelZoom) + Math.Log(target / _wheelZoom) * (1 - Math.Exp(-dt / WheelZoomEasing)));
+        bool done = Math.Abs(Math.Log(target / z)) < 0.002;
+        if (done) z = target;
+        _wheelZoom = z;
+        var gap = CenteringGap(z);
+        // Clamped as the scroller would, or the offsets kept here would drift from its own.
+        double w = double.IsNaN(_host.Width) ? 0 : _host.Width, h = double.IsNaN(_host.Height) ? 0 : _host.Height;
+        _wheelOffset = new Point(
+            Math.Clamp(_wheelContent.X * z - _wheelAnchor.X + gap.X, 0, Math.Max(0, w * z - _scroller.ViewportWidth)),
+            Math.Clamp(_wheelContent.Y * z - _wheelAnchor.Y + gap.Y, 0, Math.Max(0, h * z - _scroller.ViewportHeight)));
+        _pendingZoom = (float)z;
+        ScrollTo(_wheelOffset.X, _wheelOffset.Y, (float)z, true);
+        ZoomChanged?.Invoke(this, EventArgs.Empty);
+        if (done)
+        {
+            StopWheelZoom();
+            // The last step may change too little for the scroller to report it.
+            RefreshRendering();
+        }
+    }
+
+    private void StopWheelZoom()
+    {
+        if (_wheelTarget is null) return;
+        _wheelTarget = null;
+        CompositionTarget.Rendering -= OnWheelZoomFrame;
+    }
+
     public void SetZoom(double zoom, Point? anchor = null, bool keepMode = false)
     {
+        StopWheelZoom();
         if (!keepMode) _zoomMode = ZoomMode.Custom;
         zoom = Math.Clamp(zoom, MinZoom, MaxZoom);
         double vw = _scroller.ViewportWidth, vh = _scroller.ViewportHeight;
@@ -800,7 +899,8 @@ public sealed partial class DocumentView : UserControl
             PlaceOverlays();
             ZoomChanged?.Invoke(this, EventArgs.Empty);
         }
-        UpdateRealization(!e.IsIntermediate);
+        // The wheel zoom changes the view every frame, and renders the pages once it gets where it's going.
+        UpdateRealization(!e.IsIntermediate && _wheelTarget is null);
         UpdateCurrentPage();
     }
 
@@ -1841,6 +1941,7 @@ public sealed partial class DocumentView : UserControl
 
     private void OnPointerWheelChanged(object sender, PointerRoutedEventArgs e)
     {
+        if ((e.KeyModifiers & VirtualKeyModifiers.Control) == 0) StopWheelZoom();
         StopMiddleScroll();
         // Otherwise their next frame would scroll back to the offset they track.
         StopAutoScroll();
