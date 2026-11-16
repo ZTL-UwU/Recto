@@ -34,9 +34,36 @@ public partial class App : Application
         {
             // No other Recto is running, so leftovers from earlier sessions are no longer in use by us.
             _ = Task.Run(() => AttachmentFiles.Purge(TimeSpan.FromDays(1)));
-            SingleInstance.Listen(paths => dispatcher.TryEnqueue(() => OpenFiles(paths)));
+            Listen(dispatcher);
+        }
+        else if (Program.RestartedFrom is { } pid)
+        {
+            // The old process outlasted the wait, still sending a print job. Take its place once it's gone, so that
+            // later launches have a process to hand their files to.
+            _ = Task.Run(() =>
+            {
+                if (Program.WaitForExit(pid, Timeout.InfiniteTimeSpan) && SingleInstance.TryBecomePrimary()) Listen(dispatcher);
+            });
         }
         OpenFiles(Program.StartupFiles, adoptAttachments: Program.IsRestart);
+    }
+
+    private static void Listen(DispatcherQueue dispatcher) =>
+        SingleInstance.Listen(paths => dispatcher.TryEnqueue(() => OpenFiles(paths)));
+
+    /// <summary>
+    /// Whether this process has restarted Recto and is only staying to finish sending a print job. Files sent
+    /// to it then go to the new process, so that this one still ends with its last window.
+    /// </summary>
+    private static bool _handedOver;
+
+    /// <summary>Starts a Recto that opens <paramref name="files"/> once this process has exited.</summary>
+    private static void StartAfterThisProcess(IEnumerable<string> files)
+    {
+        var start = new ProcessStartInfo(Environment.ProcessPath!) { UseShellExecute = false };
+        start.ArgumentList.Add(Program.RestartAfter + Environment.ProcessId.ToString(CultureInfo.InvariantCulture));
+        foreach (var file in files) start.ArgumentList.Add(file);
+        Process.Start(start)?.Dispose();
     }
 
     /// <summary>
@@ -46,6 +73,13 @@ public partial class App : Application
     /// </summary>
     internal static void OpenFiles(IReadOnlyList<string> files, bool adoptAttachments = false)
     {
+        if (_handedOver)
+        {
+            // The new process may not be listening yet, so start one that waits for this one, then opens them or
+            // hands them to whichever Recto is running by then.
+            StartAfterThisProcess(files);
+            return;
+        }
         if (files.Count == 0)
         {
             var window = new MainWindow();
@@ -85,10 +119,8 @@ public partial class App : Application
             // The window restarted from last, so that it ends up in front.
             var windows = OpenWindows.Where(w => !w.IsClosing).OrderBy(w => w == LastActiveWindow).ToList();
             var files = windows.Select(w => w.DocumentPath).OfType<string>().Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-            var start = new ProcessStartInfo(Environment.ProcessPath!) { UseShellExecute = false };
-            start.ArgumentList.Add(Program.RestartAfter + Environment.ProcessId.ToString(CultureInfo.InvariantCulture));
-            foreach (var file in files) start.ArgumentList.Add(file);
-            Process.Start(start)?.Dispose();
+            StartAfterThisProcess(files);
+            _handedOver = true;
             // An attachment's copy would go with the window showing it, before the new process can open it.
             foreach (var window in windows)
             {

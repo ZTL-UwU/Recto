@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.Windows.ApplicationModel.Resources;
 using Microsoft.Windows.Globalization;
 
@@ -38,6 +39,20 @@ internal static class Languages
         }
         catch (Exception ex) when (ex is System.Runtime.InteropServices.COMException or ArgumentException)
         {
+        }
+        // Numbers and dates follow the chosen language too; following Windows keeps its regional format. Set for
+        // new threads as well, so that text made in the background, such as print and PDF errors, matches.
+        if (StartupChoice.Length > 0)
+        {
+            try
+            {
+                var culture = new CultureInfo(StartupChoice);
+                CultureInfo.CurrentCulture = CultureInfo.CurrentUICulture = culture;
+                CultureInfo.DefaultThreadCurrentCulture = CultureInfo.DefaultThreadCurrentUICulture = culture;
+            }
+            catch (CultureNotFoundException)
+            {
+            }
         }
         // Opened on first use, not at startup.
         var loader = new Lazy<ResourceLoader>(() => new ResourceLoader());
