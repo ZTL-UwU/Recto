@@ -10,7 +10,7 @@
 - A **Properties** dialog, and **password-protected** documents.
 - Remembers page, zoom and view mode per document, and reloads when the file changes on disk (encrypted files reuse the session password).
 - One process per session: PDFs opened from Explorer open as new windows in the running instance.
-- **English and French**: follows the Windows display language, or the language chosen in Settings, from the next start.
+- **English and French**: follows the Windows display language, or the language chosen in Settings, which restarts Recto with the same documents open.
 - **Explorer thumbnails** (Store/MSIX build): File Explorer shows the first page as the PDF's thumbnail, with a small Recto badge in the corner, while Recto is the default PDF app.
 
 Press F1 for keyboard shortcuts.

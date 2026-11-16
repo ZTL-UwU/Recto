@@ -441,6 +441,9 @@
   <data name="LanguageRestartBar.Message" xml:space="preserve">
     <value>The new language will be used the next time Recto starts.</value>
   </data>
+  <data name="LanguageRestartButton.Content" xml:space="preserve">
+    <value>Restart now</value>
+  </data>
   <data name="UseSystemSetting" xml:space="preserve">
     <value>Use system setting</value>
   </data>

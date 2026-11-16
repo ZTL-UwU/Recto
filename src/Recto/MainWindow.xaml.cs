@@ -636,7 +636,7 @@ public sealed partial class MainWindow : Window
         ShowMessage(Strings.Get("ChangedOnDiskTitle"), Strings.Get("ChangedOnDiskMessage"), InfoBarSeverity.Warning, reload);
     }
 
-    private async Task<bool> ConfirmDiscardChangesAsync()
+    internal async Task<bool> ConfirmDiscardChangesAsync()
     {
         // A note still being typed counts as an unsaved change.
         await Viewer.CommitPendingEditsAsync();
@@ -677,6 +677,15 @@ public sealed partial class MainWindow : Window
     private async Task CloseWindowAsync()
     {
         if (!await ConfirmDiscardChangesAsync()) return;
+        CloseNow();
+    }
+
+    /// <summary>The file this window shows, to open again after a restart.</summary>
+    internal string? DocumentPath => _closeWhenPrinted ? null : _document?.FilePath;
+
+    /// <summary>Closes the window without asking about unsaved annotations: <see cref="ConfirmDiscardChangesAsync"/> already has.</summary>
+    internal void CloseNow()
+    {
         // Close() skips OnAppWindowClosing, so remember the window and position now.
         SaveWindowState();
         PersistPosition();

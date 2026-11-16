@@ -87,7 +87,11 @@
             <InfoBar
                 x:Name="LanguageRestartBar"
                 x:Uid="LanguageRestartBar"
-                IsClosable="False" />
+                IsClosable="False">
+                <InfoBar.ActionButton>
+                    <Button x:Uid="LanguageRestartButton" Click="OnRestart" />
+                </InfoBar.ActionButton>
+            </InfoBar>
             <controls:SettingsCard x:Uid="CornersCard">
                 <controls:SettingsCard.HeaderIcon>
                     <FontIcon Glyph="&#xE7C3;" />

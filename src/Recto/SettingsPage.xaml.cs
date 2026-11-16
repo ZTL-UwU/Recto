@@ -72,6 +72,8 @@ public sealed partial class SettingsPage : UserControl
     private void UpdateLanguageRestart() =>
         LanguageRestartBar.IsOpen = LanguageBox.SelectedIndex >= 0 && LanguageChoices[LanguageBox.SelectedIndex].Tag != Languages.StartupChoice;
 
+    private async void OnRestart(object sender, RoutedEventArgs e) => await App.RestartAsync();
+
     private void OnCornersToggled(object sender, RoutedEventArgs e)
     {
         if (_refreshing) return;

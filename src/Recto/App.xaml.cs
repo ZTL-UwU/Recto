@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Globalization;
 using Recto.Services;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
@@ -54,6 +56,38 @@ public partial class App : Application
             var window = OpenWindows.FirstOrDefault(w => w.IsShowing(path) || w.IsOpening(path)) ?? OpenWindows.FirstOrDefault(w => w.IsIdle) ?? new MainWindow();
             window.BringToFront();
             _ = window.OpenAsync(path);
+        }
+    }
+
+    private static bool _restarting;
+
+    /// <summary>
+    /// Starts Recto again, for a language chosen in Settings, with the documents that are open now. Each window
+    /// first offers to save its unsaved annotations, and cancelling there calls the restart off.
+    /// </summary>
+    internal static async Task RestartAsync()
+    {
+        if (_restarting) return;
+        _restarting = true;
+        try
+        {
+            foreach (var window in OpenWindows.ToList())
+            {
+                if (!await window.ConfirmDiscardChangesAsync()) return;
+            }
+            // The window restarted from last, so that it ends up in front.
+            var windows = OpenWindows.OrderBy(w => w == LastActiveWindow).ToList();
+            var files = windows.Select(w => w.DocumentPath).OfType<string>().Distinct(StringComparer.OrdinalIgnoreCase);
+            var start = new ProcessStartInfo(Environment.ProcessPath!) { UseShellExecute = false };
+            start.ArgumentList.Add(Program.RestartAfter + Environment.ProcessId.ToString(CultureInfo.InvariantCulture));
+            foreach (var file in files) start.ArgumentList.Add(file);
+            Process.Start(start)?.Dispose();
+            // The process ends with its last window: once a print job being sent has finished, if there is one.
+            foreach (var window in windows) window.CloseNow();
+        }
+        finally
+        {
+            _restarting = false;
         }
     }
 
