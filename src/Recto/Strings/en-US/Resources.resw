@@ -423,7 +423,7 @@
     <value>Cancel</value>
   </data>
 
-  <!-- Which plural rule Strings.Count follows: en or fr -->
+  <!-- Which plural rule Strings.Count follows: en, fr or zh -->
   <data name="PluralRule" xml:space="preserve">
     <value>en</value>
   </data>

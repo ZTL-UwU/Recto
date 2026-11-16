@@ -10,7 +10,7 @@ namespace Recto.Services;
 internal static class Languages
 {
     /// <summary>In the order Settings lists them, after "Use system setting". Each is named in its own language.</summary>
-    public static readonly (string Tag, string Name)[] Available = [("en-US", "English"), ("fr-FR", "Français")];
+    public static readonly (string Tag, string Name)[] Available = [("en-US", "English"), ("fr-FR", "Français"), ("zh-CN", "简体中文")];
 
     /// <summary>
     /// The language chosen when Recto started ("" to follow Windows). Text that's already showing can't

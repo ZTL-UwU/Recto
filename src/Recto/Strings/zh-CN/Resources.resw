@@ -1,0 +1,1417 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Recto's text in Simplified Chinese.
+  Keys with a dot are set on XAML elements by x:Uid ("Uid.Property"); the others are read by code, through Strings.
+  {0}, {1}… are filled in by the code. Keys ending in _One and _Other are picked by count (see Strings.Count);
+  Chinese has no plurals, so both forms of a count read the same.
+-->
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <!-- MainWindow.xaml -->
+  <data name="ZoomButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>缩放</value>
+  </data>
+  <data name="ZoomButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>缩放（Ctrl+加号、Ctrl+减号）</value>
+  </data>
+  <data name="FitPageItem.Text" xml:space="preserve">
+    <value>适合页面</value>
+  </data>
+  <data name="FitWidthItem.Text" xml:space="preserve">
+    <value>适合宽度</value>
+  </data>
+  <data name="AnnotateToggle.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>绘图和添加文本</value>
+  </data>
+  <data name="AnnotateToggle.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>绘图和添加文本（Ctrl+Shift+A）</value>
+  </data>
+  <data name="MoreButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>主菜单</value>
+  </data>
+  <data name="MoreButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>更多选项</value>
+  </data>
+  <data name="OpenItem.Text" xml:space="preserve">
+    <value>打开…</value>
+  </data>
+  <data name="NewWindowItem.Text" xml:space="preserve">
+    <value>新建窗口</value>
+  </data>
+  <data name="SaveCopyItem.Text" xml:space="preserve">
+    <value>保存副本…</value>
+  </data>
+  <data name="PrintItem.Text" xml:space="preserve">
+    <value>打印…</value>
+  </data>
+  <data name="ContinuousItem.Text" xml:space="preserve">
+    <value>连续滚动</value>
+  </data>
+  <data name="DualItem.Text" xml:space="preserve">
+    <value>双页</value>
+  </data>
+  <data name="OddLeftItem.Text" xml:space="preserve">
+    <value>奇数页在左侧</value>
+  </data>
+  <data name="InvertItem.Text" xml:space="preserve">
+    <value>反转颜色</value>
+  </data>
+  <data name="RotateItem.Text" xml:space="preserve">
+    <value>旋转</value>
+  </data>
+  <data name="RotateLeftItem.Text" xml:space="preserve">
+    <value>向左旋转</value>
+  </data>
+  <data name="RotateLeftItem.KeyboardAcceleratorTextOverride" xml:space="preserve">
+    <value>Ctrl+向左键</value>
+  </data>
+  <data name="RotateRightItem.Text" xml:space="preserve">
+    <value>向右旋转</value>
+  </data>
+  <data name="RotateRightItem.KeyboardAcceleratorTextOverride" xml:space="preserve">
+    <value>Ctrl+向右键</value>
+  </data>
+  <data name="FullscreenItem.Text" xml:space="preserve">
+    <value>全屏</value>
+  </data>
+  <data name="PresentItem.Text" xml:space="preserve">
+    <value>演示</value>
+  </data>
+  <data name="ReloadItem.Text" xml:space="preserve">
+    <value>重新加载</value>
+  </data>
+  <data name="ShowInFolderItem.Text" xml:space="preserve">
+    <value>在文件夹中显示</value>
+  </data>
+  <data name="PropertiesItem.Text" xml:space="preserve">
+    <value>属性</value>
+  </data>
+  <data name="PropertiesItem.KeyboardAcceleratorTextOverride" xml:space="preserve">
+    <value>Alt+Enter</value>
+  </data>
+  <data name="SettingsItem.Text" xml:space="preserve">
+    <value>设置</value>
+  </data>
+  <data name="ShortcutsItem.Text" xml:space="preserve">
+    <value>键盘快捷键</value>
+  </data>
+  <data name="AboutItem.Text" xml:space="preserve">
+    <value>关于 Recto</value>
+  </data>
+  <data name="CloseItem.Text" xml:space="preserve">
+    <value>关闭文档</value>
+  </data>
+  <data name="StartTitle.Text" xml:space="preserve">
+    <value>打开文档</value>
+  </data>
+  <data name="StartHint.Text" xml:space="preserve">
+    <value>将 PDF 拖放到此处，或从文件中选择一个。</value>
+  </data>
+  <data name="StartOpenButton.Content" xml:space="preserve">
+    <value>打开…</value>
+  </data>
+  <data name="RecentTitle.Text" xml:space="preserve">
+    <value>最近打开的文档</value>
+  </data>
+  <data name="RecentSearchBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>搜索最近打开的文档</value>
+  </data>
+  <data name="RecentSearchBox.PlaceholderText" xml:space="preserve">
+    <value>搜索最近打开的文档</value>
+  </data>
+  <data name="ClearRecentButton.Content" xml:space="preserve">
+    <value>清除列表</value>
+  </data>
+  <data name="RecentOpenButtonText.Text" xml:space="preserve">
+    <value>打开…</value>
+  </data>
+  <data name="RecentNoMatches.Text" xml:space="preserve">
+    <value>没有与搜索匹配的最近文档。</value>
+  </data>
+  <data name="ThumbnailsTab.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>缩略图</value>
+  </data>
+  <data name="ThumbnailsTab.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>缩略图</value>
+  </data>
+  <data name="OutlineTab.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>大纲</value>
+  </data>
+  <data name="OutlineTab.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>大纲</value>
+  </data>
+  <data name="AnnotationsTab.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>批注</value>
+  </data>
+  <data name="AnnotationsTab.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>批注</value>
+  </data>
+  <data name="AttachmentsTab.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>附件</value>
+  </data>
+  <data name="AttachmentsTab.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>附件</value>
+  </data>
+  <data name="AnnotationsEmptyTitle.Text" xml:space="preserve">
+    <value>没有批注</value>
+  </data>
+  <data name="AnnotationsEmptyHint.Text" xml:space="preserve">
+    <value>选择文本即可高亮；右键单击页面可添加便笺；也可以用顶部的笔按钮绘图和添加文本。</value>
+  </data>
+  <data name="SearchBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>在文档中搜索</value>
+  </data>
+  <data name="SearchBox.PlaceholderText" xml:space="preserve">
+    <value>搜索</value>
+  </data>
+  <data name="MatchCaseToggle.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>区分大小写</value>
+  </data>
+  <data name="MatchCaseToggle.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>区分大小写</value>
+  </data>
+  <data name="WholeWordToggle.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>全字匹配</value>
+  </data>
+  <data name="WholeWordToggle.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>全字匹配</value>
+  </data>
+  <data name="PreviousResultButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>上一个结果</value>
+  </data>
+  <data name="PreviousResultButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>上一个结果（Shift+F3）</value>
+  </data>
+  <data name="NextResultButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>下一个结果</value>
+  </data>
+  <data name="NextResultButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>下一个结果（F3）</value>
+  </data>
+  <data name="PenTool.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>笔</value>
+  </data>
+  <data name="PenTool.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>笔</value>
+  </data>
+  <data name="HighlighterTool.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>荧光笔</value>
+  </data>
+  <data name="HighlighterTool.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>荧光笔</value>
+  </data>
+  <data name="EraserTool.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>橡皮擦</value>
+  </data>
+  <data name="EraserTool.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>橡皮擦</value>
+  </data>
+  <data name="TextTool.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>文本框</value>
+  </data>
+  <data name="TextTool.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>文本框</value>
+  </data>
+  <data name="AnnotateSize.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>大小</value>
+  </data>
+  <data name="AnnotateSize.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>大小</value>
+  </data>
+  <data name="UndoButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>撤销</value>
+  </data>
+  <data name="UndoButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>撤销（Ctrl+Z）</value>
+  </data>
+  <data name="RedoButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>重做</value>
+  </data>
+  <data name="RedoButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>重做（Ctrl+Y）</value>
+  </data>
+  <data name="DialogWaitBar.Title" xml:space="preserve">
+    <value>正在等待另一个窗口</value>
+  </data>
+  <data name="DialogWaitBar.Message" xml:space="preserve">
+    <value>请关闭另一个 Recto 窗口中的对话框，以显示此对话框。</value>
+  </data>
+  <data name="DialogWaitShowButton.Content" xml:space="preserve">
+    <value>显示</value>
+  </data>
+
+  <!-- SettingsPage.xaml -->
+  <data name="SettingsTitle.Text" xml:space="preserve">
+    <value>设置</value>
+  </data>
+  <data name="AppearanceHeader.Text" xml:space="preserve">
+    <value>外观</value>
+  </data>
+  <data name="ThemeTitle.Text" xml:space="preserve">
+    <value>应用主题</value>
+  </data>
+  <data name="ThemeDescription.Text" xml:space="preserve">
+    <value>使用浅色或深色，或跟随 Windows。</value>
+  </data>
+  <data name="ThemeOptions.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>应用主题</value>
+  </data>
+  <data name="CornersCard.Description" xml:space="preserve">
+    <value>将查看器中页面的边角变成圆角。</value>
+  </data>
+  <data name="CornersCard.Header" xml:space="preserve">
+    <value>页面圆角</value>
+  </data>
+  <data name="CornersToggle.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>页面圆角</value>
+  </data>
+  <data name="SearchHeader.Text" xml:space="preserve">
+    <value>搜索</value>
+  </data>
+  <data name="HyphenatedCard.Description" xml:space="preserve">
+    <value>搜索 example 时，也能找到被分在两行的 exam-ple。</value>
+  </data>
+  <data name="HyphenatedCard.Header" xml:space="preserve">
+    <value>查找跨行断开的单词</value>
+  </data>
+  <data name="HyphenatedToggle.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>查找跨行断开的单词</value>
+  </data>
+  <data name="QuotesCard.Description" xml:space="preserve">
+    <value>直引号和弯引号可以互相匹配。</value>
+  </data>
+  <data name="QuotesCard.Header" xml:space="preserve">
+    <value>匹配弯引号</value>
+  </data>
+  <data name="QuotesToggle.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>匹配弯引号</value>
+  </data>
+  <data name="DashesCard.Description" xml:space="preserve">
+    <value>连字符、破折号和减号可以互相匹配。</value>
+  </data>
+  <data name="DashesCard.Header" xml:space="preserve">
+    <value>匹配所有横线</value>
+  </data>
+  <data name="DashesToggle.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>匹配所有横线</value>
+  </data>
+  <data name="HistoryHeader.Text" xml:space="preserve">
+    <value>历史记录</value>
+  </data>
+  <data name="RecentCard.Description" xml:space="preserve">
+    <value>在起始页列出打开过的文档，并从上次离开的地方重新打开。</value>
+  </data>
+  <data name="RecentCard.Header" xml:space="preserve">
+    <value>记住最近打开的文档</value>
+  </data>
+  <data name="RecentToggle.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>记住最近打开的文档</value>
+  </data>
+  <data name="AboutHeader.Text" xml:space="preserve">
+    <value>关于</value>
+  </data>
+
+  <!-- PrintDialog.xaml -->
+  <data name="PreviewSheet.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>打印预览</value>
+  </data>
+  <data name="PreviousSheetButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>上一张纸</value>
+  </data>
+  <data name="PreviousSheetButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>上一张纸</value>
+  </data>
+  <data name="NextSheetButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>下一张纸</value>
+  </data>
+  <data name="NextSheetButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>下一张纸</value>
+  </data>
+  <data name="PrintTitle.Text" xml:space="preserve">
+    <value>打印</value>
+  </data>
+  <data name="PrinterBox.Header" xml:space="preserve">
+    <value>打印机</value>
+  </data>
+  <data name="PrinterBox.PlaceholderText" xml:space="preserve">
+    <value>正在查找打印机…</value>
+  </data>
+  <data name="CopiesBox.Header" xml:space="preserve">
+    <value>份数</value>
+  </data>
+  <data name="CollateBox.Content" xml:space="preserve">
+    <value>逐份打印</value>
+  </data>
+  <data name="CollateBox.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>一份一份完整地打印，而不是把每一页的所有份数一起打印</value>
+  </data>
+  <data name="PagesBox.Header" xml:space="preserve">
+    <value>页面</value>
+  </data>
+  <data name="RangeBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>要打印的页面</value>
+  </data>
+  <data name="RangeBox.PlaceholderText" xml:space="preserve">
+    <value>例如 1-5、8、11-13</value>
+  </data>
+  <data name="OrientationBox.Header" xml:space="preserve">
+    <value>方向</value>
+  </data>
+  <data name="ColorBox.Header" xml:space="preserve">
+    <value>颜色</value>
+  </data>
+  <data name="DuplexBox.Header" xml:space="preserve">
+    <value>双面打印</value>
+  </data>
+  <data name="MoreSettingsButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>更多设置</value>
+  </data>
+  <data name="MoreSettingsText.Text" xml:space="preserve">
+    <value>更多设置</value>
+  </data>
+  <data name="PaperBox.Header" xml:space="preserve">
+    <value>纸张大小</value>
+  </data>
+  <data name="PaperBox.PlaceholderText" xml:space="preserve">
+    <value>由打印机决定</value>
+  </data>
+  <data name="PerSheetBox.Header" xml:space="preserve">
+    <value>每张纸的页数</value>
+  </data>
+  <data name="ScaleBox.Header" xml:space="preserve">
+    <value>缩放</value>
+  </data>
+  <data name="ScalePercentBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>缩放百分比</value>
+  </data>
+  <data name="SubsetBox.Header" xml:space="preserve">
+    <value>包含</value>
+  </data>
+  <data name="ReverseBox.Content" xml:space="preserve">
+    <value>逆序打印</value>
+  </data>
+  <data name="AnnotationsBox.Content" xml:space="preserve">
+    <value>批注和表单字段</value>
+  </data>
+  <data name="ImageBox.Content" xml:space="preserve">
+    <value>作为图像打印</value>
+  </data>
+  <data name="ImageBox.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>速度较慢且不够清晰，但在页面打印异常时可能有帮助</value>
+  </data>
+  <data name="PrinterPropertiesButton.Content" xml:space="preserve">
+    <value>打印机属性…</value>
+  </data>
+  <data name="SystemDialogButton.Content" xml:space="preserve">
+    <value>使用系统对话框打印…</value>
+  </data>
+  <data name="PrintButton.Content" xml:space="preserve">
+    <value>打印</value>
+  </data>
+  <data name="CancelButton.Content" xml:space="preserve">
+    <value>取消</value>
+  </data>
+
+  <!-- Which plural rule Strings.Count follows: zh (no plurals: both forms read the same) -->
+  <data name="PluralRule" xml:space="preserve">
+    <value>zh</value>
+  </data>
+
+  <!-- Settings -->
+  <data name="LanguageCard.Header" xml:space="preserve">
+    <value>语言</value>
+  </data>
+  <data name="LanguageCard.Description" xml:space="preserve">
+    <value>以其他语言显示 Recto，或跟随 Windows。</value>
+  </data>
+  <data name="LanguageBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>语言</value>
+  </data>
+  <data name="LanguageRestartBar.Message" xml:space="preserve">
+    <value>下次启动 Recto 时将使用新的语言。</value>
+  </data>
+  <data name="LanguageRestartButton.Content" xml:space="preserve">
+    <value>立即重启</value>
+  </data>
+  <data name="UseSystemSetting" xml:space="preserve">
+    <value>使用系统设置</value>
+  </data>
+  <data name="ThemeLight" xml:space="preserve">
+    <value>浅色</value>
+  </data>
+  <data name="ThemeDark" xml:space="preserve">
+    <value>深色</value>
+  </data>
+  <data name="Version" xml:space="preserve">
+    <value>版本 {0}</value>
+  </data>
+
+  <!-- Common -->
+  <data name="Cancel" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="Close" xml:space="preserve">
+    <value>关闭</value>
+  </data>
+  <data name="Open" xml:space="preserve">
+    <value>打开</value>
+  </data>
+  <data name="Delete" xml:space="preserve">
+    <value>删除</value>
+  </data>
+  <data name="Show" xml:space="preserve">
+    <value>显示</value>
+  </data>
+  <data name="SaveAs" xml:space="preserve">
+    <value>另存为…</value>
+  </data>
+  <data name="ShowInFolder" xml:space="preserve">
+    <value>在文件夹中显示</value>
+  </data>
+  <data name="CloseDocument" xml:space="preserve">
+    <value>关闭文档</value>
+  </data>
+  <data name="CloseWindow" xml:space="preserve">
+    <value>关闭窗口</value>
+  </data>
+  <data name="FullScreen" xml:space="preserve">
+    <value>全屏</value>
+  </data>
+  <data name="ExitFullScreen" xml:space="preserve">
+    <value>退出全屏</value>
+  </data>
+  <data name="ZoomPercent" xml:space="preserve">
+    <value>{0:0}%</value>
+  </data>
+  <data name="PageLabel" xml:space="preserve">
+    <value>第 {0} 页</value>
+  </data>
+  <data name="PdfDocumentType" xml:space="preserve">
+    <value>PDF 文档</value>
+  </data>
+  <data name="XpsDocumentType" xml:space="preserve">
+    <value>XPS 文档</value>
+  </data>
+
+  <!-- Main window -->
+  <data name="EditedSubtitle" xml:space="preserve">
+    <value>已编辑</value>
+  </data>
+  <data name="AnnotationsChangeFailedTitle" xml:space="preserve">
+    <value>无法更改批注</value>
+  </data>
+  <data name="FileNotFoundTitle" xml:space="preserve">
+    <value>找不到文件</value>
+  </data>
+  <data name="FileNotFoundMessage" xml:space="preserve">
+    <value>找不到“{0}”。它可能已被移动或删除。</value>
+  </data>
+  <data name="OpenFailedTitle" xml:space="preserve">
+    <value>无法打开文档</value>
+  </data>
+  <data name="UnexpectedErrorTitle" xml:space="preserve">
+    <value>出现问题</value>
+  </data>
+  <data name="UnexpectedErrorMessage" xml:space="preserve">
+    <value>Recto 遇到了意外问题。如果某些功能无法使用，请保存批注并重启 Recto。详细信息见 {0}。</value>
+  </data>
+  <data name="ReloadFailedTitle" xml:space="preserve">
+    <value>无法重新加载文档</value>
+  </data>
+  <data name="ReloadButton" xml:space="preserve">
+    <value>重新加载</value>
+  </data>
+  <data name="ChangedOnDiskTitle" xml:space="preserve">
+    <value>文档已在磁盘上更改</value>
+  </data>
+  <data name="ChangedOnDiskMessage" xml:space="preserve">
+    <value>重新加载将丢弃未保存的批注。</value>
+  </data>
+  <data name="SaveChangesTitle" xml:space="preserve">
+    <value>将更改保存到副本？</value>
+  </data>
+  <data name="SaveChangesMessage" xml:space="preserve">
+    <value>“{0}”有未保存的批注。如果不保存副本，这些批注将会丢失。</value>
+  </data>
+  <data name="SaveCopyButton" xml:space="preserve">
+    <value>保存副本</value>
+  </data>
+  <data name="DontSaveButton" xml:space="preserve">
+    <value>不保存</value>
+  </data>
+  <data name="PasswordTitle" xml:space="preserve">
+    <value>需要密码</value>
+  </data>
+  <data name="PasswordPrompt" xml:space="preserve">
+    <value>“{0}”受密码保护。请输入密码以打开。</value>
+  </data>
+  <data name="PasswordPlaceholder" xml:space="preserve">
+    <value>密码</value>
+  </data>
+  <data name="PasswordWrong" xml:space="preserve">
+    <value>密码不正确，请重试。</value>
+  </data>
+  <data name="UnlockButton" xml:space="preserve">
+    <value>解锁</value>
+  </data>
+  <data name="SearchResults_One" xml:space="preserve">
+    <value>{0:N0} 个结果</value>
+  </data>
+  <data name="SearchResults_Other" xml:space="preserve">
+    <value>{0:N0} 个结果</value>
+  </data>
+  <data name="Searching" xml:space="preserve">
+    <value>正在搜索…</value>
+  </data>
+  <data name="NoResults" xml:space="preserve">
+    <value>未找到结果</value>
+  </data>
+  <data name="SaveFailedTitle" xml:space="preserve">
+    <value>无法保存</value>
+  </data>
+  <data name="SaveDraftsFailed" xml:space="preserve">
+    <value>便笺或文本框无法写入文档。未保存任何内容。</value>
+  </data>
+  <data name="SaveDocumentChanged" xml:space="preserve">
+    <value>在你选择保存位置时，文档发生了更改。未保存任何内容。</value>
+  </data>
+  <data name="AnnotatedFileName" xml:space="preserve">
+    <value>{0}（已批注）</value>
+  </data>
+  <data name="CopyFileName" xml:space="preserve">
+    <value>{0}（副本）</value>
+  </data>
+  <data name="CopySavedTitle" xml:space="preserve">
+    <value>副本已保存</value>
+  </data>
+  <data name="CopySavedMessage" xml:space="preserve">
+    <value>已保存到“{0}”。</value>
+  </data>
+  <data name="PrintProblemTitle" xml:space="preserve">
+    <value>打印问题</value>
+  </data>
+  <data name="PagesLeftBlank_One" xml:space="preserve">
+    <value>有一页无法打印，已留为空白。</value>
+  </data>
+  <data name="PagesLeftBlank_Other" xml:space="preserve">
+    <value>{0:N0} 页无法打印，已留为空白。</value>
+  </data>
+  <data name="PrintFailedTitle" xml:space="preserve">
+    <value>无法打印</value>
+  </data>
+  <data name="FullscreenHint" xml:space="preserve">
+    <value>按 Esc 或 F11 退出全屏</value>
+  </data>
+  <data name="PresentationHint" xml:space="preserve">
+    <value>按 Esc 结束演示</value>
+  </data>
+  <data name="OpenInNewWindow" xml:space="preserve">
+    <value>在新窗口中打开</value>
+  </data>
+  <data name="RemoveFromList" xml:space="preserve">
+    <value>从列表中移除</value>
+  </data>
+  <data name="ClearRecentTitle" xml:space="preserve">
+    <value>清除最近打开的文档？</value>
+  </data>
+  <data name="ClearRecentMessage" xml:space="preserve">
+    <value>所有文档都将从列表中移除，但文件本身不会被删除。</value>
+  </data>
+  <data name="ClearButton" xml:space="preserve">
+    <value>清除</value>
+  </data>
+  <data name="UnsupportedFileTitle" xml:space="preserve">
+    <value>不支持的文件</value>
+  </data>
+  <data name="UnsupportedFileMessage" xml:space="preserve">
+    <value>只能打开 PDF 文档。</value>
+  </data>
+
+  <!-- Attachments -->
+  <data name="AttachmentBlockedTitle" xml:space="preserve">
+    <value>Recto 不会打开此附件</value>
+  </data>
+  <data name="AttachmentBlockedProgram" xml:space="preserve">
+    <value>“{0}”是程序、脚本或快捷方式，可能会危害你的计算机。你可以先将其保存并检查，然后再打开。</value>
+  </data>
+  <data name="AttachmentBlockedShortcut" xml:space="preserve">
+    <value>“{0}”是快捷方式，即使不打开也可能危害你的计算机。可以将其另存为“{1}”，这样 Windows 就会忽略它。</value>
+  </data>
+  <data name="AttachmentDocumentChanged" xml:space="preserve">
+    <value>文档在此期间已重新加载或关闭。请从它的附件中重试。</value>
+  </data>
+  <data name="AttachmentOpenFailedTitle" xml:space="preserve">
+    <value>无法打开附件</value>
+  </data>
+  <data name="AttachmentNotMarked" xml:space="preserve">
+    <value>Windows 无法将“{0}”标记为来自 Internet，因此 Recto 不会打开它。请改为保存。</value>
+  </data>
+  <data name="AttachmentLaunchFailed" xml:space="preserve">
+    <value>Windows 无法打开“{0}”。请改为保存。</value>
+  </data>
+  <data name="OpenAttachmentTitle" xml:space="preserve">
+    <value>打开附件？</value>
+  </data>
+  <data name="OpenAttachmentMessage" xml:space="preserve">
+    <value>“{0}”将用 Windows 为该类型文件使用的应用打开。附件可能包含有害内容，因此只有在你信任此文档的来源时才应打开。</value>
+  </data>
+  <data name="FileType" xml:space="preserve">
+    <value>文件</value>
+  </data>
+  <data name="FileTypeNamed" xml:space="preserve">
+    <value>{0} 文件</value>
+  </data>
+  <data name="AttachmentSaveFailedTitle" xml:space="preserve">
+    <value>无法保存附件</value>
+  </data>
+  <data name="AttachmentUnmarkedTitle" xml:space="preserve">
+    <value>附件已保存，但没有安全标记</value>
+  </data>
+  <data name="AttachmentUnmarkedMessage" xml:space="preserve">
+    <value>此位置无法记录“{0}”来自 Internet，因此 Windows 在它被打开时不会警告你。</value>
+  </data>
+  <data name="AttachmentName" xml:space="preserve">
+    <value>附件 {0}</value>
+  </data>
+
+  <!-- Drawing and text tools -->
+  <data name="ColorBlack" xml:space="preserve">
+    <value>黑色</value>
+  </data>
+  <data name="ColorRed" xml:space="preserve">
+    <value>红色</value>
+  </data>
+  <data name="ColorOrange" xml:space="preserve">
+    <value>橙色</value>
+  </data>
+  <data name="ColorGreen" xml:space="preserve">
+    <value>绿色</value>
+  </data>
+  <data name="ColorBlue" xml:space="preserve">
+    <value>蓝色</value>
+  </data>
+  <data name="ColorPurple" xml:space="preserve">
+    <value>紫色</value>
+  </data>
+  <data name="ColorYellow" xml:space="preserve">
+    <value>黄色</value>
+  </data>
+  <data name="ColorPink" xml:space="preserve">
+    <value>粉色</value>
+  </data>
+
+  <!-- Recent documents and sidebar lists -->
+  <data name="JustNow" xml:space="preserve">
+    <value>刚刚</value>
+  </data>
+  <data name="MinutesAgo" xml:space="preserve">
+    <value>{0} 分钟前</value>
+  </data>
+  <data name="TodayAt" xml:space="preserve">
+    <value>今天 {0}</value>
+  </data>
+  <data name="Yesterday" xml:space="preserve">
+    <value>昨天</value>
+  </data>
+  <data name="DaysAgo" xml:space="preserve">
+    <value>{0} 天前</value>
+  </data>
+  <data name="SizeBytes_One" xml:space="preserve">
+    <value>{0:N0} 字节</value>
+  </data>
+  <data name="SizeBytes_Other" xml:space="preserve">
+    <value>{0:N0} 字节</value>
+  </data>
+  <data name="SizeKB" xml:space="preserve">
+    <value>{0:0.#} KB</value>
+  </data>
+  <data name="SizeMB" xml:space="preserve">
+    <value>{0:0.#} MB</value>
+  </data>
+  <data name="SizeGB" xml:space="preserve">
+    <value>{0:0.#} GB</value>
+  </data>
+
+  <!-- Document properties -->
+  <data name="PropertiesTitle" xml:space="preserve">
+    <value>属性</value>
+  </data>
+  <data name="PropertiesDocument" xml:space="preserve">
+    <value>文档</value>
+  </data>
+  <data name="PropertiesFile" xml:space="preserve">
+    <value>文件</value>
+  </data>
+  <data name="PropertiesTitleField" xml:space="preserve">
+    <value>标题</value>
+  </data>
+  <data name="PropertiesAuthor" xml:space="preserve">
+    <value>作者</value>
+  </data>
+  <data name="PropertiesSubject" xml:space="preserve">
+    <value>主题</value>
+  </data>
+  <data name="PropertiesKeywords" xml:space="preserve">
+    <value>关键字</value>
+  </data>
+  <data name="PropertiesCreator" xml:space="preserve">
+    <value>创建程序</value>
+  </data>
+  <data name="PropertiesProducer" xml:space="preserve">
+    <value>生成程序</value>
+  </data>
+  <data name="PropertiesCreated" xml:space="preserve">
+    <value>创建时间</value>
+  </data>
+  <data name="PropertiesModified" xml:space="preserve">
+    <value>修改时间</value>
+  </data>
+  <data name="PropertiesLocation" xml:space="preserve">
+    <value>位置</value>
+  </data>
+  <data name="PropertiesSize" xml:space="preserve">
+    <value>大小</value>
+  </data>
+  <data name="PropertiesFormat" xml:space="preserve">
+    <value>格式</value>
+  </data>
+  <data name="PropertiesPages" xml:space="preserve">
+    <value>页数</value>
+  </data>
+  <data name="PropertiesPageSize" xml:space="preserve">
+    <value>页面大小</value>
+  </data>
+  <data name="PropertiesSecurity" xml:space="preserve">
+    <value>安全性</value>
+  </data>
+  <data name="PropertiesEncrypted" xml:space="preserve">
+    <value>已加密</value>
+  </data>
+  <data name="PropertiesNone" xml:space="preserve">
+    <value>无</value>
+  </data>
+  <data name="PropertiesNoInformation" xml:space="preserve">
+    <value>无可用信息</value>
+  </data>
+  <data name="PaperLetter" xml:space="preserve">
+    <value>Letter</value>
+  </data>
+  <data name="PaperLegal" xml:space="preserve">
+    <value>Legal</value>
+  </data>
+  <data name="PaperTabloid" xml:space="preserve">
+    <value>Tabloid</value>
+  </data>
+  <data name="PaperSizeNamed" xml:space="preserve">
+    <value>{0}（{1}）</value>
+  </data>
+  <data name="PaperSizeNamedLandscape" xml:space="preserve">
+    <value>{0}，横向（{1}）</value>
+  </data>
+
+  <!-- Keyboard shortcuts. Key names are what the keyboard shows; Ctrl, Alt and F-keys aren't translated. -->
+  <data name="ShortcutsTitle" xml:space="preserve">
+    <value>键盘快捷键</value>
+  </data>
+  <data name="ShortcutsDocuments" xml:space="preserve">
+    <value>文档</value>
+  </data>
+  <data name="ShortcutsNavigation" xml:space="preserve">
+    <value>导航</value>
+  </data>
+  <data name="ShortcutsSearch" xml:space="preserve">
+    <value>搜索和选择</value>
+  </data>
+  <data name="ShortcutsAnnotations" xml:space="preserve">
+    <value>批注</value>
+  </data>
+  <data name="ShortcutsView" xml:space="preserve">
+    <value>视图</value>
+  </data>
+  <data name="ShortcutOpen" xml:space="preserve">
+    <value>打开文档</value>
+  </data>
+  <data name="ShortcutNewWindow" xml:space="preserve">
+    <value>新建窗口</value>
+  </data>
+  <data name="ShortcutSaveCopy" xml:space="preserve">
+    <value>保存副本</value>
+  </data>
+  <data name="ShortcutPrint" xml:space="preserve">
+    <value>打印</value>
+  </data>
+  <data name="ShortcutSystemPrint" xml:space="preserve">
+    <value>使用系统对话框打印</value>
+  </data>
+  <data name="ShortcutReload" xml:space="preserve">
+    <value>重新加载</value>
+  </data>
+  <data name="ShortcutProperties" xml:space="preserve">
+    <value>属性</value>
+  </data>
+  <data name="ShortcutSettings" xml:space="preserve">
+    <value>设置</value>
+  </data>
+  <data name="ShortcutScroll" xml:space="preserve">
+    <value>滚动</value>
+  </data>
+  <data name="ShortcutScreen" xml:space="preserve">
+    <value>上一屏/下一屏；在单页和适合页面模式下翻页</value>
+  </data>
+  <data name="ShortcutPage" xml:space="preserve">
+    <value>上一页/下一页；页面比窗口宽时滚动</value>
+  </data>
+  <data name="ShortcutEnds" xml:space="preserve">
+    <value>文档开头/结尾</value>
+  </data>
+  <data name="ShortcutSidebar" xml:space="preserve">
+    <value>显示或隐藏侧边栏</value>
+  </data>
+  <data name="ShortcutSearch" xml:space="preserve">
+    <value>搜索</value>
+  </data>
+  <data name="ShortcutNextResult" xml:space="preserve">
+    <value>下一个结果</value>
+  </data>
+  <data name="ShortcutPreviousResult" xml:space="preserve">
+    <value>上一个结果</value>
+  </data>
+  <data name="ShortcutCopy" xml:space="preserve">
+    <value>复制所选文本</value>
+  </data>
+  <data name="ShortcutSelectAll" xml:space="preserve">
+    <value>全选</value>
+  </data>
+  <data name="ShortcutHighlight" xml:space="preserve">
+    <value>高亮所选内容</value>
+  </data>
+  <data name="ShortcutTools" xml:space="preserve">
+    <value>显示或隐藏绘图和文字工具</value>
+  </data>
+  <data name="ShortcutLeaveTool" xml:space="preserve">
+    <value>退出当前工具</value>
+  </data>
+  <data name="ShortcutDeleteDrawing" xml:space="preserve">
+    <value>删除所选的绘图或文本框</value>
+  </data>
+  <data name="ShortcutUndo" xml:space="preserve">
+    <value>撤销</value>
+  </data>
+  <data name="ShortcutRedo" xml:space="preserve">
+    <value>重做</value>
+  </data>
+  <data name="ShortcutZoomInOut" xml:space="preserve">
+    <value>放大/缩小</value>
+  </data>
+  <data name="ShortcutActualSize" xml:space="preserve">
+    <value>实际大小</value>
+  </data>
+  <data name="ShortcutZoom" xml:space="preserve">
+    <value>缩放</value>
+  </data>
+  <data name="ShortcutRotate" xml:space="preserve">
+    <value>旋转</value>
+  </data>
+  <data name="ShortcutInvert" xml:space="preserve">
+    <value>反转颜色</value>
+  </data>
+  <data name="ShortcutFullScreen" xml:space="preserve">
+    <value>全屏</value>
+  </data>
+  <data name="ShortcutPresent" xml:space="preserve">
+    <value>演示</value>
+  </data>
+  <data name="KeyShift" xml:space="preserve">
+    <value>Shift</value>
+  </data>
+  <data name="KeyEnter" xml:space="preserve">
+    <value>Enter</value>
+  </data>
+  <data name="KeyEsc" xml:space="preserve">
+    <value>Esc</value>
+  </data>
+  <data name="KeyDelete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="KeySpace" xml:space="preserve">
+    <value>空格键</value>
+  </data>
+  <data name="KeyUp" xml:space="preserve">
+    <value>向上键</value>
+  </data>
+  <data name="KeyDown" xml:space="preserve">
+    <value>向下键</value>
+  </data>
+  <data name="KeyLeft" xml:space="preserve">
+    <value>向左键</value>
+  </data>
+  <data name="KeyRight" xml:space="preserve">
+    <value>向右键</value>
+  </data>
+  <data name="KeyHome" xml:space="preserve">
+    <value>Home</value>
+  </data>
+  <data name="KeyEnd" xml:space="preserve">
+    <value>End</value>
+  </data>
+  <data name="KeyPgUp" xml:space="preserve">
+    <value>PgUp</value>
+  </data>
+  <data name="KeyPgDn" xml:space="preserve">
+    <value>PgDn</value>
+  </data>
+  <data name="KeyPlus" xml:space="preserve">
+    <value>加号</value>
+  </data>
+  <data name="KeyMinus" xml:space="preserve">
+    <value>减号</value>
+  </data>
+  <data name="KeyWheel" xml:space="preserve">
+    <value>滚轮</value>
+  </data>
+
+  <!-- About -->
+  <data name="AboutDescription" xml:space="preserve">
+    <value>一款简洁的 Windows 文档查看器，灵感来自 GNOME Papers。PDF 渲染由 PDFium 提供。</value>
+  </data>
+
+  <!-- Document view -->
+  <data name="DocumentName" xml:space="preserve">
+    <value>文档</value>
+  </data>
+  <data name="DocumentPageName" xml:space="preserve">
+    <value>文档，第 {0} 页（{1}/{2}）</value>
+  </data>
+  <data name="LinkCantOpen" xml:space="preserve">
+    <value>无法打开此链接</value>
+  </data>
+  <data name="GoToPage" xml:space="preserve">
+    <value>转到第 {0} 页</value>
+  </data>
+  <data name="Copy" xml:space="preserve">
+    <value>复制</value>
+  </data>
+  <data name="CopyTooltip" xml:space="preserve">
+    <value>复制（Ctrl+C）</value>
+  </data>
+  <data name="Highlight" xml:space="preserve">
+    <value>高亮</value>
+  </data>
+  <data name="HighlightTooltip" xml:space="preserve">
+    <value>高亮（Ctrl+H）</value>
+  </data>
+  <data name="AddNote" xml:space="preserve">
+    <value>添加便笺</value>
+  </data>
+  <data name="AddNoteTooltip" xml:space="preserve">
+    <value>高亮并添加便笺</value>
+  </data>
+  <data name="HighlightYellow" xml:space="preserve">
+    <value>黄色高亮</value>
+  </data>
+  <data name="HighlightGreen" xml:space="preserve">
+    <value>绿色高亮</value>
+  </data>
+  <data name="HighlightBlue" xml:space="preserve">
+    <value>蓝色高亮</value>
+  </data>
+  <data name="HighlightPink" xml:space="preserve">
+    <value>粉色高亮</value>
+  </data>
+  <data name="HighlightPurple" xml:space="preserve">
+    <value>紫色高亮</value>
+  </data>
+  <data name="SearchForSelection" xml:space="preserve">
+    <value>搜索所选内容</value>
+  </data>
+  <data name="OpenLink" xml:space="preserve">
+    <value>打开链接</value>
+  </data>
+  <data name="CopyLinkAddress" xml:space="preserve">
+    <value>复制链接地址</value>
+  </data>
+  <data name="EditText" xml:space="preserve">
+    <value>编辑文本</value>
+  </data>
+  <data name="EditNote" xml:space="preserve">
+    <value>编辑便笺</value>
+  </data>
+  <data name="DeleteAnnotation" xml:space="preserve">
+    <value>删除批注</value>
+  </data>
+  <data name="AddNoteHere" xml:space="preserve">
+    <value>在此处添加便笺</value>
+  </data>
+  <data name="AddTextHere" xml:space="preserve">
+    <value>在此处添加文本</value>
+  </data>
+  <data name="SelectAll" xml:space="preserve">
+    <value>全选</value>
+  </data>
+  <data name="RotateLeft" xml:space="preserve">
+    <value>向左旋转</value>
+  </data>
+  <data name="RotateRight" xml:space="preserve">
+    <value>向右旋转</value>
+  </data>
+  <data name="NotePlaceholder" xml:space="preserve">
+    <value>添加便笺</value>
+  </data>
+  <data name="TextBox" xml:space="preserve">
+    <value>文本框</value>
+  </data>
+  <data name="KindNote" xml:space="preserve">
+    <value>便笺</value>
+  </data>
+  <data name="KindHighlight" xml:space="preserve">
+    <value>高亮</value>
+  </data>
+  <data name="KindUnderline" xml:space="preserve">
+    <value>下划线</value>
+  </data>
+  <data name="KindStrikeOut" xml:space="preserve">
+    <value>删除线</value>
+  </data>
+  <data name="KindSquiggly" xml:space="preserve">
+    <value>波浪下划线</value>
+  </data>
+  <data name="KindFreeText" xml:space="preserve">
+    <value>文本框</value>
+  </data>
+  <data name="KindShape" xml:space="preserve">
+    <value>形状</value>
+  </data>
+  <data name="KindInk" xml:space="preserve">
+    <value>绘图</value>
+  </data>
+  <data name="KindStamp" xml:space="preserve">
+    <value>图章</value>
+  </data>
+  <data name="KindAttachment" xml:space="preserve">
+    <value>附件</value>
+  </data>
+  <data name="KindOther" xml:space="preserve">
+    <value>批注</value>
+  </data>
+  <data name="DrawingAddFailed" xml:space="preserve">
+    <value>无法添加绘图。</value>
+  </data>
+  <data name="DrawingEraseFailed" xml:space="preserve">
+    <value>无法擦除绘图。</value>
+  </data>
+  <data name="AnnotationChangeFailed" xml:space="preserve">
+    <value>无法更改批注。</value>
+  </data>
+  <data name="TextBoxSaveFailed" xml:space="preserve">
+    <value>无法保存文本框。</value>
+  </data>
+  <data name="HighlightFailed" xml:space="preserve">
+    <value>无法高亮文本。</value>
+  </data>
+  <data name="NoteAddFailed" xml:space="preserve">
+    <value>无法添加便笺。</value>
+  </data>
+  <data name="AnnotationDeleteFailed" xml:space="preserve">
+    <value>无法删除批注。</value>
+  </data>
+  <data name="NoteChangeFailed" xml:space="preserve">
+    <value>无法更改便笺。</value>
+  </data>
+  <data name="UndoFailed" xml:space="preserve">
+    <value>无法撤销更改。</value>
+  </data>
+  <data name="RedoFailed" xml:space="preserve">
+    <value>无法重做更改。</value>
+  </data>
+
+  <!-- Print dialog -->
+  <data name="PrintAllPages" xml:space="preserve">
+    <value>所有页面</value>
+  </data>
+  <data name="PageCount_One" xml:space="preserve">
+    <value>{0:N0} 页</value>
+  </data>
+  <data name="PageCount_Other" xml:space="preserve">
+    <value>{0:N0} 页</value>
+  </data>
+  <data name="PrintCurrentPage" xml:space="preserve">
+    <value>当前页</value>
+  </data>
+  <data name="PrintCustomRange" xml:space="preserve">
+    <value>自定义</value>
+  </data>
+  <data name="PrintCustomRangeDetail" xml:space="preserve">
+    <value>选择要打印的页面</value>
+  </data>
+  <data name="OrientationAutomatic" xml:space="preserve">
+    <value>自动</value>
+  </data>
+  <data name="OrientationPortrait" xml:space="preserve">
+    <value>纵向</value>
+  </data>
+  <data name="OrientationLandscape" xml:space="preserve">
+    <value>横向</value>
+  </data>
+  <data name="PrintColor" xml:space="preserve">
+    <value>彩色</value>
+  </data>
+  <data name="PrintBlackAndWhite" xml:space="preserve">
+    <value>黑白</value>
+  </data>
+  <data name="DuplexOff" xml:space="preserve">
+    <value>关</value>
+  </data>
+  <data name="DuplexLongEdge" xml:space="preserve">
+    <value>沿长边翻转</value>
+  </data>
+  <data name="DuplexShortEdge" xml:space="preserve">
+    <value>沿短边翻转</value>
+  </data>
+  <data name="ScaleFit" xml:space="preserve">
+    <value>适合可打印区域</value>
+  </data>
+  <data name="ScaleShrink" xml:space="preserve">
+    <value>缩小超大页面</value>
+  </data>
+  <data name="ScaleActual" xml:space="preserve">
+    <value>实际大小</value>
+  </data>
+  <data name="ScaleCustom" xml:space="preserve">
+    <value>自定义</value>
+  </data>
+  <data name="SubsetAll" xml:space="preserve">
+    <value>范围内的所有页面</value>
+  </data>
+  <data name="SubsetOdd" xml:space="preserve">
+    <value>仅奇数页</value>
+  </data>
+  <data name="SubsetEven" xml:space="preserve">
+    <value>仅偶数页</value>
+  </data>
+  <data name="NoPrinters" xml:space="preserve">
+    <value>没有打印机</value>
+  </data>
+  <data name="NoPrintersHint" xml:space="preserve">
+    <value>请在 Windows 设置中添加打印机，或使用系统对话框。</value>
+  </data>
+  <data name="PrinterConnecting" xml:space="preserve">
+    <value>正在连接…</value>
+  </data>
+  <data name="PrinterUnavailable" xml:space="preserve">
+    <value>不可用。{0}</value>
+  </data>
+  <data name="PrinterDefault" xml:space="preserve">
+    <value>默认</value>
+  </data>
+  <data name="PrinterPropertiesFailed" xml:space="preserve">
+    <value>无法打开打印机的设置。{0}</value>
+  </data>
+  <data name="NoEvenPages" xml:space="preserve">
+    <value>没有可打印的偶数页。</value>
+  </data>
+  <data name="NoOddPages" xml:space="preserve">
+    <value>没有可打印的奇数页。</value>
+  </data>
+  <data name="EnterPages" xml:space="preserve">
+    <value>请输入要打印的页面。</value>
+  </data>
+  <data name="NothingToPrint" xml:space="preserve">
+    <value>无可打印内容</value>
+  </data>
+  <data name="NothingToPrintSentence" xml:space="preserve">
+    <value>无可打印内容。</value>
+  </data>
+  <data name="SheetsOfPaper_One" xml:space="preserve">
+    <value>{0:N0} 张纸</value>
+  </data>
+  <data name="SheetsOfPaper_Other" xml:space="preserve">
+    <value>{0:N0} 张纸</value>
+  </data>
+  <data name="SheetPosition" xml:space="preserve">
+    <value>{0:N0}/{1:N0}</value>
+  </data>
+  <data name="PrintPreparing" xml:space="preserve">
+    <value>正在准备…</value>
+  </data>
+  <data name="PrintSending" xml:space="preserve">
+    <value>正在发送第 {0:N0} 张纸，共 {1:N0} 张…</value>
+  </data>
+  <data name="PrintDocumentClosed" xml:space="preserve">
+    <value>文档已关闭。</value>
+  </data>
+  <data name="PrintCancelling" xml:space="preserve">
+    <value>正在取消…</value>
+  </data>
+  <data name="PagesLeftOut_One" xml:space="preserve">
+    <value>有一页无法打印，已被跳过。</value>
+  </data>
+  <data name="PagesLeftOut_Other" xml:space="preserve">
+    <value>{0:N0} 页无法打印，已被跳过。</value>
+  </data>
+  <data name="RangeNotRange" xml:space="preserve">
+    <value>“{0}”不是页面范围。</value>
+  </data>
+  <data name="RangeTooMany" xml:space="preserve">
+    <value>页数过多。</value>
+  </data>
+  <data name="RangeEmpty" xml:space="preserve">
+    <value>请输入要打印的页面，例如 1-5、8。</value>
+  </data>
+  <data name="RangeNotNumber" xml:space="preserve">
+    <value>“{0}”不是页码。</value>
+  </data>
+  <data name="RangeOnlyOnePage" xml:space="preserve">
+    <value>文档只有一页。</value>
+  </data>
+  <data name="RangeNoSuchPage" xml:space="preserve">
+    <value>没有第 {0} 页。文档共有 {1:N0} 页。</value>
+  </data>
+
+  <!-- Printer status, from Windows' print queue -->
+  <data name="PrinterOffline" xml:space="preserve">
+    <value>脱机</value>
+  </data>
+  <data name="PrinterNotAvailable" xml:space="preserve">
+    <value>不可用</value>
+  </data>
+  <data name="PrinterPaused" xml:space="preserve">
+    <value>已暂停</value>
+  </data>
+  <data name="PrinterPaperJam" xml:space="preserve">
+    <value>卡纸</value>
+  </data>
+  <data name="PrinterOutOfPaper" xml:space="preserve">
+    <value>缺纸</value>
+  </data>
+  <data name="PrinterPaperProblem" xml:space="preserve">
+    <value>纸张问题</value>
+  </data>
+  <data name="PrinterNoToner" xml:space="preserve">
+    <value>碳粉或墨水用尽</value>
+  </data>
+  <data name="PrinterDoorOpen" xml:space="preserve">
+    <value>机盖已打开</value>
+  </data>
+  <data name="PrinterNeedsAttention" xml:space="preserve">
+    <value>需要处理</value>
+  </data>
+  <data name="PrinterError" xml:space="preserve">
+    <value>错误</value>
+  </data>
+  <data name="PrinterReady" xml:space="preserve">
+    <value>就绪</value>
+  </data>
+  <data name="PrinterTonerLow" xml:space="preserve">
+    <value>就绪，碳粉或墨水不足</value>
+  </data>
+  <data name="DocumentsWaiting_One" xml:space="preserve">
+    <value>{0:N0} 个文档正在等待</value>
+  </data>
+  <data name="DocumentsWaiting_Other" xml:space="preserve">
+    <value>{0:N0} 个文档正在等待</value>
+  </data>
+  <data name="PrinterSettingsIncomplete" xml:space="preserve">
+    <value>打印机设置不完整。</value>
+  </data>
+  <data name="PrinterOpenFailed" xml:space="preserve">
+    <value>无法打开“{0}”。{1}</value>
+  </data>
+  <data name="PrinterStoppedAccepting" xml:space="preserve">
+    <value>打印机已停止接收页面。</value>
+  </data>
+  <data name="PrinterCouldntFinish" xml:space="preserve">
+    <value>打印机无法完成此文档。</value>
+  </data>
+  <data name="PrinterRejectedDocument" xml:space="preserve">
+    <value>打印机未接受该文档。{0}</value>
+  </data>
+  <data name="PrinterRejectedPage" xml:space="preserve">
+    <value>打印机未接受该页面。</value>
+  </data>
+  <data name="NoPagesToPrint" xml:space="preserve">
+    <value>文档没有可打印的页面。</value>
+  </data>
+  <data name="PrintPageNoMemory" xml:space="preserve">
+    <value>内存不足，无法打印该页面。</value>
+  </data>
+
+  <!-- Errors from reading and changing PDF files -->
+  <data name="PdfIncorrectPassword" xml:space="preserve">
+    <value>密码不正确</value>
+  </data>
+  <data name="PdfPasswordRequired" xml:space="preserve">
+    <value>需要密码</value>
+  </data>
+  <data name="PdfTooLarge" xml:space="preserve">
+    <value>文件太大，无法打开。Recto 可打开最大 {0} GB 的文档。</value>
+  </data>
+  <data name="PdfOpenNoMemory" xml:space="preserve">
+    <value>内存不足，无法打开该文件。</value>
+  </data>
+  <data name="PdfChangedWhileReading" xml:space="preserve">
+    <value>文件在读取过程中发生了更改。</value>
+  </data>
+  <data name="PdfNotFound" xml:space="preserve">
+    <value>找不到或无法打开该文件。</value>
+  </data>
+  <data name="PdfDamaged" xml:space="preserve">
+    <value>该文件不是 PDF 文档，或者已损坏。</value>
+  </data>
+  <data name="PdfUnsupportedSecurity" xml:space="preserve">
+    <value>文档使用了不受支持的安全方案。</value>
+  </data>
+  <data name="PdfLoadFailed" xml:space="preserve">
+    <value>无法加载该文档。</value>
+  </data>
+  <data name="PdfNoPages" xml:space="preserve">
+    <value>文档没有页面。</value>
+  </data>
+  <data name="PdfPageLoadFailed" xml:space="preserve">
+    <value>无法加载第 {0} 页。</value>
+  </data>
+  <data name="PdfAnnotationCreateFailed" xml:space="preserve">
+    <value>无法创建批注。</value>
+  </data>
+  <data name="PdfAnnotationReadFailed" xml:space="preserve">
+    <value>无法重新读取该批注。</value>
+  </data>
+  <data name="PdfHighlightCreateFailed" xml:space="preserve">
+    <value>无法创建高亮。</value>
+  </data>
+  <data name="PdfNoteCreateFailed" xml:space="preserve">
+    <value>无法创建便笺。</value>
+  </data>
+  <data name="PdfAnnotationRestoreFailed" xml:space="preserve">
+    <value>无法恢复该批注。</value>
+  </data>
+  <data name="PdfAttachmentNotFound" xml:space="preserve">
+    <value>在文档中找不到该附件。</value>
+  </data>
+  <data name="PdfAttachmentReadFailed" xml:space="preserve">
+    <value>无法从文档中读取该附件。</value>
+  </data>
+  <data name="PdfAttachmentTooLarge" xml:space="preserve">
+    <value>附件太大，无法提取。Recto 可提取最大 2 GB 的文件。</value>
+  </data>
+  <data name="PdfAttachmentNoMemory" xml:space="preserve">
+    <value>内存不足，无法提取该附件。</value>
+  </data>
+  <data name="PdfSaveFailed" xml:space="preserve">
+    <value>无法保存该文档。</value>
+  </data>
+  <data name="PdfTextLayoutFailed" xml:space="preserve">
+    <value>无法排版文本。</value>
+  </data>
+</root>

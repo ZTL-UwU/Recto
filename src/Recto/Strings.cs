@@ -10,13 +10,13 @@ namespace Recto;
 internal static class Strings
 {
     private static Func<string, string?>? _lookup;
-    private static bool? _frenchPlurals;
+    private static string? _pluralRule;
 
     /// <summary>Where the text comes from: the app's resources, or the tests' copy of the English ones.</summary>
     public static void SetSource(Func<string, string?> lookup)
     {
         _lookup = lookup;
-        _frenchPlurals = null;
+        _pluralRule = null;
     }
 
     /// <summary>The text for <paramref name="key"/>, or the key itself if there's none, which a test catches.</summary>
@@ -27,13 +27,14 @@ internal static class Strings
 
     /// <summary>
     /// The text for a count: <paramref name="key"/>_One or _Other, chosen by the language's rule, with {0} as the
-    /// number. English says "1 page" but "0 pages"; French says "0 page" and "1 page".
+    /// number. English says "1 page" but "0 pages"; French says "0 page" and "1 page". Chinese has no plurals,
+    /// so its two forms read the same.
     /// </summary>
     public static string Count(string key, long count, params object?[] args)
     {
         // Each language file names its rule, so this follows whichever one Windows picked.
-        _frenchPlurals ??= Get("PluralRule") == "fr";
-        bool one = _frenchPlurals.Value ? count is 0 or 1 : count == 1;
+        _pluralRule ??= Get("PluralRule");
+        bool one = _pluralRule == "fr" ? count is 0 or 1 : count == 1;
         return string.Format(CultureInfo.CurrentCulture, Get(key + (one ? "_One" : "_Other")), [count, .. args]);
     }
 }
