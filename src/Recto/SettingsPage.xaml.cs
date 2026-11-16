@@ -68,9 +68,9 @@ public sealed partial class SettingsPage : UserControl
         AppState.Save();
     }
 
-    /// <summary>Says when the language chosen isn't the one Recto started in, which it switches to only when it restarts.</summary>
+    /// <summary>Says when the language chosen isn't the one showing, which Recto switches to only when it restarts.</summary>
     private void UpdateLanguageRestart() =>
-        LanguageRestartBar.IsOpen = LanguageBox.SelectedIndex >= 0 && LanguageChoices[LanguageBox.SelectedIndex].Tag != Languages.StartupChoice;
+        LanguageRestartBar.IsOpen = LanguageBox.SelectedIndex >= 0 && Languages.NeedsRestart(LanguageChoices[LanguageBox.SelectedIndex].Tag);
 
     private async void OnRestart(object sender, RoutedEventArgs e) => await App.RestartAsync();
 

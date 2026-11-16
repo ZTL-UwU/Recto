@@ -202,34 +202,35 @@ internal static class Dialogs
 
     public static async Task ShowShortcutsAsync(XamlRoot root)
     {
+        // Looked up here, not when shown, so LocalizationTests can check that each key exists.
         (string Group, (string Keys, string Action)[] Items)[] groups =
         [
-            ("ShortcutsDocuments", [
-                ("Ctrl+O", "ShortcutOpen"), ("Ctrl+N", "ShortcutNewWindow"), ("Ctrl+S", "ShortcutSaveCopy"),
-                ("Ctrl+P", "ShortcutPrint"), ("Ctrl+Shift+P", "ShortcutSystemPrint"), ("Ctrl+R", "ShortcutReload"),
-                ("Alt+Enter", "ShortcutProperties"), ("Ctrl+W", AppState.Preferences.RememberRecent ? "CloseDocument" : "CloseWindow"),
-                ("Ctrl+,", "ShortcutSettings"),
+            (Strings.Get("ShortcutsDocuments"), [
+                ("Ctrl+O", Strings.Get("ShortcutOpen")), ("Ctrl+N", Strings.Get("ShortcutNewWindow")), ("Ctrl+S", Strings.Get("ShortcutSaveCopy")),
+                ("Ctrl+P", Strings.Get("ShortcutPrint")), ("Ctrl+Shift+P", Strings.Get("ShortcutSystemPrint")), ("Ctrl+R", Strings.Get("ShortcutReload")),
+                ("Alt+Enter", Strings.Get("ShortcutProperties")), ("Ctrl+W", Strings.Get(AppState.Preferences.RememberRecent ? "CloseDocument" : "CloseWindow")),
+                ("Ctrl+,", Strings.Get("ShortcutSettings")),
             ]),
-            ("ShortcutsNavigation", [
-                ("Up / Down", "ShortcutScroll"),
-                ("PgUp / PgDn", "ShortcutScreen"),
-                ("Shift+Space / Space", "ShortcutScreen"),
-                ("Left / Right", "ShortcutPage"),
-                ("Home / End", "ShortcutEnds"),
-                ("Ctrl+B / F9", "ShortcutSidebar"),
+            (Strings.Get("ShortcutsNavigation"), [
+                ("Up / Down", Strings.Get("ShortcutScroll")),
+                ("PgUp / PgDn", Strings.Get("ShortcutScreen")),
+                ("Shift+Space / Space", Strings.Get("ShortcutScreen")),
+                ("Left / Right", Strings.Get("ShortcutPage")),
+                ("Home / End", Strings.Get("ShortcutEnds")),
+                ("Ctrl+B / F9", Strings.Get("ShortcutSidebar")),
             ]),
-            ("ShortcutsSearch", [
-                ("Ctrl+F", "ShortcutSearch"), ("F3 / Enter", "ShortcutNextResult"), ("Shift+F3 / Shift+Enter", "ShortcutPreviousResult"),
-                ("Ctrl+C", "ShortcutCopy"), ("Ctrl+A", "ShortcutSelectAll"),
+            (Strings.Get("ShortcutsSearch"), [
+                ("Ctrl+F", Strings.Get("ShortcutSearch")), ("F3 / Enter", Strings.Get("ShortcutNextResult")), ("Shift+F3 / Shift+Enter", Strings.Get("ShortcutPreviousResult")),
+                ("Ctrl+C", Strings.Get("ShortcutCopy")), ("Ctrl+A", Strings.Get("ShortcutSelectAll")),
             ]),
-            ("ShortcutsAnnotations", [
-                ("Ctrl+H", "ShortcutHighlight"), ("Ctrl+Shift+A", "ShortcutTools"),
-                ("Esc", "ShortcutLeaveTool"), ("Delete", "ShortcutDeleteDrawing"),
-                ("Ctrl+Z", "ShortcutUndo"), ("Ctrl+Y / Ctrl+Shift+Z", "ShortcutRedo"),
+            (Strings.Get("ShortcutsAnnotations"), [
+                ("Ctrl+H", Strings.Get("ShortcutHighlight")), ("Ctrl+Shift+A", Strings.Get("ShortcutTools")),
+                ("Esc", Strings.Get("ShortcutLeaveTool")), ("Delete", Strings.Get("ShortcutDeleteDrawing")),
+                ("Ctrl+Z", Strings.Get("ShortcutUndo")), ("Ctrl+Y / Ctrl+Shift+Z", Strings.Get("ShortcutRedo")),
             ]),
-            ("ShortcutsView", [
-                ("Ctrl+Plus / Ctrl+Minus", "ShortcutZoomInOut"), ("Ctrl+0", "ShortcutActualSize"), ("Ctrl+Wheel", "ShortcutZoom"),
-                ("Ctrl+Left / Ctrl+Right", "ShortcutRotate"), ("Ctrl+I", "ShortcutInvert"), ("F11", "ShortcutFullScreen"), ("F5", "ShortcutPresent"),
+            (Strings.Get("ShortcutsView"), [
+                ("Ctrl+Plus / Ctrl+Minus", Strings.Get("ShortcutZoomInOut")), ("Ctrl+0", Strings.Get("ShortcutActualSize")), ("Ctrl+Wheel", Strings.Get("ShortcutZoom")),
+                ("Ctrl+Left / Ctrl+Right", Strings.Get("ShortcutRotate")), ("Ctrl+I", Strings.Get("ShortcutInvert")), ("F11", Strings.Get("ShortcutFullScreen")), ("F5", Strings.Get("ShortcutPresent")),
             ]),
         ];
 
@@ -237,14 +238,14 @@ internal static class Dialogs
         foreach (var (group, items) in groups)
         {
             var section = new StackPanel { Spacing = 8 };
-            section.Children.Add(new TextBlock { Text = Strings.Get(group), Style = AppStyle("BodyStrongTextBlockStyle") });
+            section.Children.Add(new TextBlock { Text = group, Style = AppStyle("BodyStrongTextBlockStyle") });
             var grid = new Grid { ColumnSpacing = 24, RowSpacing = 8 };
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             for (int i = 0; i < items.Length; i++)
             {
                 grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-                var action = new TextBlock { Text = Strings.Get(items[i].Action), TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center };
+                var action = new TextBlock { Text = items[i].Action, TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center };
                 var keys = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4, HorizontalAlignment = HorizontalAlignment.Right };
                 var alternatives = items[i].Keys.Split(" / ");
                 for (int alt = 0; alt < alternatives.Length; alt++)

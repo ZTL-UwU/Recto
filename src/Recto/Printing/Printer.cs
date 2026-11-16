@@ -305,15 +305,16 @@ internal static unsafe partial class Printers
     private static (string Text, bool Problem) DescribeStatus(uint status, uint attributes, uint jobs)
     {
         const uint PRINTER_ATTRIBUTE_WORK_OFFLINE = 0x400;
-        (uint Flag, string Key)[] problems =
+        (uint Flag, string Text)[] problems =
         [
-            (0x80, "PrinterOffline"), (0x1000, "PrinterNotAvailable"), (0x1, "PrinterPaused"), (0x8, "PrinterPaperJam"), (0x10, "PrinterOutOfPaper"),
-            (0x40, "PrinterPaperProblem"), (0x40000, "PrinterNoToner"), (0x400000, "PrinterDoorOpen"), (0x100000, "PrinterNeedsAttention"),
-            (0x2, "PrinterError"),
+            (0x80, Strings.Get("PrinterOffline")), (0x1000, Strings.Get("PrinterNotAvailable")), (0x1, Strings.Get("PrinterPaused")),
+            (0x8, Strings.Get("PrinterPaperJam")), (0x10, Strings.Get("PrinterOutOfPaper")), (0x40, Strings.Get("PrinterPaperProblem")),
+            (0x40000, Strings.Get("PrinterNoToner")), (0x400000, Strings.Get("PrinterDoorOpen")), (0x100000, Strings.Get("PrinterNeedsAttention")),
+            (0x2, Strings.Get("PrinterError")),
         ];
-        string? problem = (attributes & PRINTER_ATTRIBUTE_WORK_OFFLINE) != 0 ? "PrinterOffline" : null;
-        problem ??= problems.FirstOrDefault(p => (status & p.Flag) != 0).Key;
-        string text = Strings.Get(problem ?? ((status & 0x20000) != 0 ? "PrinterTonerLow" : "PrinterReady"));
+        string? problem = (attributes & PRINTER_ATTRIBUTE_WORK_OFFLINE) != 0 ? Strings.Get("PrinterOffline") : null;
+        problem ??= problems.FirstOrDefault(p => (status & p.Flag) != 0).Text;
+        string text = problem ?? Strings.Get((status & 0x20000) != 0 ? "PrinterTonerLow" : "PrinterReady");
         if (jobs > 0) text += " · " + Strings.Count("DocumentsWaiting", jobs);
         return (text, problem is not null);
     }

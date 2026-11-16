@@ -93,6 +93,8 @@ public sealed partial class LocalizationTests
             foreach (Match call in StringsCall().Matches(code))
             {
                 string argument = FirstArgument(code, call.Index + call.Length);
+                // A key kept in a variable or a table can't be checked here, so the code names each one in the call.
+                if (!argument.Contains('"')) missing.Add($"{Path.GetFileName(file)}: Strings.{call.Groups[1].Value}({argument}) names no key");
                 // Literals that are joined to something else ("Color" + name) are prefixes, not keys.
                 foreach (Match literal in KeyLiteral().Matches(argument))
                 {

@@ -429,6 +429,11 @@
     <value>zh</value>
   </data>
 
+  <!-- The tag of this language in Languages.Available, so Settings knows which one is showing -->
+  <data name="LanguageTag" xml:space="preserve">
+    <value>zh-CN</value>
+  </data>
+
   <!-- Settings -->
   <data name="LanguageCard.Header" xml:space="preserve">
     <value>语言</value>

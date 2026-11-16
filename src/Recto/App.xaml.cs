@@ -36,14 +36,15 @@ public partial class App : Application
             _ = Task.Run(() => AttachmentFiles.Purge(TimeSpan.FromDays(1)));
             SingleInstance.Listen(paths => dispatcher.TryEnqueue(() => OpenFiles(paths)));
         }
-        OpenFiles(Program.StartupFiles);
+        OpenFiles(Program.StartupFiles, adoptAttachments: Program.IsRestart);
     }
 
     /// <summary>
     /// Opens each file in the window that already shows it, an idle start page, or a new window.
-    /// With no files, opens a new window.
+    /// With no files, opens a new window. <paramref name="adoptAttachments"/> is for a restart, whose
+    /// windows take over the folders of the attachments they show from the windows that closed.
     /// </summary>
-    internal static void OpenFiles(IReadOnlyList<string> files)
+    internal static void OpenFiles(IReadOnlyList<string> files, bool adoptAttachments = false)
     {
         if (files.Count == 0)
         {
@@ -54,6 +55,7 @@ public partial class App : Application
         foreach (var path in files)
         {
             var window = OpenWindows.FirstOrDefault(w => w.IsShowing(path) || w.IsOpening(path)) ?? OpenWindows.FirstOrDefault(w => w.IsIdle) ?? new MainWindow();
+            if (adoptAttachments && AttachmentFiles.Contains(path) && Path.GetDirectoryName(path) is { } dir) window.AdoptAttachmentFolder(dir);
             window.BringToFront();
             _ = window.OpenAsync(path);
         }
@@ -71,17 +73,27 @@ public partial class App : Application
         _restarting = true;
         try
         {
-            foreach (var window in OpenWindows.ToList())
+            // A prompt only blocks its own window, so the others can be edited, or new ones opened, while it's up.
+            // So each window is asked again if it has been edited since, until none needs asking; the windows then
+            // close with no await in between. Windows closing once a print job is sent have already been asked.
+            var asked = new Dictionary<MainWindow, MainWindow.EditStamp>();
+            while (OpenWindows.FirstOrDefault(w => !w.IsClosing && (!asked.TryGetValue(w, out var stamp) || w.EditedSince(stamp))) is { } next)
             {
-                if (!await window.ConfirmDiscardChangesAsync()) return;
+                if (!await next.ConfirmDiscardChangesAsync()) return;
+                asked[next] = next.TakeEditStamp();
             }
             // The window restarted from last, so that it ends up in front.
-            var windows = OpenWindows.OrderBy(w => w == LastActiveWindow).ToList();
-            var files = windows.Select(w => w.DocumentPath).OfType<string>().Distinct(StringComparer.OrdinalIgnoreCase);
+            var windows = OpenWindows.Where(w => !w.IsClosing).OrderBy(w => w == LastActiveWindow).ToList();
+            var files = windows.Select(w => w.DocumentPath).OfType<string>().Distinct(StringComparer.OrdinalIgnoreCase).ToList();
             var start = new ProcessStartInfo(Environment.ProcessPath!) { UseShellExecute = false };
             start.ArgumentList.Add(Program.RestartAfter + Environment.ProcessId.ToString(CultureInfo.InvariantCulture));
             foreach (var file in files) start.ArgumentList.Add(file);
             Process.Start(start)?.Dispose();
+            // An attachment's copy would go with the window showing it, before the new process can open it.
+            foreach (var window in windows)
+            {
+                if (window.DocumentPath is { } path && AttachmentFiles.Contains(path)) window.HandOverAttachmentFolder(path);
+            }
             // The process ends with its last window: once a print job being sent has finished, if there is one.
             foreach (var window in windows) window.CloseNow();
         }

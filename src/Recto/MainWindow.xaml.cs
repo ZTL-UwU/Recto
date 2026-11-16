@@ -316,12 +316,12 @@ public sealed partial class MainWindow : Window
     }
 
     /// <summary>How far the document on screen, and what's being typed or drawn on it, had been edited at some point.</summary>
-    private readonly record struct EditStamp(PdfDocument? Document, int Edits, int Drafts);
+    internal readonly record struct EditStamp(PdfDocument? Document, int Edits, int Drafts);
 
-    private EditStamp TakeEditStamp() => new(_document, _document?.EditCount ?? 0, Viewer.DraftVersion);
+    internal EditStamp TakeEditStamp() => new(_document, _document?.EditCount ?? 0, Viewer.DraftVersion);
 
     /// <summary>Whether the document on screen has unsaved edits made since <paramref name="stamp"/>, which the user hasn't been asked about.</summary>
-    private bool EditedSince(EditStamp stamp) =>
+    internal bool EditedSince(EditStamp stamp) =>
         _document is not null && (_document.IsModified || Viewer.HasPendingEdits) && stamp != TakeEditStamp();
 
     /// <summary>
@@ -683,6 +683,9 @@ public sealed partial class MainWindow : Window
     /// <summary>The file this window shows, to open again after a restart.</summary>
     internal string? DocumentPath => _closeWhenPrinted ? null : _document?.FilePath;
 
+    /// <summary>Whether the window is out of sight, closing once a print job has been sent (see <see cref="CloseWhenPrinted"/>).</summary>
+    internal bool IsClosing => _closeWhenPrinted;
+
     /// <summary>Closes the window without asking about unsaved annotations: <see cref="ConfirmDiscardChangesAsync"/> already has.</summary>
     internal void CloseNow()
     {
@@ -800,6 +803,12 @@ public sealed partial class MainWindow : Window
 
     /// <summary>Takes over a folder of extracted attachments, deleting it when this window closes.</summary>
     internal void AdoptAttachmentFolder(string dir) => _attachmentFolders.Add(dir);
+
+    /// <summary>Leaves the folder holding <paramref name="path"/> when this window closes, for the restarted process to take over.</summary>
+    internal void HandOverAttachmentFolder(string path)
+    {
+        if (Path.GetDirectoryName(path) is { } dir) _attachmentFolders.RemoveAll(d => SamePath(d, dir));
+    }
 
     private void SaveWindowState()
     {

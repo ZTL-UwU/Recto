@@ -18,6 +18,15 @@ internal static class Languages
     /// </summary>
     public static string StartupChoice { get; private set; } = "";
 
+    /// <summary>The tag of the language Recto is showing, which Windows picked unless <see cref="StartupChoice"/> names one.</summary>
+    public static string Showing => Strings.Get("LanguageTag");
+
+    /// <summary>
+    /// Whether choosing <paramref name="tag"/> ("" to follow Windows) takes a restart to show. Which language
+    /// Windows would pick isn't known while another one is chosen, so going back to it is taken to need one.
+    /// </summary>
+    public static bool NeedsRestart(string tag) => tag.Length > 0 ? tag != Showing : StartupChoice.Length > 0;
+
     /// <summary>Applies the language chosen in Settings. Runs before any XAML loads, which reads its text once.</summary>
     public static void Initialize()
     {

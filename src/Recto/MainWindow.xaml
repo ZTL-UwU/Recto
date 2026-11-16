@@ -93,35 +93,16 @@
                                     </RadioMenuFlyoutItem.Icon>
                                 </RadioMenuFlyoutItem>
                                 <MenuFlyoutSeparator />
-                                <MenuFlyoutItem
-                                    Click="OnZoomPreset"
-                                    Tag="0.5"
-                                    Text="50%" />
-                                <MenuFlyoutItem
-                                    Click="OnZoomPreset"
-                                    Tag="0.75"
-                                    Text="75%" />
+                                <MenuFlyoutItem Click="OnZoomPreset" Tag="0.5" />
+                                <MenuFlyoutItem Click="OnZoomPreset" Tag="0.75" />
                                 <MenuFlyoutItem
                                     Click="OnZoomPreset"
                                     KeyboardAcceleratorTextOverride="Ctrl+0"
-                                    Tag="1"
-                                    Text="100%" />
-                                <MenuFlyoutItem
-                                    Click="OnZoomPreset"
-                                    Tag="1.25"
-                                    Text="125%" />
-                                <MenuFlyoutItem
-                                    Click="OnZoomPreset"
-                                    Tag="1.5"
-                                    Text="150%" />
-                                <MenuFlyoutItem
-                                    Click="OnZoomPreset"
-                                    Tag="2"
-                                    Text="200%" />
-                                <MenuFlyoutItem
-                                    Click="OnZoomPreset"
-                                    Tag="4"
-                                    Text="400%" />
+                                    Tag="1" />
+                                <MenuFlyoutItem Click="OnZoomPreset" Tag="1.25" />
+                                <MenuFlyoutItem Click="OnZoomPreset" Tag="1.5" />
+                                <MenuFlyoutItem Click="OnZoomPreset" Tag="2" />
+                                <MenuFlyoutItem Click="OnZoomPreset" Tag="4" />
                             </MenuFlyout>
                         </DropDownButton.Flyout>
                     </DropDownButton>

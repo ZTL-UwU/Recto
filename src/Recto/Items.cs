@@ -119,15 +119,21 @@ public sealed class AttachmentItem(PdfDocument document, PdfAttachment attachmen
 
     public static string FormatSize(long bytes)
     {
-        string[] units = ["SizeKB", "SizeMB", "SizeGB"];
         double value = bytes;
         int unit = 0;
-        while (value >= 1024 && unit < units.Length)
+        // Up to GB.
+        while (value >= 1024 && unit < 3)
         {
             value /= 1024;
             unit++;
         }
-        return unit == 0 ? Strings.Count("SizeBytes", bytes) : Strings.Format(units[unit - 1], value);
+        return unit switch
+        {
+            0 => Strings.Count("SizeBytes", bytes),
+            1 => Strings.Format("SizeKB", value),
+            2 => Strings.Format("SizeMB", value),
+            _ => Strings.Format("SizeGB", value),
+        };
     }
 }
 
