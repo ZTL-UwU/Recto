@@ -129,33 +129,33 @@ internal static class Dialogs
         var file = new FileInfo(document.FilePath);
         var rows = new List<(string, string)>
         {
-            ("Title", info.Title),
-            ("Author", info.Author),
-            ("Subject", info.Subject),
-            ("Keywords", info.Keywords),
-            ("Creator", info.Creator),
-            ("Producer", info.Producer),
-            ("Created", info.Created?.LocalDateTime.ToString("f") ?? ""),
-            ("Modified", info.Modified?.LocalDateTime.ToString("f") ?? ""),
+            (Strings.Get("PropertiesTitleField"), info.Title),
+            (Strings.Get("PropertiesAuthor"), info.Author),
+            (Strings.Get("PropertiesSubject"), info.Subject),
+            (Strings.Get("PropertiesKeywords"), info.Keywords),
+            (Strings.Get("PropertiesCreator"), info.Creator),
+            (Strings.Get("PropertiesProducer"), info.Producer),
+            (Strings.Get("PropertiesCreated"), info.Created?.LocalDateTime.ToString("f") ?? ""),
+            (Strings.Get("PropertiesModified"), info.Modified?.LocalDateTime.ToString("f") ?? ""),
         };
         var general = new List<(string, string)>
         {
-            ("Location", file.FullName),
-            ("Size", AttachmentItem.FormatSize(file.Exists ? file.Length : document.FileSize)),
-            ("Format", string.IsNullOrEmpty(info.Version) ? "PDF" : $"PDF {info.Version}"),
-            ("Pages", document.PageCount.ToString("N0")),
-            ("Page size", PaperSize(document.PageSizes[0])),
-            ("Security", info.IsEncrypted ? "Encrypted" : "None"),
+            (Strings.Get("PropertiesLocation"), file.FullName),
+            (Strings.Get("PropertiesSize"), AttachmentItem.FormatSize(file.Exists ? file.Length : document.FileSize)),
+            (Strings.Get("PropertiesFormat"), string.IsNullOrEmpty(info.Version) ? "PDF" : $"PDF {info.Version}"),
+            (Strings.Get("PropertiesPages"), document.PageCount.ToString("N0")),
+            (Strings.Get("PropertiesPageSize"), PaperSize(document.PageSizes[0])),
+            (Strings.Get("PropertiesSecurity"), Strings.Get(info.IsEncrypted ? "PropertiesEncrypted" : "PropertiesNone")),
         };
 
         var panel = new StackPanel { Spacing = 16 };
-        panel.Children.Add(Section("Document", rows.Where(r => !string.IsNullOrWhiteSpace(r.Item2)).ToList()));
-        panel.Children.Add(Section("File", general));
+        panel.Children.Add(Section(Strings.Get("PropertiesDocument"), rows.Where(r => !string.IsNullOrWhiteSpace(r.Item2)).ToList()));
+        panel.Children.Add(Section(Strings.Get("PropertiesFile"), general));
 
         var dialog = Create(root);
-        dialog.Title = "Properties";
+        dialog.Title = Strings.Get("PropertiesTitle");
         dialog.Content = new ScrollViewer { Content = panel, MaxHeight = 520, Padding = new Thickness(0, 0, 16, 0) };
-        dialog.CloseButtonText = "Close";
+        dialog.CloseButtonText = Strings.Get("Close");
         dialog.DefaultButton = ContentDialogButton.Close;
         await ShowAsync(dialog);
     }
@@ -166,9 +166,10 @@ internal static class Dialogs
         stack.Children.Add(new TextBlock { Text = title, Style = AppStyle("BodyStrongTextBlockStyle") });
         var card = new Border { Style = AppStyle("CardBorderStyle"), Padding = new Thickness(16, 12, 16, 12) };
         var grid = new Grid { ColumnSpacing = 24, RowSpacing = 10 };
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(96) });
+        // As wide as the longest label, which depends on the language.
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto, MinWidth = 96 });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        if (rows.Count == 0) rows.Add(("", "No information available"));
+        if (rows.Count == 0) rows.Add(("", Strings.Get("PropertiesNoInformation")));
         for (int i = 0; i < rows.Count; i++)
         {
             grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
@@ -192,44 +193,44 @@ internal static class Dialogs
         (string Name, double A, double B)[] known =
         [
             ("A3", 297, 420), ("A4", 210, 297), ("A5", 148, 210), ("B5", 176, 250),
-            ("Letter", 215.9, 279.4), ("Legal", 215.9, 355.6), ("Tabloid", 279.4, 431.8),
+            (Strings.Get("PaperLetter"), 215.9, 279.4), (Strings.Get("PaperLegal"), 215.9, 355.6), (Strings.Get("PaperTabloid"), 279.4, 431.8),
         ];
         var match = known.FirstOrDefault(k => Math.Abs(k.A - a) < 2 && Math.Abs(k.B - b) < 2);
-        string orientation = w > h ? ", landscape" : "";
         string size = $"{w:0} × {h:0} mm";
-        return match.Name is null ? size : $"{match.Name}{orientation} ({size})";
+        return match.Name is null ? size : Strings.Format(w > h ? "PaperSizeNamedLandscape" : "PaperSizeNamed", match.Name, size);
     }
 
     public static async Task ShowShortcutsAsync(XamlRoot root)
     {
+        // Looked up here, not when shown, so LocalizationTests can check that each key exists.
         (string Group, (string Keys, string Action)[] Items)[] groups =
         [
-            ("Documents", [
-                ("Ctrl+O", "Open a document"), ("Ctrl+N", "New window"), ("Ctrl+S", "Save a copy"),
-                ("Ctrl+P", "Print"), ("Ctrl+Shift+P", "Print using the system dialog"), ("Ctrl+R", "Reload"),
-                ("Alt+Enter", "Properties"), ("Ctrl+W", AppState.Preferences.RememberRecent ? "Close document" : "Close window"),
-                ("Ctrl+,", "Settings"),
+            (Strings.Get("ShortcutsDocuments"), [
+                ("Ctrl+O", Strings.Get("ShortcutOpen")), ("Ctrl+N", Strings.Get("ShortcutNewWindow")), ("Ctrl+S", Strings.Get("ShortcutSaveCopy")),
+                ("Ctrl+P", Strings.Get("ShortcutPrint")), ("Ctrl+Shift+P", Strings.Get("ShortcutSystemPrint")), ("Ctrl+R", Strings.Get("ShortcutReload")),
+                ("Alt+Enter", Strings.Get("ShortcutProperties")), ("Ctrl+W", Strings.Get(AppState.Preferences.RememberRecent ? "CloseDocument" : "CloseWindow")),
+                ("Ctrl+,", Strings.Get("ShortcutSettings")),
             ]),
-            ("Navigation", [
-                ("Up / Down", "Scroll"),
-                ("PgUp / PgDn", "Previous / next screen, or page in single page and fit page"),
-                ("Shift+Space / Space", "Previous / next screen, or page in single page and fit page"),
-                ("Left / Right", "Previous / next page, or scroll when the page is wider than the window"),
-                ("Home / End", "Beginning / end of document"),
-                ("Ctrl+B / F9", "Show or hide the sidebar"),
+            (Strings.Get("ShortcutsNavigation"), [
+                ("Up / Down", Strings.Get("ShortcutScroll")),
+                ("PgUp / PgDn", Strings.Get("ShortcutScreen")),
+                ("Shift+Space / Space", Strings.Get("ShortcutScreen")),
+                ("Left / Right", Strings.Get("ShortcutPage")),
+                ("Home / End", Strings.Get("ShortcutEnds")),
+                ("Ctrl+B / F9", Strings.Get("ShortcutSidebar")),
             ]),
-            ("Search and selection", [
-                ("Ctrl+F", "Search"), ("F3 / Enter", "Next result"), ("Shift+F3 / Shift+Enter", "Previous result"),
-                ("Ctrl+C", "Copy selected text"), ("Ctrl+A", "Select all"),
+            (Strings.Get("ShortcutsSearch"), [
+                ("Ctrl+F", Strings.Get("ShortcutSearch")), ("F3 / Enter", Strings.Get("ShortcutNextResult")), ("Shift+F3 / Shift+Enter", Strings.Get("ShortcutPreviousResult")),
+                ("Ctrl+C", Strings.Get("ShortcutCopy")), ("Ctrl+A", Strings.Get("ShortcutSelectAll")),
             ]),
-            ("Annotations", [
-                ("Ctrl+H", "Highlight selection"), ("Ctrl+Shift+A", "Show or hide the drawing and text tools"),
-                ("Esc", "Leave the current tool"), ("Delete", "Delete the selected drawing or text box"),
-                ("Ctrl+Z", "Undo"), ("Ctrl+Y / Ctrl+Shift+Z", "Redo"),
+            (Strings.Get("ShortcutsAnnotations"), [
+                ("Ctrl+H", Strings.Get("ShortcutHighlight")), ("Ctrl+Shift+A", Strings.Get("ShortcutTools")),
+                ("Esc", Strings.Get("ShortcutLeaveTool")), ("Delete", Strings.Get("ShortcutDeleteDrawing")),
+                ("Ctrl+Z", Strings.Get("ShortcutUndo")), ("Ctrl+Y / Ctrl+Shift+Z", Strings.Get("ShortcutRedo")),
             ]),
-            ("View", [
-                ("Ctrl+Plus / Ctrl+Minus", "Zoom in / out"), ("Ctrl+0", "Actual size"), ("Ctrl+Wheel", "Zoom"),
-                ("Ctrl+Left / Ctrl+Right", "Rotate"), ("Ctrl+I", "Invert colors"), ("F11", "Full screen"), ("F5", "Present"),
+            (Strings.Get("ShortcutsView"), [
+                ("Ctrl+Plus / Ctrl+Minus", Strings.Get("ShortcutZoomInOut")), ("Ctrl+0", Strings.Get("ShortcutActualSize")), ("Ctrl+Wheel", Strings.Get("ShortcutZoom")),
+                ("Ctrl+Left / Ctrl+Right", Strings.Get("ShortcutRotate")), ("Ctrl+I", Strings.Get("ShortcutInvert")), ("F11", Strings.Get("ShortcutFullScreen")), ("F5", Strings.Get("ShortcutPresent")),
             ]),
         ];
 
@@ -256,7 +257,7 @@ internal static class Dialogs
                         keys.Children.Add(new Border
                         {
                             Style = AppStyle("KeyCapBorderStyle"),
-                            Child = new TextBlock { Text = key, Style = AppStyle("CaptionTextBlockStyle") },
+                            Child = new TextBlock { Text = KeyName(key), Style = AppStyle("CaptionTextBlockStyle") },
                         });
                     }
                 }
@@ -271,12 +272,18 @@ internal static class Dialogs
         }
 
         var dialog = Create(root);
-        dialog.Title = "Keyboard shortcuts";
+        dialog.Title = Strings.Get("ShortcutsTitle");
         dialog.Content = new ScrollViewer { Content = panel, MaxHeight = 520, Padding = new Thickness(0, 0, 16, 0) };
-        dialog.CloseButtonText = "Close";
+        dialog.CloseButtonText = Strings.Get("Close");
         dialog.DefaultButton = ContentDialogButton.Close;
         await ShowAsync(dialog);
     }
+
+    /// <summary>Keys whose names are translated, as their keycaps are on that language's keyboards (Shift is Maj in French).</summary>
+    private static readonly HashSet<string> NamedKeys =
+        ["Shift", "Enter", "Esc", "Delete", "Space", "Up", "Down", "Left", "Right", "Home", "End", "PgUp", "PgDn", "Plus", "Minus", "Wheel"];
+
+    private static string KeyName(string key) => NamedKeys.Contains(key) ? Strings.Get("Key" + key) : key;
 
     public static async Task ShowAboutAsync(XamlRoot root)
     {
@@ -292,7 +299,7 @@ internal static class Dialogs
         panel.Children.Add(new TextBlock { Text = "Recto", Style = AppStyle("SubtitleTextBlockStyle"), HorizontalAlignment = HorizontalAlignment.Center });
         panel.Children.Add(new TextBlock
         {
-            Text = $"Version {version?.ToString(3) ?? "1.0.0"}",
+            Text = Strings.Format("Version", version?.ToString(3) ?? "1.0.0"),
             Style = AppStyle("SecondaryTextBlockStyle"),
             HorizontalAlignment = HorizontalAlignment.Center,
         });
@@ -311,14 +318,14 @@ internal static class Dialogs
         }
         panel.Children.Add(new TextBlock
         {
-            Text = "A simple document viewer for Windows, inspired by GNOME Papers. PDF rendering by PDFium.",
+            Text = Strings.Get("AboutDescription"),
             TextWrapping = TextWrapping.Wrap,
             TextAlignment = TextAlignment.Center,
             Margin = new Thickness(0, 12, 0, 0),
         });
         var dialog = Create(root);
         dialog.Content = panel;
-        dialog.CloseButtonText = "Close";
+        dialog.CloseButtonText = Strings.Get("Close");
         dialog.DefaultButton = ContentDialogButton.Close;
         await ShowAsync(dialog);
     }

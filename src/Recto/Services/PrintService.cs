@@ -28,7 +28,7 @@ internal static class PrintService
     /// </summary>
     public static async Task PrintAsync(Window window, PdfDocument document, string title, Action<string> reportProblem)
     {
-        if (document.PageCount == 0) throw new InvalidOperationException("The document has no pages to print.");
+        if (document.PageCount == 0) throw new InvalidOperationException(Strings.Get("NoPagesToPrint"));
         IntPtr hwnd = WinRT.Interop.WindowNative.GetWindowHandle(window);
         var manager = PrintManagerInterop.GetForWindow(hwnd);
         var printDocument = new PrintDocument();
@@ -83,7 +83,7 @@ internal static class PrintService
                 // Without this the print job never finishes.
                 printDocument.AddPagesComplete();
             }
-            if (failed > 0) reportProblem(failed == 1 ? "One page couldn't be printed and was left out." : $"{failed} pages couldn't be printed and were left out.");
+            if (failed > 0) reportProblem(Strings.Count("PagesLeftOut", failed));
         };
 
         if (Handlers.Remove(hwnd, out var previous)) manager.PrintTaskRequested -= previous;

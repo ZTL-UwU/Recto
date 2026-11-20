@@ -319,7 +319,7 @@ public sealed unsafe partial class PixelBuffer : IDisposable
     }
 }
 
-public sealed class PdfPasswordException(bool wrongPassword) : Exception(wrongPassword ? "Incorrect password" : "Password required")
+public sealed class PdfPasswordException(bool wrongPassword) : Exception(Strings.Get(wrongPassword ? "PdfIncorrectPassword" : "PdfPasswordRequired"))
 {
     public bool WrongPassword { get; } = wrongPassword;
 }

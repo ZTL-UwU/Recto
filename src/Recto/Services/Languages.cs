@@ -1,0 +1,74 @@
+using System.Globalization;
+using Microsoft.Windows.ApplicationModel.Resources;
+using Microsoft.Windows.Globalization;
+
+namespace Recto.Services;
+
+/// <summary>
+/// The languages Recto is translated into (one folder each in Strings), and the one chosen in Settings.
+/// Windows picks the closest of them to the user's languages unless Settings names one.
+/// </summary>
+internal static class Languages
+{
+    /// <summary>In the order Settings lists them, after "Use system setting". Each is named in its own language.</summary>
+    public static readonly (string Tag, string Name)[] Available = [("en-US", "English"), ("fr-FR", "Français"), ("zh-CN", "简体中文")];
+
+    /// <summary>
+    /// The language chosen when Recto started ("" to follow Windows). Text that's already showing can't
+    /// switch language, so a different choice takes effect the next time Recto starts.
+    /// </summary>
+    public static string StartupChoice { get; private set; } = "";
+
+    /// <summary>The tag of the language Recto is showing, which Windows picked unless <see cref="StartupChoice"/> names one.</summary>
+    public static string Showing => Strings.Get("LanguageTag");
+
+    /// <summary>
+    /// Whether choosing <paramref name="tag"/> ("" to follow Windows) takes a restart to show. Which language
+    /// Windows would pick isn't known while another one is chosen, so going back to it is taken to need one.
+    /// </summary>
+    public static bool NeedsRestart(string tag) => tag.Length > 0 ? tag != Showing : StartupChoice.Length > 0;
+
+    /// <summary>Applies the language chosen in Settings. Runs before any XAML loads, which reads its text once.</summary>
+    public static void Initialize()
+    {
+        StartupChoice = Normalize(AppState.Preferences.Language);
+        try
+        {
+            // Always set, since "" is what clears an override an earlier run left.
+            ApplicationLanguages.PrimaryLanguageOverride = StartupChoice;
+        }
+        catch (Exception ex) when (ex is System.Runtime.InteropServices.COMException or ArgumentException)
+        {
+        }
+        // Numbers and dates follow the chosen language too; following Windows keeps its regional format. Set for
+        // new threads as well, so that text made in the background, such as print and PDF errors, matches.
+        if (StartupChoice.Length > 0)
+        {
+            try
+            {
+                var culture = new CultureInfo(StartupChoice);
+                CultureInfo.CurrentCulture = CultureInfo.CurrentUICulture = culture;
+                CultureInfo.DefaultThreadCurrentCulture = CultureInfo.DefaultThreadCurrentUICulture = culture;
+            }
+            catch (CultureNotFoundException)
+            {
+            }
+        }
+        // Opened on first use, not at startup.
+        var loader = new Lazy<ResourceLoader>(() => new ResourceLoader());
+        Strings.SetSource(key =>
+        {
+            try
+            {
+                return loader.Value.GetString(key);
+            }
+            catch (System.Runtime.InteropServices.COMException)
+            {
+                return null;
+            }
+        });
+    }
+
+    /// <summary>A tag from <see cref="Available"/>, or "" for anything else, such as a language no longer offered.</summary>
+    public static string Normalize(string? tag) => Available.FirstOrDefault(l => l.Tag == tag).Tag ?? "";
+}

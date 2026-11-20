@@ -40,7 +40,7 @@ public sealed unsafe partial class PdfDocument
         {
             IntPtr page = GetPage(index);
             IntPtr annot = Native.FPDFPage_CreateAnnot(page, subtype);
-            if (annot == IntPtr.Zero) throw new InvalidOperationException("The annotation could not be created.");
+            if (annot == IntPtr.Zero) throw new InvalidOperationException(Strings.Get("PdfAnnotationCreateFailed"));
             try
             {
                 try

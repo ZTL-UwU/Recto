@@ -565,7 +565,7 @@ public sealed partial class DocumentView
         catch (Exception ex) when (IsEditFailure(ex))
         {
             if (_views.TryGetValue(stroke.Page, out var failed)) failed.RemoveStroke(stroke.Preview);
-            ReportEditFailure(document, ex, "The drawing couldn't be added.");
+            ReportEditFailure(document, ex, Strings.Get("DrawingAddFailed"));
             return;
         }
         if (document != _document) return;
@@ -610,7 +610,7 @@ public sealed partial class DocumentView
         catch (Exception ex) when (IsEditFailure(ex))
         {
             // Strokes erased before the failure stay in the history below.
-            ReportEditFailure(document, ex, "The drawing couldn't be erased.");
+            ReportEditFailure(document, ex, Strings.Get("DrawingEraseFailed"));
         }
         if (document != _document) return;
         _lastInk = null;
@@ -661,7 +661,7 @@ public sealed partial class DocumentView
         }
         catch (Exception ex) when (IsEditFailure(ex))
         {
-            ReportEditFailure(document, ex, "The annotation couldn't be changed.");
+            ReportEditFailure(document, ex, Strings.Get("AnnotationChangeFailed"));
         }
         if (document != _document) return;
         written?.Invoke();
@@ -790,7 +790,7 @@ public sealed partial class DocumentView
             Padding = new Thickness(PdfDocument.TextBoxInset * BaseScale),
             MaxLength = 20000,
         };
-        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(box, "Text box");
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(box, Strings.Get("TextBox"));
         return box;
     }
 
@@ -911,7 +911,7 @@ public sealed partial class DocumentView
             {
                 _host.Children.Remove(edit.Box);
             }
-            ReportEditFailure(edit.Document, ex, "The text box couldn't be saved.");
+            ReportEditFailure(edit.Document, ex, Strings.Get("TextBoxSaveFailed"));
             return;
         }
         if (edit.Document != _document) return;

@@ -50,11 +50,11 @@ public sealed partial class RecentItem(RecentDocument entry) : ObservableItem
     private static string Humanize(DateTimeOffset time)
     {
         var span = DateTimeOffset.Now - time;
-        if (span.TotalMinutes < 1) return "Just now";
-        if (span.TotalHours < 1) return $"{(int)span.TotalMinutes} min ago";
-        if (time.Date == DateTime.Today) return $"Today, {time.LocalDateTime:t}";
-        if (time.Date == DateTime.Today.AddDays(-1)) return "Yesterday";
-        if (span.TotalDays < 7) return $"{(int)Math.Ceiling(span.TotalDays)} days ago";
+        if (span.TotalMinutes < 1) return Strings.Get("JustNow");
+        if (span.TotalHours < 1) return Strings.Format("MinutesAgo", (int)span.TotalMinutes);
+        if (time.Date == DateTime.Today) return Strings.Format("TodayAt", time.LocalDateTime.ToString("t"));
+        if (time.Date == DateTime.Today.AddDays(-1)) return Strings.Get("Yesterday");
+        if (span.TotalDays < 7) return Strings.Format("DaysAgo", (int)Math.Ceiling(span.TotalDays));
         return time.LocalDateTime.ToString("d");
     }
 }
@@ -97,7 +97,7 @@ public sealed class AnnotationItem(PdfAnnotation annotation, string pageLabel)
 {
     public PdfAnnotation Annotation { get; } = annotation;
     public string Kind => DocumentView.KindName(Annotation.Kind);
-    public string Page => $"Page {pageLabel}";
+    public string Page => Strings.Format("PageLabel", pageLabel);
     public string Contents => Annotation.Contents.Trim();
     public Visibility ContentsVisibility => string.IsNullOrWhiteSpace(Annotation.Contents) ? Visibility.Collapsed : Visibility.Visible;
     public Brush ColorBrush => new SolidColorBrush(Annotation.Color);
@@ -119,15 +119,21 @@ public sealed class AttachmentItem(PdfDocument document, PdfAttachment attachmen
 
     public static string FormatSize(long bytes)
     {
-        string[] units = ["bytes", "KB", "MB", "GB"];
         double value = bytes;
         int unit = 0;
-        while (value >= 1024 && unit < units.Length - 1)
+        // Up to GB.
+        while (value >= 1024 && unit < 3)
         {
             value /= 1024;
             unit++;
         }
-        return unit == 0 ? $"{bytes:N0} bytes" : $"{value:0.#} {units[unit]}";
+        return unit switch
+        {
+            0 => Strings.Count("SizeBytes", bytes),
+            1 => Strings.Format("SizeKB", value),
+            2 => Strings.Format("SizeMB", value),
+            _ => Strings.Format("SizeGB", value),
+        };
     }
 }
 

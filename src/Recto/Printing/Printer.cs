@@ -25,7 +25,7 @@ internal sealed class DevMode
 
     public DevMode(byte[] data)
     {
-        if (data.Length < MinSize) throw new ArgumentException("The printer settings are incomplete.", nameof(data));
+        if (data.Length < MinSize) throw new ArgumentException(Strings.Get("PrinterSettingsIncomplete"), nameof(data));
         _data = data;
     }
 
@@ -307,14 +307,15 @@ internal static unsafe partial class Printers
         const uint PRINTER_ATTRIBUTE_WORK_OFFLINE = 0x400;
         (uint Flag, string Text)[] problems =
         [
-            (0x80, "Offline"), (0x1000, "Not available"), (0x1, "Paused"), (0x8, "Paper jam"), (0x10, "Out of paper"),
-            (0x40, "Paper problem"), (0x40000, "Out of toner or ink"), (0x400000, "Door open"), (0x100000, "Needs attention"),
-            (0x2, "Error"),
+            (0x80, Strings.Get("PrinterOffline")), (0x1000, Strings.Get("PrinterNotAvailable")), (0x1, Strings.Get("PrinterPaused")),
+            (0x8, Strings.Get("PrinterPaperJam")), (0x10, Strings.Get("PrinterOutOfPaper")), (0x40, Strings.Get("PrinterPaperProblem")),
+            (0x40000, Strings.Get("PrinterNoToner")), (0x400000, Strings.Get("PrinterDoorOpen")), (0x100000, Strings.Get("PrinterNeedsAttention")),
+            (0x2, Strings.Get("PrinterError")),
         ];
-        string? problem = (attributes & PRINTER_ATTRIBUTE_WORK_OFFLINE) != 0 ? "Offline" : null;
+        string? problem = (attributes & PRINTER_ATTRIBUTE_WORK_OFFLINE) != 0 ? Strings.Get("PrinterOffline") : null;
         problem ??= problems.FirstOrDefault(p => (status & p.Flag) != 0).Text;
-        string text = problem ?? ((status & 0x20000) != 0 ? "Ready, toner or ink is low" : "Ready");
-        if (jobs > 0) text += jobs == 1 ? " · 1 document waiting" : $" · {jobs} documents waiting";
+        string text = problem ?? Strings.Get((status & 0x20000) != 0 ? "PrinterTonerLow" : "PrinterReady");
+        if (jobs > 0) text += " · " + Strings.Count("DocumentsWaiting", jobs);
         return (text, problem is not null);
     }
 

@@ -1,0 +1,1421 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Recto's text in English, the language it falls back to. Every other language has the same keys (a test checks).
+  Keys with a dot are set on XAML elements by x:Uid ("Uid.Property"); the others are read by code, through Strings.
+  {0}, {1}… are filled in by the code. Keys ending in _One and _Other are picked by count (see Strings.Count).
+-->
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <!-- MainWindow.xaml -->
+  <data name="ZoomButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Zoom</value>
+  </data>
+  <data name="ZoomButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Zoom (Ctrl+Plus, Ctrl+Minus)</value>
+  </data>
+  <data name="FitPageItem.Text" xml:space="preserve">
+    <value>Fit page</value>
+  </data>
+  <data name="FitWidthItem.Text" xml:space="preserve">
+    <value>Fit width</value>
+  </data>
+  <data name="AnnotateToggle.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Draw and add text</value>
+  </data>
+  <data name="AnnotateToggle.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Draw and add text (Ctrl+Shift+A)</value>
+  </data>
+  <data name="MoreButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Main menu</value>
+  </data>
+  <data name="MoreButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>More options</value>
+  </data>
+  <data name="OpenItem.Text" xml:space="preserve">
+    <value>Open…</value>
+  </data>
+  <data name="NewWindowItem.Text" xml:space="preserve">
+    <value>New window</value>
+  </data>
+  <data name="SaveCopyItem.Text" xml:space="preserve">
+    <value>Save a copy…</value>
+  </data>
+  <data name="PrintItem.Text" xml:space="preserve">
+    <value>Print…</value>
+  </data>
+  <data name="ContinuousItem.Text" xml:space="preserve">
+    <value>Continuous</value>
+  </data>
+  <data name="DualItem.Text" xml:space="preserve">
+    <value>Dual pages</value>
+  </data>
+  <data name="OddLeftItem.Text" xml:space="preserve">
+    <value>Odd pages on the left</value>
+  </data>
+  <data name="InvertItem.Text" xml:space="preserve">
+    <value>Invert colors</value>
+  </data>
+  <data name="RotateItem.Text" xml:space="preserve">
+    <value>Rotate</value>
+  </data>
+  <data name="RotateLeftItem.Text" xml:space="preserve">
+    <value>Rotate left</value>
+  </data>
+  <data name="RotateLeftItem.KeyboardAcceleratorTextOverride" xml:space="preserve">
+    <value>Ctrl+Left</value>
+  </data>
+  <data name="RotateRightItem.Text" xml:space="preserve">
+    <value>Rotate right</value>
+  </data>
+  <data name="RotateRightItem.KeyboardAcceleratorTextOverride" xml:space="preserve">
+    <value>Ctrl+Right</value>
+  </data>
+  <data name="FullscreenItem.Text" xml:space="preserve">
+    <value>Full screen</value>
+  </data>
+  <data name="PresentItem.Text" xml:space="preserve">
+    <value>Present</value>
+  </data>
+  <data name="ReloadItem.Text" xml:space="preserve">
+    <value>Reload</value>
+  </data>
+  <data name="ShowInFolderItem.Text" xml:space="preserve">
+    <value>Show in folder</value>
+  </data>
+  <data name="PropertiesItem.Text" xml:space="preserve">
+    <value>Properties</value>
+  </data>
+  <data name="PropertiesItem.KeyboardAcceleratorTextOverride" xml:space="preserve">
+    <value>Alt+Enter</value>
+  </data>
+  <data name="SettingsItem.Text" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="ShortcutsItem.Text" xml:space="preserve">
+    <value>Keyboard shortcuts</value>
+  </data>
+  <data name="AboutItem.Text" xml:space="preserve">
+    <value>About Recto</value>
+  </data>
+  <data name="CloseItem.Text" xml:space="preserve">
+    <value>Close document</value>
+  </data>
+  <data name="StartTitle.Text" xml:space="preserve">
+    <value>Open a document</value>
+  </data>
+  <data name="StartHint.Text" xml:space="preserve">
+    <value>Drag and drop a PDF here, or pick one from your files.</value>
+  </data>
+  <data name="StartOpenButton.Content" xml:space="preserve">
+    <value>Open…</value>
+  </data>
+  <data name="RecentTitle.Text" xml:space="preserve">
+    <value>Recent documents</value>
+  </data>
+  <data name="RecentSearchBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Search recent documents</value>
+  </data>
+  <data name="RecentSearchBox.PlaceholderText" xml:space="preserve">
+    <value>Search recent documents</value>
+  </data>
+  <data name="ClearRecentButton.Content" xml:space="preserve">
+    <value>Clear list</value>
+  </data>
+  <data name="RecentOpenButtonText.Text" xml:space="preserve">
+    <value>Open…</value>
+  </data>
+  <data name="RecentNoMatches.Text" xml:space="preserve">
+    <value>No recent documents match your search.</value>
+  </data>
+  <data name="ThumbnailsTab.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Thumbnails</value>
+  </data>
+  <data name="ThumbnailsTab.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Thumbnails</value>
+  </data>
+  <data name="OutlineTab.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Outline</value>
+  </data>
+  <data name="OutlineTab.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Outline</value>
+  </data>
+  <data name="AnnotationsTab.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Annotations</value>
+  </data>
+  <data name="AnnotationsTab.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Annotations</value>
+  </data>
+  <data name="AttachmentsTab.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Attachments</value>
+  </data>
+  <data name="AttachmentsTab.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Attachments</value>
+  </data>
+  <data name="AnnotationsEmptyTitle.Text" xml:space="preserve">
+    <value>No annotations</value>
+  </data>
+  <data name="AnnotationsEmptyHint.Text" xml:space="preserve">
+    <value>Select text to highlight it, right-click a page to add a note, or draw and add text with the pen button at the top.</value>
+  </data>
+  <data name="SearchBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Search in document</value>
+  </data>
+  <data name="SearchBox.PlaceholderText" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="MatchCaseToggle.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Match case</value>
+  </data>
+  <data name="MatchCaseToggle.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Match case</value>
+  </data>
+  <data name="WholeWordToggle.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Whole words only</value>
+  </data>
+  <data name="WholeWordToggle.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Whole words only</value>
+  </data>
+  <data name="PreviousResultButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Previous result</value>
+  </data>
+  <data name="PreviousResultButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Previous result (Shift+F3)</value>
+  </data>
+  <data name="NextResultButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Next result</value>
+  </data>
+  <data name="NextResultButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Next result (F3)</value>
+  </data>
+  <data name="PenTool.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Pen</value>
+  </data>
+  <data name="PenTool.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Pen</value>
+  </data>
+  <data name="HighlighterTool.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Highlighter</value>
+  </data>
+  <data name="HighlighterTool.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Highlighter</value>
+  </data>
+  <data name="EraserTool.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Eraser</value>
+  </data>
+  <data name="EraserTool.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Eraser</value>
+  </data>
+  <data name="TextTool.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Text box</value>
+  </data>
+  <data name="TextTool.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Text box</value>
+  </data>
+  <data name="AnnotateSize.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Size</value>
+  </data>
+  <data name="AnnotateSize.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Size</value>
+  </data>
+  <data name="UndoButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Undo</value>
+  </data>
+  <data name="UndoButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Undo (Ctrl+Z)</value>
+  </data>
+  <data name="RedoButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Redo</value>
+  </data>
+  <data name="RedoButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Redo (Ctrl+Y)</value>
+  </data>
+  <data name="DialogWaitBar.Title" xml:space="preserve">
+    <value>Waiting for another window</value>
+  </data>
+  <data name="DialogWaitBar.Message" xml:space="preserve">
+    <value>Close the dialog in the other Recto window to see this one.</value>
+  </data>
+  <data name="DialogWaitShowButton.Content" xml:space="preserve">
+    <value>Show</value>
+  </data>
+
+  <!-- SettingsPage.xaml -->
+  <data name="SettingsTitle.Text" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="AppearanceHeader.Text" xml:space="preserve">
+    <value>Appearance</value>
+  </data>
+  <data name="ThemeTitle.Text" xml:space="preserve">
+    <value>App theme</value>
+  </data>
+  <data name="ThemeDescription.Text" xml:space="preserve">
+    <value>Use light or dark colors, or follow Windows.</value>
+  </data>
+  <data name="ThemeOptions.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>App theme</value>
+  </data>
+  <data name="CornersCard.Description" xml:space="preserve">
+    <value>Round the corners of pages in the viewer.</value>
+  </data>
+  <data name="CornersCard.Header" xml:space="preserve">
+    <value>Rounded page corners</value>
+  </data>
+  <data name="CornersToggle.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Rounded page corners</value>
+  </data>
+  <data name="SearchHeader.Text" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="HyphenatedCard.Description" xml:space="preserve">
+    <value>Searching example also finds exam-ple split across two lines.</value>
+  </data>
+  <data name="HyphenatedCard.Header" xml:space="preserve">
+    <value>Find words hyphenated across lines</value>
+  </data>
+  <data name="HyphenatedToggle.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Find words hyphenated across lines</value>
+  </data>
+  <data name="QuotesCard.Description" xml:space="preserve">
+    <value>Straight and curly quotes find each other.</value>
+  </data>
+  <data name="QuotesCard.Header" xml:space="preserve">
+    <value>Match curly quotes</value>
+  </data>
+  <data name="QuotesToggle.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Match curly quotes</value>
+  </data>
+  <data name="DashesCard.Description" xml:space="preserve">
+    <value>Hyphens, dashes and minus signs find each other.</value>
+  </data>
+  <data name="DashesCard.Header" xml:space="preserve">
+    <value>Match all dashes</value>
+  </data>
+  <data name="DashesToggle.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Match all dashes</value>
+  </data>
+  <data name="HistoryHeader.Text" xml:space="preserve">
+    <value>History</value>
+  </data>
+  <data name="RecentCard.Description" xml:space="preserve">
+    <value>List opened documents on the start page and reopen them where you left off.</value>
+  </data>
+  <data name="RecentCard.Header" xml:space="preserve">
+    <value>Remember recent documents</value>
+  </data>
+  <data name="RecentToggle.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Remember recent documents</value>
+  </data>
+  <data name="AboutHeader.Text" xml:space="preserve">
+    <value>About</value>
+  </data>
+
+  <!-- PrintDialog.xaml -->
+  <data name="PreviewSheet.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Print preview</value>
+  </data>
+  <data name="PreviousSheetButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Previous sheet</value>
+  </data>
+  <data name="PreviousSheetButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Previous sheet</value>
+  </data>
+  <data name="NextSheetButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Next sheet</value>
+  </data>
+  <data name="NextSheetButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Next sheet</value>
+  </data>
+  <data name="PrintTitle.Text" xml:space="preserve">
+    <value>Print</value>
+  </data>
+  <data name="PrinterBox.Header" xml:space="preserve">
+    <value>Printer</value>
+  </data>
+  <data name="PrinterBox.PlaceholderText" xml:space="preserve">
+    <value>Looking for printers…</value>
+  </data>
+  <data name="CopiesBox.Header" xml:space="preserve">
+    <value>Copies</value>
+  </data>
+  <data name="CollateBox.Content" xml:space="preserve">
+    <value>Collate</value>
+  </data>
+  <data name="CollateBox.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Print whole copies one after another, rather than all copies of each page together</value>
+  </data>
+  <data name="PagesBox.Header" xml:space="preserve">
+    <value>Pages</value>
+  </data>
+  <data name="RangeBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Pages to print</value>
+  </data>
+  <data name="RangeBox.PlaceholderText" xml:space="preserve">
+    <value>For example 1-5, 8, 11-13</value>
+  </data>
+  <data name="OrientationBox.Header" xml:space="preserve">
+    <value>Orientation</value>
+  </data>
+  <data name="ColorBox.Header" xml:space="preserve">
+    <value>Color</value>
+  </data>
+  <data name="DuplexBox.Header" xml:space="preserve">
+    <value>Print on both sides</value>
+  </data>
+  <data name="MoreSettingsButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>More settings</value>
+  </data>
+  <data name="MoreSettingsText.Text" xml:space="preserve">
+    <value>More settings</value>
+  </data>
+  <data name="PaperBox.Header" xml:space="preserve">
+    <value>Paper size</value>
+  </data>
+  <data name="PaperBox.PlaceholderText" xml:space="preserve">
+    <value>Set by the printer</value>
+  </data>
+  <data name="PerSheetBox.Header" xml:space="preserve">
+    <value>Pages per sheet</value>
+  </data>
+  <data name="ScaleBox.Header" xml:space="preserve">
+    <value>Scale</value>
+  </data>
+  <data name="ScalePercentBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Scale in percent</value>
+  </data>
+  <data name="SubsetBox.Header" xml:space="preserve">
+    <value>Include</value>
+  </data>
+  <data name="ReverseBox.Content" xml:space="preserve">
+    <value>Reverse order</value>
+  </data>
+  <data name="AnnotationsBox.Content" xml:space="preserve">
+    <value>Annotations and form fields</value>
+  </data>
+  <data name="ImageBox.Content" xml:space="preserve">
+    <value>Print as image</value>
+  </data>
+  <data name="ImageBox.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Slower and less sharp, but can help when pages print incorrectly</value>
+  </data>
+  <data name="PrinterPropertiesButton.Content" xml:space="preserve">
+    <value>Printer properties…</value>
+  </data>
+  <data name="SystemDialogButton.Content" xml:space="preserve">
+    <value>Print using the system dialog…</value>
+  </data>
+  <data name="PrintButton.Content" xml:space="preserve">
+    <value>Print</value>
+  </data>
+  <data name="CancelButton.Content" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+
+  <!-- Which plural rule Strings.Count follows: en, fr or zh -->
+  <data name="PluralRule" xml:space="preserve">
+    <value>en</value>
+  </data>
+
+  <!-- The tag of this language in Languages.Available, so Settings knows which one is showing -->
+  <data name="LanguageTag" xml:space="preserve">
+    <value>en-US</value>
+  </data>
+
+  <!-- Settings -->
+  <data name="LanguageCard.Header" xml:space="preserve">
+    <value>Language</value>
+  </data>
+  <data name="LanguageCard.Description" xml:space="preserve">
+    <value>Show Recto in another language, or follow Windows.</value>
+  </data>
+  <data name="LanguageBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Language</value>
+  </data>
+  <data name="LanguageRestartBar.Message" xml:space="preserve">
+    <value>The new language will be used the next time Recto starts.</value>
+  </data>
+  <data name="LanguageRestartButton.Content" xml:space="preserve">
+    <value>Restart now</value>
+  </data>
+  <data name="UseSystemSetting" xml:space="preserve">
+    <value>Use system setting</value>
+  </data>
+  <data name="ThemeLight" xml:space="preserve">
+    <value>Light</value>
+  </data>
+  <data name="ThemeDark" xml:space="preserve">
+    <value>Dark</value>
+  </data>
+  <data name="Version" xml:space="preserve">
+    <value>Version {0}</value>
+  </data>
+
+  <!-- Common -->
+  <data name="Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="Close" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="Open" xml:space="preserve">
+    <value>Open</value>
+  </data>
+  <data name="Delete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="Show" xml:space="preserve">
+    <value>Show</value>
+  </data>
+  <data name="SaveAs" xml:space="preserve">
+    <value>Save as…</value>
+  </data>
+  <data name="ShowInFolder" xml:space="preserve">
+    <value>Show in folder</value>
+  </data>
+  <data name="CloseDocument" xml:space="preserve">
+    <value>Close document</value>
+  </data>
+  <data name="CloseWindow" xml:space="preserve">
+    <value>Close window</value>
+  </data>
+  <data name="FullScreen" xml:space="preserve">
+    <value>Full screen</value>
+  </data>
+  <data name="ExitFullScreen" xml:space="preserve">
+    <value>Exit full screen</value>
+  </data>
+  <data name="ZoomPercent" xml:space="preserve">
+    <value>{0:0}%</value>
+  </data>
+  <data name="PageLabel" xml:space="preserve">
+    <value>Page {0}</value>
+  </data>
+  <data name="PdfDocumentType" xml:space="preserve">
+    <value>PDF document</value>
+  </data>
+  <data name="XpsDocumentType" xml:space="preserve">
+    <value>XPS document</value>
+  </data>
+
+  <!-- Main window -->
+  <data name="EditedSubtitle" xml:space="preserve">
+    <value>Edited</value>
+  </data>
+  <data name="AnnotationsChangeFailedTitle" xml:space="preserve">
+    <value>Unable to change annotations</value>
+  </data>
+  <data name="FileNotFoundTitle" xml:space="preserve">
+    <value>File not found</value>
+  </data>
+  <data name="FileNotFoundMessage" xml:space="preserve">
+    <value>“{0}” could not be found. It may have been moved or deleted.</value>
+  </data>
+  <data name="OpenFailedTitle" xml:space="preserve">
+    <value>Unable to open document</value>
+  </data>
+  <data name="UnexpectedErrorTitle" xml:space="preserve">
+    <value>Something went wrong</value>
+  </data>
+  <data name="UnexpectedErrorMessage" xml:space="preserve">
+    <value>Recto ran into an unexpected problem. If something stops working, save your annotations and restart Recto. Details are in {0}.</value>
+  </data>
+  <data name="ReloadFailedTitle" xml:space="preserve">
+    <value>Unable to reload document</value>
+  </data>
+  <data name="ReloadButton" xml:space="preserve">
+    <value>Reload</value>
+  </data>
+  <data name="ChangedOnDiskTitle" xml:space="preserve">
+    <value>The document changed on disk</value>
+  </data>
+  <data name="ChangedOnDiskMessage" xml:space="preserve">
+    <value>Reloading will discard your unsaved annotations.</value>
+  </data>
+  <data name="SaveChangesTitle" xml:space="preserve">
+    <value>Save changes to a copy?</value>
+  </data>
+  <data name="SaveChangesMessage" xml:space="preserve">
+    <value>“{0}” has unsaved annotations. If you don’t save a copy, they will be lost.</value>
+  </data>
+  <data name="SaveCopyButton" xml:space="preserve">
+    <value>Save a copy</value>
+  </data>
+  <data name="DontSaveButton" xml:space="preserve">
+    <value>Don’t save</value>
+  </data>
+  <data name="PasswordTitle" xml:space="preserve">
+    <value>Password required</value>
+  </data>
+  <data name="PasswordPrompt" xml:space="preserve">
+    <value>“{0}” is protected. Enter the password to open it.</value>
+  </data>
+  <data name="PasswordPlaceholder" xml:space="preserve">
+    <value>Password</value>
+  </data>
+  <data name="PasswordWrong" xml:space="preserve">
+    <value>The password is incorrect. Try again.</value>
+  </data>
+  <data name="UnlockButton" xml:space="preserve">
+    <value>Unlock</value>
+  </data>
+  <data name="SearchResults_One" xml:space="preserve">
+    <value>{0:N0} result</value>
+  </data>
+  <data name="SearchResults_Other" xml:space="preserve">
+    <value>{0:N0} results</value>
+  </data>
+  <data name="Searching" xml:space="preserve">
+    <value>Searching…</value>
+  </data>
+  <data name="NoResults" xml:space="preserve">
+    <value>No results found</value>
+  </data>
+  <data name="SaveFailedTitle" xml:space="preserve">
+    <value>Unable to save</value>
+  </data>
+  <data name="SaveDraftsFailed" xml:space="preserve">
+    <value>A note or text box couldn’t be written to the document. Nothing was saved.</value>
+  </data>
+  <data name="SaveDocumentChanged" xml:space="preserve">
+    <value>The document changed while you chose where to save it. Nothing was saved.</value>
+  </data>
+  <data name="AnnotatedFileName" xml:space="preserve">
+    <value>{0} (annotated)</value>
+  </data>
+  <data name="CopyFileName" xml:space="preserve">
+    <value>{0} (copy)</value>
+  </data>
+  <data name="CopySavedTitle" xml:space="preserve">
+    <value>Copy saved</value>
+  </data>
+  <data name="CopySavedMessage" xml:space="preserve">
+    <value>Saved to “{0}”.</value>
+  </data>
+  <data name="PrintProblemTitle" xml:space="preserve">
+    <value>Printing problem</value>
+  </data>
+  <data name="PagesLeftBlank_One" xml:space="preserve">
+    <value>One page couldn’t be printed and was left blank.</value>
+  </data>
+  <data name="PagesLeftBlank_Other" xml:space="preserve">
+    <value>{0:N0} pages couldn’t be printed and were left blank.</value>
+  </data>
+  <data name="PrintFailedTitle" xml:space="preserve">
+    <value>Unable to print</value>
+  </data>
+  <data name="FullscreenHint" xml:space="preserve">
+    <value>Press Esc or F11 to exit full screen</value>
+  </data>
+  <data name="PresentationHint" xml:space="preserve">
+    <value>Press Esc to end the presentation</value>
+  </data>
+  <data name="OpenInNewWindow" xml:space="preserve">
+    <value>Open in new window</value>
+  </data>
+  <data name="RemoveFromList" xml:space="preserve">
+    <value>Remove from list</value>
+  </data>
+  <data name="ClearRecentTitle" xml:space="preserve">
+    <value>Clear recent documents?</value>
+  </data>
+  <data name="ClearRecentMessage" xml:space="preserve">
+    <value>All documents will be removed from the list. The files themselves won’t be deleted.</value>
+  </data>
+  <data name="ClearButton" xml:space="preserve">
+    <value>Clear</value>
+  </data>
+  <data name="UnsupportedFileTitle" xml:space="preserve">
+    <value>Unsupported file</value>
+  </data>
+  <data name="UnsupportedFileMessage" xml:space="preserve">
+    <value>Only PDF documents can be opened.</value>
+  </data>
+
+  <!-- Attachments -->
+  <data name="AttachmentBlockedTitle" xml:space="preserve">
+    <value>Recto won’t open this attachment</value>
+  </data>
+  <data name="AttachmentBlockedProgram" xml:space="preserve">
+    <value>“{0}” is a program, script or shortcut that could harm your computer. You can save it and check it before opening it.</value>
+  </data>
+  <data name="AttachmentBlockedShortcut" xml:space="preserve">
+    <value>“{0}” is a shortcut that could harm your computer, even unopened. It can be saved as “{1}” so Windows ignores it.</value>
+  </data>
+  <data name="AttachmentDocumentChanged" xml:space="preserve">
+    <value>The document was reloaded or closed meanwhile. Try again from its attachments.</value>
+  </data>
+  <data name="AttachmentOpenFailedTitle" xml:space="preserve">
+    <value>Unable to open attachment</value>
+  </data>
+  <data name="AttachmentNotMarked" xml:space="preserve">
+    <value>Windows couldn’t mark “{0}” as coming from the internet, so Recto won’t open it. Try saving it instead.</value>
+  </data>
+  <data name="AttachmentLaunchFailed" xml:space="preserve">
+    <value>Windows couldn’t open “{0}”. Try saving it instead.</value>
+  </data>
+  <data name="OpenAttachmentTitle" xml:space="preserve">
+    <value>Open attachment?</value>
+  </data>
+  <data name="OpenAttachmentMessage" xml:space="preserve">
+    <value>“{0}” will open in the app Windows uses for this type of file. Attachments can contain harmful content, so only open it if you trust where this document came from.</value>
+  </data>
+  <data name="FileType" xml:space="preserve">
+    <value>File</value>
+  </data>
+  <data name="FileTypeNamed" xml:space="preserve">
+    <value>{0} file</value>
+  </data>
+  <data name="AttachmentSaveFailedTitle" xml:space="preserve">
+    <value>Unable to save attachment</value>
+  </data>
+  <data name="AttachmentUnmarkedTitle" xml:space="preserve">
+    <value>Attachment saved without a security mark</value>
+  </data>
+  <data name="AttachmentUnmarkedMessage" xml:space="preserve">
+    <value>This location can’t record that “{0}” came from the internet, so Windows won’t warn you when it’s opened.</value>
+  </data>
+  <data name="AttachmentName" xml:space="preserve">
+    <value>Attachment {0}</value>
+  </data>
+
+  <!-- Drawing and text tools -->
+  <data name="ColorBlack" xml:space="preserve">
+    <value>Black</value>
+  </data>
+  <data name="ColorRed" xml:space="preserve">
+    <value>Red</value>
+  </data>
+  <data name="ColorOrange" xml:space="preserve">
+    <value>Orange</value>
+  </data>
+  <data name="ColorGreen" xml:space="preserve">
+    <value>Green</value>
+  </data>
+  <data name="ColorBlue" xml:space="preserve">
+    <value>Blue</value>
+  </data>
+  <data name="ColorPurple" xml:space="preserve">
+    <value>Purple</value>
+  </data>
+  <data name="ColorYellow" xml:space="preserve">
+    <value>Yellow</value>
+  </data>
+  <data name="ColorPink" xml:space="preserve">
+    <value>Pink</value>
+  </data>
+
+  <!-- Recent documents and sidebar lists -->
+  <data name="JustNow" xml:space="preserve">
+    <value>Just now</value>
+  </data>
+  <data name="MinutesAgo" xml:space="preserve">
+    <value>{0} min ago</value>
+  </data>
+  <data name="TodayAt" xml:space="preserve">
+    <value>Today, {0}</value>
+  </data>
+  <data name="Yesterday" xml:space="preserve">
+    <value>Yesterday</value>
+  </data>
+  <data name="DaysAgo" xml:space="preserve">
+    <value>{0} days ago</value>
+  </data>
+  <data name="SizeBytes_One" xml:space="preserve">
+    <value>{0:N0} byte</value>
+  </data>
+  <data name="SizeBytes_Other" xml:space="preserve">
+    <value>{0:N0} bytes</value>
+  </data>
+  <data name="SizeKB" xml:space="preserve">
+    <value>{0:0.#} KB</value>
+  </data>
+  <data name="SizeMB" xml:space="preserve">
+    <value>{0:0.#} MB</value>
+  </data>
+  <data name="SizeGB" xml:space="preserve">
+    <value>{0:0.#} GB</value>
+  </data>
+
+  <!-- Document properties -->
+  <data name="PropertiesTitle" xml:space="preserve">
+    <value>Properties</value>
+  </data>
+  <data name="PropertiesDocument" xml:space="preserve">
+    <value>Document</value>
+  </data>
+  <data name="PropertiesFile" xml:space="preserve">
+    <value>File</value>
+  </data>
+  <data name="PropertiesTitleField" xml:space="preserve">
+    <value>Title</value>
+  </data>
+  <data name="PropertiesAuthor" xml:space="preserve">
+    <value>Author</value>
+  </data>
+  <data name="PropertiesSubject" xml:space="preserve">
+    <value>Subject</value>
+  </data>
+  <data name="PropertiesKeywords" xml:space="preserve">
+    <value>Keywords</value>
+  </data>
+  <data name="PropertiesCreator" xml:space="preserve">
+    <value>Creator</value>
+  </data>
+  <data name="PropertiesProducer" xml:space="preserve">
+    <value>Producer</value>
+  </data>
+  <data name="PropertiesCreated" xml:space="preserve">
+    <value>Created</value>
+  </data>
+  <data name="PropertiesModified" xml:space="preserve">
+    <value>Modified</value>
+  </data>
+  <data name="PropertiesLocation" xml:space="preserve">
+    <value>Location</value>
+  </data>
+  <data name="PropertiesSize" xml:space="preserve">
+    <value>Size</value>
+  </data>
+  <data name="PropertiesFormat" xml:space="preserve">
+    <value>Format</value>
+  </data>
+  <data name="PropertiesPages" xml:space="preserve">
+    <value>Pages</value>
+  </data>
+  <data name="PropertiesPageSize" xml:space="preserve">
+    <value>Page size</value>
+  </data>
+  <data name="PropertiesSecurity" xml:space="preserve">
+    <value>Security</value>
+  </data>
+  <data name="PropertiesEncrypted" xml:space="preserve">
+    <value>Encrypted</value>
+  </data>
+  <data name="PropertiesNone" xml:space="preserve">
+    <value>None</value>
+  </data>
+  <data name="PropertiesNoInformation" xml:space="preserve">
+    <value>No information available</value>
+  </data>
+  <data name="PaperLetter" xml:space="preserve">
+    <value>Letter</value>
+  </data>
+  <data name="PaperLegal" xml:space="preserve">
+    <value>Legal</value>
+  </data>
+  <data name="PaperTabloid" xml:space="preserve">
+    <value>Tabloid</value>
+  </data>
+  <data name="PaperSizeNamed" xml:space="preserve">
+    <value>{0} ({1})</value>
+  </data>
+  <data name="PaperSizeNamedLandscape" xml:space="preserve">
+    <value>{0}, landscape ({1})</value>
+  </data>
+
+  <!-- Keyboard shortcuts. Key names are what the keyboard shows; Ctrl, Alt and F-keys aren't translated. -->
+  <data name="ShortcutsTitle" xml:space="preserve">
+    <value>Keyboard shortcuts</value>
+  </data>
+  <data name="ShortcutsDocuments" xml:space="preserve">
+    <value>Documents</value>
+  </data>
+  <data name="ShortcutsNavigation" xml:space="preserve">
+    <value>Navigation</value>
+  </data>
+  <data name="ShortcutsSearch" xml:space="preserve">
+    <value>Search and selection</value>
+  </data>
+  <data name="ShortcutsAnnotations" xml:space="preserve">
+    <value>Annotations</value>
+  </data>
+  <data name="ShortcutsView" xml:space="preserve">
+    <value>View</value>
+  </data>
+  <data name="ShortcutOpen" xml:space="preserve">
+    <value>Open a document</value>
+  </data>
+  <data name="ShortcutNewWindow" xml:space="preserve">
+    <value>New window</value>
+  </data>
+  <data name="ShortcutSaveCopy" xml:space="preserve">
+    <value>Save a copy</value>
+  </data>
+  <data name="ShortcutPrint" xml:space="preserve">
+    <value>Print</value>
+  </data>
+  <data name="ShortcutSystemPrint" xml:space="preserve">
+    <value>Print using the system dialog</value>
+  </data>
+  <data name="ShortcutReload" xml:space="preserve">
+    <value>Reload</value>
+  </data>
+  <data name="ShortcutProperties" xml:space="preserve">
+    <value>Properties</value>
+  </data>
+  <data name="ShortcutSettings" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="ShortcutScroll" xml:space="preserve">
+    <value>Scroll</value>
+  </data>
+  <data name="ShortcutScreen" xml:space="preserve">
+    <value>Previous / next screen, or page in single page and fit page</value>
+  </data>
+  <data name="ShortcutPage" xml:space="preserve">
+    <value>Previous / next page, or scroll when the page is wider than the window</value>
+  </data>
+  <data name="ShortcutEnds" xml:space="preserve">
+    <value>Beginning / end of document</value>
+  </data>
+  <data name="ShortcutSidebar" xml:space="preserve">
+    <value>Show or hide the sidebar</value>
+  </data>
+  <data name="ShortcutSearch" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="ShortcutNextResult" xml:space="preserve">
+    <value>Next result</value>
+  </data>
+  <data name="ShortcutPreviousResult" xml:space="preserve">
+    <value>Previous result</value>
+  </data>
+  <data name="ShortcutCopy" xml:space="preserve">
+    <value>Copy selected text</value>
+  </data>
+  <data name="ShortcutSelectAll" xml:space="preserve">
+    <value>Select all</value>
+  </data>
+  <data name="ShortcutHighlight" xml:space="preserve">
+    <value>Highlight selection</value>
+  </data>
+  <data name="ShortcutTools" xml:space="preserve">
+    <value>Show or hide the drawing and text tools</value>
+  </data>
+  <data name="ShortcutLeaveTool" xml:space="preserve">
+    <value>Leave the current tool</value>
+  </data>
+  <data name="ShortcutDeleteDrawing" xml:space="preserve">
+    <value>Delete the selected drawing or text box</value>
+  </data>
+  <data name="ShortcutUndo" xml:space="preserve">
+    <value>Undo</value>
+  </data>
+  <data name="ShortcutRedo" xml:space="preserve">
+    <value>Redo</value>
+  </data>
+  <data name="ShortcutZoomInOut" xml:space="preserve">
+    <value>Zoom in / out</value>
+  </data>
+  <data name="ShortcutActualSize" xml:space="preserve">
+    <value>Actual size</value>
+  </data>
+  <data name="ShortcutZoom" xml:space="preserve">
+    <value>Zoom</value>
+  </data>
+  <data name="ShortcutRotate" xml:space="preserve">
+    <value>Rotate</value>
+  </data>
+  <data name="ShortcutInvert" xml:space="preserve">
+    <value>Invert colors</value>
+  </data>
+  <data name="ShortcutFullScreen" xml:space="preserve">
+    <value>Full screen</value>
+  </data>
+  <data name="ShortcutPresent" xml:space="preserve">
+    <value>Present</value>
+  </data>
+  <data name="KeyShift" xml:space="preserve">
+    <value>Shift</value>
+  </data>
+  <data name="KeyEnter" xml:space="preserve">
+    <value>Enter</value>
+  </data>
+  <data name="KeyEsc" xml:space="preserve">
+    <value>Esc</value>
+  </data>
+  <data name="KeyDelete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="KeySpace" xml:space="preserve">
+    <value>Space</value>
+  </data>
+  <data name="KeyUp" xml:space="preserve">
+    <value>Up</value>
+  </data>
+  <data name="KeyDown" xml:space="preserve">
+    <value>Down</value>
+  </data>
+  <data name="KeyLeft" xml:space="preserve">
+    <value>Left</value>
+  </data>
+  <data name="KeyRight" xml:space="preserve">
+    <value>Right</value>
+  </data>
+  <data name="KeyHome" xml:space="preserve">
+    <value>Home</value>
+  </data>
+  <data name="KeyEnd" xml:space="preserve">
+    <value>End</value>
+  </data>
+  <data name="KeyPgUp" xml:space="preserve">
+    <value>PgUp</value>
+  </data>
+  <data name="KeyPgDn" xml:space="preserve">
+    <value>PgDn</value>
+  </data>
+  <data name="KeyPlus" xml:space="preserve">
+    <value>Plus</value>
+  </data>
+  <data name="KeyMinus" xml:space="preserve">
+    <value>Minus</value>
+  </data>
+  <data name="KeyWheel" xml:space="preserve">
+    <value>Wheel</value>
+  </data>
+
+  <!-- About -->
+  <data name="AboutDescription" xml:space="preserve">
+    <value>A simple document viewer for Windows, inspired by GNOME Papers. PDF rendering by PDFium.</value>
+  </data>
+
+  <!-- Document view -->
+  <data name="DocumentName" xml:space="preserve">
+    <value>Document</value>
+  </data>
+  <data name="DocumentPageName" xml:space="preserve">
+    <value>Document, page {0}, {1} of {2}</value>
+  </data>
+  <data name="LinkCantOpen" xml:space="preserve">
+    <value>This link can’t be opened</value>
+  </data>
+  <data name="GoToPage" xml:space="preserve">
+    <value>Go to page {0}</value>
+  </data>
+  <data name="Copy" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="CopyTooltip" xml:space="preserve">
+    <value>Copy (Ctrl+C)</value>
+  </data>
+  <data name="Highlight" xml:space="preserve">
+    <value>Highlight</value>
+  </data>
+  <data name="HighlightTooltip" xml:space="preserve">
+    <value>Highlight (Ctrl+H)</value>
+  </data>
+  <data name="AddNote" xml:space="preserve">
+    <value>Add note</value>
+  </data>
+  <data name="AddNoteTooltip" xml:space="preserve">
+    <value>Highlight and add a note</value>
+  </data>
+  <data name="HighlightYellow" xml:space="preserve">
+    <value>Highlight yellow</value>
+  </data>
+  <data name="HighlightGreen" xml:space="preserve">
+    <value>Highlight green</value>
+  </data>
+  <data name="HighlightBlue" xml:space="preserve">
+    <value>Highlight blue</value>
+  </data>
+  <data name="HighlightPink" xml:space="preserve">
+    <value>Highlight pink</value>
+  </data>
+  <data name="HighlightPurple" xml:space="preserve">
+    <value>Highlight purple</value>
+  </data>
+  <data name="SearchForSelection" xml:space="preserve">
+    <value>Search for selection</value>
+  </data>
+  <data name="OpenLink" xml:space="preserve">
+    <value>Open link</value>
+  </data>
+  <data name="CopyLinkAddress" xml:space="preserve">
+    <value>Copy link address</value>
+  </data>
+  <data name="EditText" xml:space="preserve">
+    <value>Edit text</value>
+  </data>
+  <data name="EditNote" xml:space="preserve">
+    <value>Edit note</value>
+  </data>
+  <data name="DeleteAnnotation" xml:space="preserve">
+    <value>Delete annotation</value>
+  </data>
+  <data name="AddNoteHere" xml:space="preserve">
+    <value>Add note here</value>
+  </data>
+  <data name="AddTextHere" xml:space="preserve">
+    <value>Add text here</value>
+  </data>
+  <data name="SelectAll" xml:space="preserve">
+    <value>Select all</value>
+  </data>
+  <data name="RotateLeft" xml:space="preserve">
+    <value>Rotate left</value>
+  </data>
+  <data name="RotateRight" xml:space="preserve">
+    <value>Rotate right</value>
+  </data>
+  <data name="NotePlaceholder" xml:space="preserve">
+    <value>Add a note</value>
+  </data>
+  <data name="TextBox" xml:space="preserve">
+    <value>Text box</value>
+  </data>
+  <data name="KindNote" xml:space="preserve">
+    <value>Note</value>
+  </data>
+  <data name="KindHighlight" xml:space="preserve">
+    <value>Highlight</value>
+  </data>
+  <data name="KindUnderline" xml:space="preserve">
+    <value>Underline</value>
+  </data>
+  <data name="KindStrikeOut" xml:space="preserve">
+    <value>Strikethrough</value>
+  </data>
+  <data name="KindSquiggly" xml:space="preserve">
+    <value>Squiggly underline</value>
+  </data>
+  <data name="KindFreeText" xml:space="preserve">
+    <value>Text box</value>
+  </data>
+  <data name="KindShape" xml:space="preserve">
+    <value>Shape</value>
+  </data>
+  <data name="KindInk" xml:space="preserve">
+    <value>Drawing</value>
+  </data>
+  <data name="KindStamp" xml:space="preserve">
+    <value>Stamp</value>
+  </data>
+  <data name="KindAttachment" xml:space="preserve">
+    <value>Attachment</value>
+  </data>
+  <data name="KindOther" xml:space="preserve">
+    <value>Annotation</value>
+  </data>
+  <data name="DrawingAddFailed" xml:space="preserve">
+    <value>The drawing couldn’t be added.</value>
+  </data>
+  <data name="DrawingEraseFailed" xml:space="preserve">
+    <value>The drawing couldn’t be erased.</value>
+  </data>
+  <data name="AnnotationChangeFailed" xml:space="preserve">
+    <value>The annotation couldn’t be changed.</value>
+  </data>
+  <data name="TextBoxSaveFailed" xml:space="preserve">
+    <value>The text box couldn’t be saved.</value>
+  </data>
+  <data name="HighlightFailed" xml:space="preserve">
+    <value>The text couldn’t be highlighted.</value>
+  </data>
+  <data name="NoteAddFailed" xml:space="preserve">
+    <value>The note couldn’t be added.</value>
+  </data>
+  <data name="AnnotationDeleteFailed" xml:space="preserve">
+    <value>The annotation couldn’t be deleted.</value>
+  </data>
+  <data name="NoteChangeFailed" xml:space="preserve">
+    <value>The note couldn’t be changed.</value>
+  </data>
+  <data name="UndoFailed" xml:space="preserve">
+    <value>The change couldn’t be undone.</value>
+  </data>
+  <data name="RedoFailed" xml:space="preserve">
+    <value>The change couldn’t be redone.</value>
+  </data>
+
+  <!-- Print dialog -->
+  <data name="PrintAllPages" xml:space="preserve">
+    <value>All pages</value>
+  </data>
+  <data name="PageCount_One" xml:space="preserve">
+    <value>{0:N0} page</value>
+  </data>
+  <data name="PageCount_Other" xml:space="preserve">
+    <value>{0:N0} pages</value>
+  </data>
+  <data name="PrintCurrentPage" xml:space="preserve">
+    <value>Current page</value>
+  </data>
+  <data name="PrintCustomRange" xml:space="preserve">
+    <value>Custom</value>
+  </data>
+  <data name="PrintCustomRangeDetail" xml:space="preserve">
+    <value>Choose the pages to print</value>
+  </data>
+  <data name="OrientationAutomatic" xml:space="preserve">
+    <value>Automatic</value>
+  </data>
+  <data name="OrientationPortrait" xml:space="preserve">
+    <value>Portrait</value>
+  </data>
+  <data name="OrientationLandscape" xml:space="preserve">
+    <value>Landscape</value>
+  </data>
+  <data name="PrintColor" xml:space="preserve">
+    <value>Color</value>
+  </data>
+  <data name="PrintBlackAndWhite" xml:space="preserve">
+    <value>Black and white</value>
+  </data>
+  <data name="DuplexOff" xml:space="preserve">
+    <value>Off</value>
+  </data>
+  <data name="DuplexLongEdge" xml:space="preserve">
+    <value>Flip on long edge</value>
+  </data>
+  <data name="DuplexShortEdge" xml:space="preserve">
+    <value>Flip on short edge</value>
+  </data>
+  <data name="ScaleFit" xml:space="preserve">
+    <value>Fit to printable area</value>
+  </data>
+  <data name="ScaleShrink" xml:space="preserve">
+    <value>Shrink oversized pages</value>
+  </data>
+  <data name="ScaleActual" xml:space="preserve">
+    <value>Actual size</value>
+  </data>
+  <data name="ScaleCustom" xml:space="preserve">
+    <value>Custom</value>
+  </data>
+  <data name="SubsetAll" xml:space="preserve">
+    <value>All pages in range</value>
+  </data>
+  <data name="SubsetOdd" xml:space="preserve">
+    <value>Odd pages only</value>
+  </data>
+  <data name="SubsetEven" xml:space="preserve">
+    <value>Even pages only</value>
+  </data>
+  <data name="NoPrinters" xml:space="preserve">
+    <value>No printers</value>
+  </data>
+  <data name="NoPrintersHint" xml:space="preserve">
+    <value>Add a printer in Windows Settings, or use the system dialog.</value>
+  </data>
+  <data name="PrinterConnecting" xml:space="preserve">
+    <value>Connecting…</value>
+  </data>
+  <data name="PrinterUnavailable" xml:space="preserve">
+    <value>Unavailable. {0}</value>
+  </data>
+  <data name="PrinterDefault" xml:space="preserve">
+    <value>Default</value>
+  </data>
+  <data name="PrinterPropertiesFailed" xml:space="preserve">
+    <value>The printer’s settings couldn’t be opened. {0}</value>
+  </data>
+  <data name="NoEvenPages" xml:space="preserve">
+    <value>There are no even pages to print.</value>
+  </data>
+  <data name="NoOddPages" xml:space="preserve">
+    <value>There are no odd pages to print.</value>
+  </data>
+  <data name="EnterPages" xml:space="preserve">
+    <value>Enter the pages to print.</value>
+  </data>
+  <data name="NothingToPrint" xml:space="preserve">
+    <value>Nothing to print</value>
+  </data>
+  <data name="NothingToPrintSentence" xml:space="preserve">
+    <value>Nothing to print.</value>
+  </data>
+  <data name="SheetsOfPaper_One" xml:space="preserve">
+    <value>{0:N0} sheet of paper</value>
+  </data>
+  <data name="SheetsOfPaper_Other" xml:space="preserve">
+    <value>{0:N0} sheets of paper</value>
+  </data>
+  <data name="SheetPosition" xml:space="preserve">
+    <value>{0:N0} of {1:N0}</value>
+  </data>
+  <data name="PrintPreparing" xml:space="preserve">
+    <value>Preparing…</value>
+  </data>
+  <data name="PrintSending" xml:space="preserve">
+    <value>Sending sheet {0:N0} of {1:N0}…</value>
+  </data>
+  <data name="PrintDocumentClosed" xml:space="preserve">
+    <value>The document was closed.</value>
+  </data>
+  <data name="PrintCancelling" xml:space="preserve">
+    <value>Cancelling…</value>
+  </data>
+  <data name="PagesLeftOut_One" xml:space="preserve">
+    <value>One page couldn’t be printed and was left out.</value>
+  </data>
+  <data name="PagesLeftOut_Other" xml:space="preserve">
+    <value>{0:N0} pages couldn’t be printed and were left out.</value>
+  </data>
+  <data name="RangeNotRange" xml:space="preserve">
+    <value>“{0}” isn’t a page range.</value>
+  </data>
+  <data name="RangeTooMany" xml:space="preserve">
+    <value>That’s too many pages.</value>
+  </data>
+  <data name="RangeEmpty" xml:space="preserve">
+    <value>Enter the pages to print, such as 1-5, 8.</value>
+  </data>
+  <data name="RangeNotNumber" xml:space="preserve">
+    <value>“{0}” isn’t a page number.</value>
+  </data>
+  <data name="RangeOnlyOnePage" xml:space="preserve">
+    <value>The document has only one page.</value>
+  </data>
+  <data name="RangeNoSuchPage" xml:space="preserve">
+    <value>There’s no page {0}. The document has {1:N0} pages.</value>
+  </data>
+
+  <!-- Printer status, from Windows' print queue -->
+  <data name="PrinterOffline" xml:space="preserve">
+    <value>Offline</value>
+  </data>
+  <data name="PrinterNotAvailable" xml:space="preserve">
+    <value>Not available</value>
+  </data>
+  <data name="PrinterPaused" xml:space="preserve">
+    <value>Paused</value>
+  </data>
+  <data name="PrinterPaperJam" xml:space="preserve">
+    <value>Paper jam</value>
+  </data>
+  <data name="PrinterOutOfPaper" xml:space="preserve">
+    <value>Out of paper</value>
+  </data>
+  <data name="PrinterPaperProblem" xml:space="preserve">
+    <value>Paper problem</value>
+  </data>
+  <data name="PrinterNoToner" xml:space="preserve">
+    <value>Out of toner or ink</value>
+  </data>
+  <data name="PrinterDoorOpen" xml:space="preserve">
+    <value>Door open</value>
+  </data>
+  <data name="PrinterNeedsAttention" xml:space="preserve">
+    <value>Needs attention</value>
+  </data>
+  <data name="PrinterError" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="PrinterReady" xml:space="preserve">
+    <value>Ready</value>
+  </data>
+  <data name="PrinterTonerLow" xml:space="preserve">
+    <value>Ready, toner or ink is low</value>
+  </data>
+  <data name="DocumentsWaiting_One" xml:space="preserve">
+    <value>{0:N0} document waiting</value>
+  </data>
+  <data name="DocumentsWaiting_Other" xml:space="preserve">
+    <value>{0:N0} documents waiting</value>
+  </data>
+  <data name="PrinterSettingsIncomplete" xml:space="preserve">
+    <value>The printer settings are incomplete.</value>
+  </data>
+  <data name="PrinterOpenFailed" xml:space="preserve">
+    <value>“{0}” couldn’t be opened. {1}</value>
+  </data>
+  <data name="PrinterStoppedAccepting" xml:space="preserve">
+    <value>The printer stopped accepting pages.</value>
+  </data>
+  <data name="PrinterCouldntFinish" xml:space="preserve">
+    <value>The printer couldn’t finish the document.</value>
+  </data>
+  <data name="PrinterRejectedDocument" xml:space="preserve">
+    <value>The printer didn’t accept the document. {0}</value>
+  </data>
+  <data name="PrinterRejectedPage" xml:space="preserve">
+    <value>The printer didn’t accept the page.</value>
+  </data>
+  <data name="NoPagesToPrint" xml:space="preserve">
+    <value>The document has no pages to print.</value>
+  </data>
+  <data name="PrintPageNoMemory" xml:space="preserve">
+    <value>There isn’t enough memory to print the page.</value>
+  </data>
+
+  <!-- Errors from reading and changing PDF files -->
+  <data name="PdfIncorrectPassword" xml:space="preserve">
+    <value>Incorrect password</value>
+  </data>
+  <data name="PdfPasswordRequired" xml:space="preserve">
+    <value>Password required</value>
+  </data>
+  <data name="PdfTooLarge" xml:space="preserve">
+    <value>The file is too large to open. Recto opens documents up to {0} GB.</value>
+  </data>
+  <data name="PdfOpenNoMemory" xml:space="preserve">
+    <value>There isn’t enough memory to open the file.</value>
+  </data>
+  <data name="PdfChangedWhileReading" xml:space="preserve">
+    <value>The file changed while it was being read.</value>
+  </data>
+  <data name="PdfNotFound" xml:space="preserve">
+    <value>The file could not be found or opened.</value>
+  </data>
+  <data name="PdfDamaged" xml:space="preserve">
+    <value>The file is not a PDF document or it is damaged.</value>
+  </data>
+  <data name="PdfUnsupportedSecurity" xml:space="preserve">
+    <value>The document uses an unsupported security scheme.</value>
+  </data>
+  <data name="PdfLoadFailed" xml:space="preserve">
+    <value>The document could not be loaded.</value>
+  </data>
+  <data name="PdfNoPages" xml:space="preserve">
+    <value>The document has no pages.</value>
+  </data>
+  <data name="PdfPageLoadFailed" xml:space="preserve">
+    <value>Page {0} could not be loaded.</value>
+  </data>
+  <data name="PdfAnnotationCreateFailed" xml:space="preserve">
+    <value>The annotation could not be created.</value>
+  </data>
+  <data name="PdfAnnotationReadFailed" xml:space="preserve">
+    <value>The annotation could not be read back.</value>
+  </data>
+  <data name="PdfHighlightCreateFailed" xml:space="preserve">
+    <value>The highlight could not be created.</value>
+  </data>
+  <data name="PdfNoteCreateFailed" xml:space="preserve">
+    <value>The note could not be created.</value>
+  </data>
+  <data name="PdfAnnotationRestoreFailed" xml:space="preserve">
+    <value>The annotation could not be put back.</value>
+  </data>
+  <data name="PdfAttachmentNotFound" xml:space="preserve">
+    <value>The attachment couldn’t be found in the document.</value>
+  </data>
+  <data name="PdfAttachmentReadFailed" xml:space="preserve">
+    <value>The attachment couldn’t be read from the document.</value>
+  </data>
+  <data name="PdfAttachmentTooLarge" xml:space="preserve">
+    <value>The attachment is too large to extract. Recto extracts files up to 2 GB.</value>
+  </data>
+  <data name="PdfAttachmentNoMemory" xml:space="preserve">
+    <value>There isn’t enough memory to extract the attachment.</value>
+  </data>
+  <data name="PdfSaveFailed" xml:space="preserve">
+    <value>The document could not be saved.</value>
+  </data>
+  <data name="PdfTextLayoutFailed" xml:space="preserve">
+    <value>The text could not be laid out.</value>
+  </data>
+</root>

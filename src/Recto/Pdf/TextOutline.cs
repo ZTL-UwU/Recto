@@ -58,12 +58,12 @@ internal static unsafe partial class TextOutline
     public static (string Operators, double Height) Draw(string text, double width, double fontSize, Func<double, double, double, Point> place)
     {
         IntPtr dc = CreateCompatibleDC(IntPtr.Zero);
-        if (dc == IntPtr.Zero) throw new InvalidOperationException("The text could not be laid out.");
+        if (dc == IntPtr.Zero) throw new InvalidOperationException(Strings.Get("PdfTextLayoutFailed"));
         IntPtr font = CreateFontW(-(int)Math.Round(fontSize * UnitsPerPoint), 0, 0, 0, 400, 0, 0, 0, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, 0, 0, 0, FontFamily);
         if (font == IntPtr.Zero)
         {
             DeleteDC(dc);
-            throw new InvalidOperationException("The text could not be laid out.");
+            throw new InvalidOperationException(Strings.Get("PdfTextLayoutFailed"));
         }
         IntPtr previous = SelectObject(dc, font);
         try

@@ -91,26 +91,26 @@ public static class PrintLayout
             else
             {
                 string from = part[..dash].Trim(), to = part[(dash + 1)..].Trim();
-                if (from.Length == 0 && to.Length == 0) return Fail($"“{part}” isn't a page range.", out error);
+                if (from.Length == 0 && to.Length == 0) return Fail(Strings.Format("RangeNotRange", part), out error);
                 first = 1;
                 last = pageCount;
                 if (from.Length > 0 && !TryPage(from, pageCount, out first, ref error)) return false;
                 if (to.Length > 0 && !TryPage(to, pageCount, out last, ref error)) return false;
             }
-            if (pages.Count + Math.Abs(last - first) + 1 > MaxSelected) return Fail("That's too many pages.", out error);
+            if (pages.Count + Math.Abs(last - first) + 1 > MaxSelected) return Fail(Strings.Get("RangeTooMany"), out error);
             int step = last >= first ? 1 : -1;
             for (int p = first; p != last + step; p += step) pages.Add(p - 1);
         }
-        if (pages.Count == 0) return Fail("Enter the pages to print, such as 1-5, 8.", out error);
+        if (pages.Count == 0) return Fail(Strings.Get("RangeEmpty"), out error);
         return true;
     }
 
     private static bool TryPage(string text, int pageCount, out int page, ref string? error)
     {
         if (!int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out page))
-            return Fail($"“{text}” isn't a page number.", out error);
+            return Fail(Strings.Format("RangeNotNumber", text), out error);
         if (page < 1 || page > pageCount)
-            return Fail(pageCount == 1 ? "The document has only one page." : $"There's no page {page}. The document has {pageCount:N0} pages.", out error);
+            return Fail(pageCount == 1 ? Strings.Get("RangeOnlyOnePage") : Strings.Format("RangeNoSuchPage", page, pageCount), out error);
         return true;
     }
 

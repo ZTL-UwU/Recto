@@ -969,8 +969,8 @@ public sealed partial class DocumentView : UserControl
     private void UpdateAutomationName()
     {
         AutomationProperties.SetName(this, _document is null
-            ? "Document"
-            : $"Document, page {_document.GetPageLabel(_currentPage)}, {_currentPage + 1} of {_document.PageCount}");
+            ? Strings.Get("DocumentName")
+            : Strings.Format("DocumentPageName", _document.GetPageLabel(_currentPage), _currentPage + 1, _document.PageCount));
     }
 
     // ---------------------------------------------------------------- text data
@@ -1431,8 +1431,8 @@ public sealed partial class DocumentView : UserControl
             {
                 cursor = InputSystemCursorShape.Hand;
                 status = link.Destination.Uri is { } uri
-                    ? LaunchPolicy.ParseExternalLink(uri) is { } parsed ? LaunchPolicy.DescribeLink(parsed) : "This link can't be opened"
-                    : $"Go to page {_document!.GetPageLabel(link.Destination.PageIndex)}";
+                    ? LaunchPolicy.ParseExternalLink(uri) is { } parsed ? LaunchPolicy.DescribeLink(parsed) : Strings.Get("LinkCantOpen")
+                    : Strings.Format("GoToPage", _document!.GetPageLabel(link.Destination.PageIndex));
             }
             else if (_selected is { } selected && selected.PageIndex == h.Page && Inflate(selected.Bounds, SelectionFrame.Gap / Zoom).Contains(h.Display))
             {
@@ -2085,6 +2085,7 @@ public sealed partial class DocumentView : UserControl
 
     // ---------------------------------------------------------------- flyouts & annotations
 
+    // Names are keys of Strings: Highlight<name>.
     private static readonly (string Name, Color Color)[] HighlightColors =
     [
         ("Yellow", Color.FromArgb(255, 255, 221, 51)),
@@ -2109,14 +2110,14 @@ public sealed partial class DocumentView : UserControl
     {
         _selectionFlyout?.Hide();
         var flyout = _selectionFlyout = new CommandBarFlyout { AlwaysExpanded = true };
-        var copy = new AppBarButton { Label = "Copy", Icon = new SymbolIcon(Symbol.Copy) };
-        ToolTipService.SetToolTip(copy, "Copy (Ctrl+C)");
+        var copy = new AppBarButton { Label = Strings.Get("Copy"), Icon = new SymbolIcon(Symbol.Copy) };
+        ToolTipService.SetToolTip(copy, Strings.Get("CopyTooltip"));
         copy.Click += (_, _) => { CopySelection(); flyout.Hide(); };
-        var highlight = new AppBarButton { Label = "Highlight", Icon = new FontIcon { Glyph = "\uE7E6" } };
-        ToolTipService.SetToolTip(highlight, "Highlight (Ctrl+H)");
+        var highlight = new AppBarButton { Label = Strings.Get("Highlight"), Icon = new FontIcon { Glyph = "\uE7E6" } };
+        ToolTipService.SetToolTip(highlight, Strings.Get("HighlightTooltip"));
         highlight.Click += (_, _) => { HighlightSelection(HighlightColors[0].Color); flyout.Hide(); };
-        var note = new AppBarButton { Label = "Add note", Icon = new FontIcon { Glyph = "\uE70B" } };
-        ToolTipService.SetToolTip(note, "Highlight and add a note");
+        var note = new AppBarButton { Label = Strings.Get("AddNote"), Icon = new FontIcon { Glyph = "\uE70B" } };
+        ToolTipService.SetToolTip(note, Strings.Get("AddNoteTooltip"));
         note.Click += (_, _) => { HighlightSelection(HighlightColors[0].Color, openNote: true); flyout.Hide(); };
         flyout.PrimaryCommands.Add(copy);
         flyout.PrimaryCommands.Add(highlight);
@@ -2126,14 +2127,14 @@ public sealed partial class DocumentView : UserControl
         {
             var item = new AppBarButton
             {
-                Label = $"Highlight {name.ToLowerInvariant()}",
+                Label = Strings.Get("Highlight" + name),
                 Icon = new FontIcon { Glyph = "\uE91F", Foreground = new SolidColorBrush(color) },
             };
             item.Click += (_, _) => { HighlightSelection(color); flyout.Hide(); };
             flyout.SecondaryCommands.Add(item);
         }
         flyout.SecondaryCommands.Add(new AppBarSeparator());
-        var search = new AppBarButton { Label = "Search for selection", Icon = new SymbolIcon(Symbol.Find) };
+        var search = new AppBarButton { Label = Strings.Get("SearchForSelection"), Icon = new SymbolIcon(Symbol.Find) };
         search.Click += (_, _) =>
         {
             flyout.Hide();
@@ -2179,25 +2180,25 @@ public sealed partial class DocumentView : UserControl
         {
             if (LinkAt(h.Page, h.Display) is { Destination.Uri: { } uri })
             {
-                if (LaunchPolicy.ParseExternalLink(uri) is not null) AddItem(menu, "Open link", "\uE8A7", () => _ = LaunchUriAsync(uri));
-                AddItem(menu, "Copy link address", "\uE71B", () => CopyText(uri));
+                if (LaunchPolicy.ParseExternalLink(uri) is not null) AddItem(menu, Strings.Get("OpenLink"), "\uE8A7", () => _ = LaunchUriAsync(uri));
+                AddItem(menu, Strings.Get("CopyLinkAddress"), "\uE71B", () => CopyText(uri));
                 menu.Items.Add(new MenuFlyoutSeparator());
             }
             if (AnnotationAt(h.Page, h.Display) is { } annotation)
             {
-                if (annotation.FreeText is not null) AddItem(menu, "Edit text", "\uE70F", () => BeginTextEdit(annotation));
-                else if (!IsForeignText(annotation)) AddItem(menu, "Edit note", "\uE70F", () => ShowAnnotationFlyout(annotation, position));
-                AddItem(menu, "Delete annotation", "\uE74D", () => DeleteAnnotation(annotation));
+                if (annotation.FreeText is not null) AddItem(menu, Strings.Get("EditText"), "\uE70F", () => BeginTextEdit(annotation));
+                else if (!IsForeignText(annotation)) AddItem(menu, Strings.Get("EditNote"), "\uE70F", () => ShowAnnotationFlyout(annotation, position));
+                AddItem(menu, Strings.Get("DeleteAnnotation"), "\uE74D", () => DeleteAnnotation(annotation));
                 menu.Items.Add(new MenuFlyoutSeparator());
             }
-            AddItem(menu, "Add note here", "\uE70B", () => AddNote(h.Page, h.Display, position));
-            AddItem(menu, "Add text here", "\uE8D2", () => BeginTextEdit(h.Page, h.Display));
+            AddItem(menu, Strings.Get("AddNoteHere"), "\uE70B", () => AddNote(h.Page, h.Display, position));
+            AddItem(menu, Strings.Get("AddTextHere"), "\uE8D2", () => BeginTextEdit(h.Page, h.Display));
         }
-        AddItem(menu, "Select all", "\uE8B3", SelectAll, VirtualKey.A);
+        AddItem(menu, Strings.Get("SelectAll"), "\uE8B3", SelectAll, VirtualKey.A);
         menu.Items.Add(new MenuFlyoutSeparator());
-        AddItem(menu, "Rotate left", "\uE7AD", () => Rotate(-90));
+        AddItem(menu, Strings.Get("RotateLeft"), "\uE7AD", () => Rotate(-90));
         ((MenuFlyoutItem)menu.Items[^1]).Icon = new FontIcon { Glyph = "\uE7AD", RenderTransformOrigin = new Point(0.5, 0.5), RenderTransform = new ScaleTransform { ScaleX = -1 } };
-        AddItem(menu, "Rotate right", "\uE7AD", () => Rotate(90));
+        AddItem(menu, Strings.Get("RotateRight"), "\uE7AD", () => Rotate(90));
         ShowArrowWhenOpened(menu);
         menu.ShowAt(_host, position);
         e.Handled = true;
@@ -2238,7 +2239,7 @@ public sealed partial class DocumentView : UserControl
         catch (Exception ex) when (IsEditFailure(ex))
         {
             // Pages highlighted before the failure still get refreshed below.
-            ReportEditFailure(document, ex, "The text couldn't be highlighted.");
+            ReportEditFailure(document, ex, Strings.Get("HighlightFailed"));
         }
         if (document != _document) return;
         Record([.. changes]);
@@ -2288,7 +2289,7 @@ public sealed partial class DocumentView : UserControl
         }
         catch (Exception ex) when (IsEditFailure(ex))
         {
-            ReportEditFailure(document, ex, "The note couldn't be added.");
+            ReportEditFailure(document, ex, Strings.Get("NoteAddFailed"));
             return;
         }
         if (document != _document) return;
@@ -2318,7 +2319,7 @@ public sealed partial class DocumentView : UserControl
         }
         catch (Exception ex) when (IsEditFailure(ex))
         {
-            ReportEditFailure(document, ex, "The annotation couldn't be deleted.");
+            ReportEditFailure(document, ex, Strings.Get("AnnotationDeleteFailed"));
             return;
         }
         if (document != _document) return;
@@ -2378,7 +2379,7 @@ public sealed partial class DocumentView : UserControl
         var box = new TextBox
         {
             Text = annotation.Contents,
-            PlaceholderText = IsForeignText(annotation) ? "" : "Add a note",
+            PlaceholderText = IsForeignText(annotation) ? "" : Strings.Get("NotePlaceholder"),
             IsReadOnly = IsForeignText(annotation),
             AcceptsReturn = true,
             TextWrapping = TextWrapping.Wrap,
@@ -2389,7 +2390,7 @@ public sealed partial class DocumentView : UserControl
         ScrollViewer.SetVerticalScrollBarVisibility(box, ScrollBarVisibility.Auto);
         var delete = new Button
         {
-            Content = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { new FontIcon { Glyph = "\uE74D", FontSize = 14 }, new TextBlock { Text = "Delete" } } },
+            Content = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { new FontIcon { Glyph = "\uE74D", FontSize = 14 }, new TextBlock { Text = Strings.Get("Delete") } } },
         };
         var flyout = new Flyout
         {
@@ -2468,7 +2469,7 @@ public sealed partial class DocumentView : UserControl
         {
             // Still unsaved, so closing the window doesn't drop the text without asking.
             if (edit.Saved == text) edit.Saved = saved;
-            ReportEditFailure(edit.Document, ex, "The note couldn't be changed.");
+            ReportEditFailure(edit.Document, ex, Strings.Get("NoteChangeFailed"));
             return;
         }
         if (edit.Document != _document) return;
@@ -2605,7 +2606,7 @@ public sealed partial class DocumentView : UserControl
             catch (Exception ex) when (IsEditFailure(ex))
             {
                 // Left out of the history: partly made, it can't be taken back or made again as a whole.
-                ReportEditFailure(document, ex, undo ? "The change couldn't be undone." : "The change couldn't be redone.");
+                ReportEditFailure(document, ex, Strings.Get(undo ? "UndoFailed" : "RedoFailed"));
             }
             if (document != _document) return;
             foreach (int page in pages)
@@ -2629,20 +2630,20 @@ public sealed partial class DocumentView : UserControl
         if (target.IsEmpty) EnsurePageVisible(annotation.PageIndex, annotation.Bounds);
     }
 
-    public static string KindName(AnnotationKind kind) => kind switch
+    public static string KindName(AnnotationKind kind) => Strings.Get(kind switch
     {
-        AnnotationKind.Note => "Note",
-        AnnotationKind.Highlight => "Highlight",
-        AnnotationKind.Underline => "Underline",
-        AnnotationKind.StrikeOut => "Strikethrough",
-        AnnotationKind.Squiggly => "Squiggly underline",
-        AnnotationKind.FreeText => "Text box",
-        AnnotationKind.Shape => "Shape",
-        AnnotationKind.Ink => "Drawing",
-        AnnotationKind.Stamp => "Stamp",
-        AnnotationKind.Attachment => "Attachment",
-        _ => "Annotation",
-    };
+        AnnotationKind.Note => "KindNote",
+        AnnotationKind.Highlight => "KindHighlight",
+        AnnotationKind.Underline => "KindUnderline",
+        AnnotationKind.StrikeOut => "KindStrikeOut",
+        AnnotationKind.Squiggly => "KindSquiggly",
+        AnnotationKind.FreeText => "KindFreeText",
+        AnnotationKind.Shape => "KindShape",
+        AnnotationKind.Ink => "KindInk",
+        AnnotationKind.Stamp => "KindStamp",
+        AnnotationKind.Attachment => "KindAttachment",
+        _ => "KindOther",
+    });
 
     private static async Task LaunchUriAsync(string uri)
     {

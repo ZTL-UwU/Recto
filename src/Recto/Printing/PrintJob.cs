@@ -59,7 +59,7 @@ internal static partial class PrintJob
                 // which only draws, a page at a time, letting the viewer's own renders in between.
                 await Task.Run(() =>
                 {
-                    if (StartPage(dc) <= 0) throw new InvalidOperationException("The printer stopped accepting pages.");
+                    if (StartPage(dc) <= 0) throw new InvalidOperationException(Strings.Get("PrinterStoppedAccepting"));
                 }, token).ConfigureAwait(false);
                 if (sequence[n] is { } i)
                 {
@@ -88,14 +88,14 @@ internal static partial class PrintJob
                 }
                 await Task.Run(() =>
                 {
-                    if (EndPage(dc) <= 0) throw new InvalidOperationException("The printer stopped accepting pages.");
+                    if (EndPage(dc) <= 0) throw new InvalidOperationException(Strings.Get("PrinterStoppedAccepting"));
                 }, token).ConfigureAwait(false);
                 progress.Report((request.TwoSided ? (n + 2) / 2 : n + 1, paperTotal));
             }
 
             await Task.Run(() =>
             {
-                if (EndDoc(dc) <= 0) throw new InvalidOperationException("The printer couldn't finish the document.");
+                if (EndDoc(dc) <= 0) throw new InvalidOperationException(Strings.Get("PrinterCouldntFinish"));
             }).ConfigureAwait(false);
             finished = true;
             return failed.Count;
@@ -118,7 +118,7 @@ internal static partial class PrintJob
         fixed (byte* settings = request.Settings.Data)
         {
             IntPtr dc = Printers.CreateDCW("WINSPOOL", request.Printer, null, settings);
-            if (dc == IntPtr.Zero) throw new InvalidOperationException($"“{request.Printer}” couldn't be opened. {new Win32Exception(Marshal.GetLastPInvokeError()).Message}");
+            if (dc == IntPtr.Zero) throw new InvalidOperationException(Strings.Format("PrinterOpenFailed", request.Printer, new Win32Exception(Marshal.GetLastPInvokeError()).Message));
             return dc;
         }
     }
@@ -134,7 +134,7 @@ internal static partial class PrintJob
                 int error = Marshal.GetLastPInvokeError();
                 // Cancelled in a driver's own prompt, such as for a file name.
                 if (error == ERROR_CANCELLED) throw new OperationCanceledException();
-                throw new InvalidOperationException($"The printer didn't accept the document. {new Win32Exception(error).Message}");
+                throw new InvalidOperationException(Strings.Format("PrinterRejectedDocument", new Win32Exception(error).Message));
             }
         }
     }
