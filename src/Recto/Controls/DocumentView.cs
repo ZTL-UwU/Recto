@@ -59,6 +59,8 @@ public sealed partial class DocumentView : UserControl
     private int _currentPage;
     private int _currentRow;
     private double _lastZoom = 1;
+    /// <summary>The zoom pages were last rendered for.</summary>
+    private double _renderedZoom;
     private float? _pendingZoom;
     /// <summary>Position (in unzoomed content coordinates) of a scroll request that hasn't been applied yet.</summary>
     private double? _pendingContentX, _pendingContentY;
@@ -100,6 +102,7 @@ public sealed partial class DocumentView : UserControl
     {
         IsTabStop = true;
         UseSystemFocusVisuals = false;
+        _ctrlKeyHandler = (_, _) => UpdateScrollerZoomMode();
         var accent = Application.Current.Resources.TryGetValue("SystemAccentColor", out var a) && a is Color c ? c : Color.FromArgb(255, 0, 103, 192);
         _selectionBrush = new SolidColorBrush(Color.FromArgb(0x55, accent.R, accent.G, accent.B));
         _frame = new SelectionFrame(accent);
@@ -122,6 +125,9 @@ public sealed partial class DocumentView : UserControl
         _prefetchTimer.IsRepeating = false;
         _scroller.SizeChanged += (_, _) => OnViewportSizeChanged();
         ScrollBarHideFix.Attach(_scroller);
+        // Ctrl can change while another window has the keys, so it's checked again when the pointer comes back.
+        _scroller.AddHandler(PointerEnteredEvent, new PointerEventHandler((_, _) => UpdateScrollerZoomMode()), true);
+        _scroller.AddHandler(PointerMovedEvent, new PointerEventHandler((_, _) => UpdateScrollerZoomMode()), true);
         _root.Children.Add(_scroller);
         _root.Children.Add(_middleScrollMarker);
 
@@ -169,6 +175,13 @@ public sealed partial class DocumentView : UserControl
             _xamlRoot = XamlRoot;
             _xamlRoot.Changed += OnXamlRootChanged;
             _prefetchTimer.Tick += OnPrefetchTimerTick;
+            // Ctrl is watched across the whole window, as the keys may be going to anything in it.
+            if (_xamlRoot.Content is UIElement content)
+            {
+                _keyRoot = content;
+                content.AddHandler(PreviewKeyDownEvent, _ctrlKeyHandler, true);
+                content.AddHandler(PreviewKeyUpEvent, _ctrlKeyHandler, true);
+            }
         };
         Unloaded += (_, _) =>
         {
@@ -189,6 +202,10 @@ public sealed partial class DocumentView : UserControl
         _xamlRoot = null;
         _prefetchTimer.Stop();
         _prefetchTimer.Tick -= OnPrefetchTimerTick;
+        StopWheelZoom();
+        _keyRoot?.RemoveHandler(PreviewKeyDownEvent, _ctrlKeyHandler);
+        _keyRoot?.RemoveHandler(PreviewKeyUpEvent, _ctrlKeyHandler);
+        _keyRoot = null;
     }
 
     private void OnPrefetchTimerTick(Microsoft.UI.Dispatching.DispatcherQueueTimer sender, object args) => UpdateRealization(true);
@@ -242,6 +259,7 @@ public sealed partial class DocumentView : UserControl
         foreach (var loading in _textLoading.Values) loading.Cts.Cancel();
         _textLoading.Clear();
         _lastVisible = Rect.Empty;
+        StopWheelZoom();
         _searchHits.Clear();
         _currentHit = null;
         ClearSelection();
@@ -336,6 +354,7 @@ public sealed partial class DocumentView : UserControl
 
     public void SetZoomMode(ZoomMode mode)
     {
+        StopWheelZoom();
         _zoomMode = mode;
         ApplyZoomMode();
         ZoomChanged?.Invoke(this, EventArgs.Empty);
@@ -352,8 +371,106 @@ public sealed partial class DocumentView : UserControl
         return ZoomSteps.LastOrDefault(s => s < current * 0.99, MinZoom);
     }
 
+    // ---------------------------------------------------------------- Ctrl+wheel zoom
+
+    // The scroller zooms with Ctrl+wheel itself, but with momentum: turned the other way, it went on zooming the old
+    // way for several notches, as each notch only slowed it down. This zoom heads for where the notches add up to, so it
+    // turns as soon as the wheel does, and eases there. Each notch goes to the next of the zoom steps Ctrl+= and Ctrl+-
+    // use, so it lands on round numbers.
+    /// <summary>In milliseconds: after this long, the zoom has gone about two thirds of the way to the target.</summary>
+    private const double WheelZoomEasing = 40;
+    /// <summary>The zoom the wheel is heading for, or null when it isn't zooming.</summary>
+    private double? _wheelTarget;
+    /// <summary>The zoom it has got to, and the scroll offsets that go with it, which the scroller's lag behind.</summary>
+    private double _wheelZoom;
+    private Point _wheelOffset;
+    /// <summary>The pointer, in the viewport, and the point of the content kept under it.</summary>
+    private Point _wheelAnchor, _wheelContent;
+    private TimeSpan? _wheelFrameTime;
+    /// <summary>Wheel turned short of a notch, as a touchpad sends it: the step is taken once it comes to one.</summary>
+    private int _wheelRemainder;
+    private UIElement? _keyRoot;
+    private readonly KeyEventHandler _ctrlKeyHandler;
+
+    /// <summary>
+    /// Turns the scroller's own zoom off while Ctrl is held, so Ctrl+wheel comes here instead. Pinching still zooms
+    /// the scroller's way, as it doesn't hold Ctrl. Turned off, the scroller still zooms when asked to.
+    /// </summary>
+    private void UpdateScrollerZoomMode()
+    {
+        var mode = IsKeyDown(VirtualKey.Control) ? Microsoft.UI.Xaml.Controls.ZoomMode.Disabled : Microsoft.UI.Xaml.Controls.ZoomMode.Enabled;
+        if (_scroller.ZoomMode == mode) return;
+        _scroller.ZoomMode = mode;
+    }
+
+    private void ZoomByWheel(Point anchor, int delta)
+    {
+        if (_document is null || delta == 0) return;
+        if (_wheelTarget is null)
+        {
+            double z = Zoom;
+            _wheelZoom = z;
+            _wheelOffset = new Point(_pendingContentX is { } x ? x * z : _scroller.HorizontalOffset, _pendingContentY is { } y ? y * z : _scroller.VerticalOffset);
+            _wheelFrameTime = null;
+            CompositionTarget.Rendering += OnWheelZoomFrame;
+        }
+        // Taken again on every notch, in case the pointer moved.
+        var gap = CenteringGap(_wheelZoom);
+        _wheelAnchor = anchor;
+        _wheelContent = new Point((_wheelOffset.X + anchor.X - gap.X) / _wheelZoom, (_wheelOffset.Y + anchor.Y - gap.Y) / _wheelZoom);
+        // Turned the other way, what was left over doesn't hold back the new direction.
+        _wheelRemainder = Math.Sign(_wheelRemainder) == -Math.Sign(delta) ? delta : _wheelRemainder + delta;
+        double target = _wheelTarget ?? _wheelZoom;
+        for (; _wheelRemainder >= 120; _wheelRemainder -= 120) target = NextZoomStep(target, 1);
+        for (; _wheelRemainder <= -120; _wheelRemainder += 120) target = NextZoomStep(target, -1);
+        _wheelTarget = target;
+        _zoomMode = ZoomMode.Custom;
+    }
+
+    private void OnWheelZoomFrame(object? sender, object e)
+    {
+        if (_wheelTarget is not { } target)
+        {
+            StopWheelZoom();
+            return;
+        }
+        var time = ((RenderingEventArgs)e).RenderingTime;
+        double dt = _wheelFrameTime is { } last ? (time - last).TotalMilliseconds : 16;
+        // Rendering can be raised more than once a frame.
+        if (dt <= 0) return;
+        _wheelFrameTime = time;
+        // Eased in log space, so zooming in and out by the same factor take as long.
+        double z = Math.Exp(Math.Log(_wheelZoom) + Math.Log(target / _wheelZoom) * (1 - Math.Exp(-dt / WheelZoomEasing)));
+        bool done = Math.Abs(Math.Log(target / z)) < 0.002;
+        if (done) z = target;
+        _wheelZoom = z;
+        var gap = CenteringGap(z);
+        // Clamped as the scroller would, or the offsets kept here would drift from its own.
+        double w = double.IsNaN(_host.Width) ? 0 : _host.Width, h = double.IsNaN(_host.Height) ? 0 : _host.Height;
+        _wheelOffset = new Point(
+            Math.Clamp(_wheelContent.X * z - _wheelAnchor.X + gap.X, 0, Math.Max(0, w * z - _scroller.ViewportWidth)),
+            Math.Clamp(_wheelContent.Y * z - _wheelAnchor.Y + gap.Y, 0, Math.Max(0, h * z - _scroller.ViewportHeight)));
+        _pendingZoom = (float)z;
+        ScrollTo(_wheelOffset.X, _wheelOffset.Y, (float)z, true);
+        ZoomChanged?.Invoke(this, EventArgs.Empty);
+        if (done)
+        {
+            StopWheelZoom();
+            // The last step may change too little for the scroller to report it.
+            RefreshRendering();
+        }
+    }
+
+    private void StopWheelZoom()
+    {
+        if (_wheelTarget is null) return;
+        _wheelTarget = null;
+        CompositionTarget.Rendering -= OnWheelZoomFrame;
+    }
+
     public void SetZoom(double zoom, Point? anchor = null, bool keepMode = false)
     {
+        StopWheelZoom();
         if (!keepMode) _zoomMode = ZoomMode.Custom;
         zoom = Math.Clamp(zoom, MinZoom, MaxZoom);
         double vw = _scroller.ViewportWidth, vh = _scroller.ViewportHeight;
@@ -800,7 +917,10 @@ public sealed partial class DocumentView : UserControl
             PlaceOverlays();
             ZoomChanged?.Invoke(this, EventArgs.Empty);
         }
-        UpdateRealization(!e.IsIntermediate);
+        // The wheel zoom changes the view every frame, and renders the pages once it gets where it's going. A scroll at the
+        // zoom the pages were drawn for draws what it brings into view as it goes, or that would stay blurry until it stops.
+        bool scrolling = _pendingZoom is null && Math.Abs(zoom - _renderedZoom) <= 0.0001;
+        UpdateRealization(_wheelTarget is null && (!e.IsIntermediate || scrolling));
         UpdateCurrentPage();
     }
 
@@ -873,6 +993,10 @@ public sealed partial class DocumentView : UserControl
         }
 
         double pixelScale = Zoom * XamlRoot.RasterizationScale;
+        if (allowRescale) _renderedZoom = Zoom;
+        // Tiles a tile's width past the view are drawn too, so scrolling a little shows them sharp from the start.
+        double margin = PageView.TileSize / pixelScale;
+        var ahead = new Rect(visible.X - margin, visible.Y - margin, visible.Width + 2 * margin, visible.Height + 2 * margin);
         foreach (var index in wanted)
         {
             if (!_views.TryGetValue(index, out var view))
@@ -892,7 +1016,9 @@ public sealed partial class DocumentView : UserControl
             var inter = RectHelper.Intersect(rect, visible);
             bool isVisible = !inter.IsEmpty && inter.Width > 0 && inter.Height > 0;
             var local = isVisible ? new Rect(inter.X - rect.X, inter.Y - rect.Y, inter.Width, inter.Height) : Rect.Empty;
-            if (allowRescale || !HasBitmap(view)) view.Render(pixelScale, local, _inverted, isVisible);
+            var near = RectHelper.Intersect(rect, ahead);
+            var localAhead = !near.IsEmpty && near.Width > 0 && near.Height > 0 ? new Rect(near.X - rect.X, near.Y - rect.Y, near.Width, near.Height) : Rect.Empty;
+            if (allowRescale || !HasBitmap(view)) view.Render(pixelScale, local, localAhead, _inverted, isVisible);
             // A page drawn while off screen queued its text behind the pages around it; now it's in view, that can't wait.
             if (isVisible && !_texts.ContainsKey(index) && HasBitmap(view)) EnsureText(index);
         }
@@ -1841,6 +1967,18 @@ public sealed partial class DocumentView : UserControl
 
     private void OnPointerWheelChanged(object sender, PointerRoutedEventArgs e)
     {
+        if ((e.KeyModifiers & VirtualKeyModifiers.Control) == 0) StopWheelZoom();
+        else
+        {
+            // Handled means the scroller zoomed: Ctrl went down while the window wasn't taking keys.
+            UpdateScrollerZoomMode();
+            if (!e.Handled && _document is not null)
+            {
+                var point = e.GetCurrentPoint(_scroller);
+                if (!point.Properties.IsHorizontalMouseWheel) ZoomByWheel(point.Position, point.Properties.MouseWheelDelta);
+                e.Handled = true;
+            }
+        }
         StopMiddleScroll();
         // Otherwise their next frame would scroll back to the offset they track.
         StopAutoScroll();

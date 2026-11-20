@@ -35,7 +35,8 @@ internal enum OverlayLayer
 /// </summary>
 internal sealed partial class PageView : Canvas
 {
-    private const int TileSize = 512;
+    /// <summary>In device pixels.</summary>
+    public const int TileSize = 512;
     private const double MaxFullPagePixels = 6_000_000;
     private const double LowResPixels = 1_500_000;
     private const double MaxBitmapSide = 8192;
@@ -53,6 +54,16 @@ internal sealed partial class PageView : Canvas
     private readonly Dictionary<(int Col, int Row), TileBatch> _pendingTiles = [];
     /// <summary>Tiles from before the last <see cref="Invalidate"/>. They stay up until replaced: the bitmap under them is blurry.</summary>
     private readonly HashSet<(int Col, int Row)> _staleTiles = [];
+    /// <summary>
+    /// Tiles from an earlier zoom, oldest first, in <see cref="_tiles"/> under the current ones. Stretched, they look much
+    /// better than the bitmap under them, so they stay up until the current ones cover the view.
+    /// </summary>
+    private readonly List<(Image Image, double Pixels)> _previousTiles = [];
+    /// <summary>Whether some of <see cref="_previousTiles"/> show the page from before the last <see cref="Invalidate"/>.</summary>
+    private bool _previousStale;
+    /// <summary>The tiles in view at the last <see cref="Render"/>, or null if none are.</summary>
+    private (int C0, int R0, int C1, int R1)? _visibleTiles;
+    private bool _tiled;
     private CancellationTokenSource? _baseCts;
     private double _baseScale;
     private double _tileScale;
@@ -61,6 +72,10 @@ internal sealed partial class PageView : Canvas
     private int _version;
     /// <summary>The <see cref="_version"/> that <see cref="_base"/> shows.</summary>
     private int _baseVersion;
+    /// <summary>The scale <see cref="_base"/> shows the page at.</summary>
+    private double _shownBaseScale;
+    /// <summary>A bitmap of the page lower in resolution than <see cref="_base"/>'s, which replaces it once tiles cover the view.</summary>
+    private (SoftwareBitmapSource Source, double Width, double Height, int Version, double Scale)? _heldBase;
     /// <summary>An annotation being moved, which is drawn over the page meanwhile.</summary>
     private PdfAnnotation? _leftOut;
 
@@ -160,6 +175,7 @@ internal sealed partial class PageView : Canvas
         {
             // Old bitmaps have the wrong orientation; drop them.
             Free(_base);
+            DiscardHeldBase();
             ClearTiles();
             _baseScale = 0;
         }
@@ -229,6 +245,7 @@ internal sealed partial class PageView : Canvas
         _baseScale = 0;
         CancelPendingTiles();
         _staleTiles.UnionWith(_tileImages.Keys);
+        if (_previousTiles.Count > 0) _previousStale = true;
     }
 
     /// <summary>Draws the page without <paramref name="annotation"/> from now on, or with all of them again if it's null.</summary>
@@ -246,9 +263,10 @@ internal sealed partial class PageView : Canvas
 
     /// <summary>
     /// Ensures the bitmaps match the current zoom. <paramref name="pixelScale"/> is device pixels per
-    /// layout DIP; <paramref name="visible"/> is the visible part of the page in page-local layout DIPs.
+    /// layout DIP; <paramref name="visible"/> is the visible part of the page in page-local layout DIPs, and
+    /// <paramref name="ahead"/> the part around the view to have tiles ready for, in case it scrolls into it.
     /// </summary>
-    public void Render(double pixelScale, Rect visible, bool inverted, bool isVisible)
+    public void Render(double pixelScale, Rect visible, Rect ahead, bool inverted, bool isVisible)
     {
         if (Math.Abs(pixelScale - _framePixelScale) > 1e-6)
         {
@@ -267,6 +285,7 @@ internal sealed partial class PageView : Canvas
             Invalidate();
         }
 
+        _tiled = tiled;
         if (_baseScale <= 0 || Math.Abs(baseScale - _baseScale) / baseScale > 0.02)
         {
             RenderBase(baseScale, inverted, isVisible);
@@ -274,48 +293,147 @@ internal sealed partial class PageView : Canvas
 
         if (!tiled)
         {
-            ClearTiles();
+            _visibleTiles = null;
+            // Until the bitmap at this zoom arrives, the one up is the low resolution one from under the tiles.
+            if (BaseIsCurrent(baseScale)) ClearTiles();
+            else RetireTiles();
             OnRedrawn();
             return;
         }
         if (Math.Abs(_tileScale - pxPerPoint) / pxPerPoint > 0.001)
         {
-            ClearTiles();
+            RetireTiles();
             _tileScale = pxPerPoint;
         }
-        if (!isVisible || visible.IsEmpty)
+        bool inView = isVisible && !visible.IsEmpty;
+        if (!inView) _visibleTiles = null;
+        if (ahead.IsEmpty)
         {
+            CancelPendingTiles();
             foreach (var key in _staleTiles.ToList()) DropTile(key);
+            OnTilesChanged();
             OnRedrawn();
             return;
         }
 
         int maxW = (int)Math.Ceiling(pw), maxH = (int)Math.Ceiling(ph);
-        int c0 = Math.Max(0, (int)(visible.Left * pixelScale) / TileSize);
-        int r0 = Math.Max(0, (int)(visible.Top * pixelScale) / TileSize);
-        int c1 = Math.Min((maxW - 1) / TileSize, (int)(visible.Right * pixelScale) / TileSize);
-        int r1 = Math.Min((maxH - 1) / TileSize, (int)(visible.Bottom * pixelScale) / TileSize);
+        (int C0, int R0, int C1, int R1) TilesIn(Rect area) => (
+            Math.Max(0, (int)(area.Left * pixelScale) / TileSize),
+            Math.Max(0, (int)(area.Top * pixelScale) / TileSize),
+            Math.Min((maxW - 1) / TileSize, (int)(area.Right * pixelScale) / TileSize),
+            Math.Min((maxH - 1) / TileSize, (int)(area.Bottom * pixelScale) / TileSize));
+        var near = TilesIn(ahead);
+        if (inView) _visibleTiles = TilesIn(visible);
 
+        bool InView((int Col, int Row) key) => _visibleTiles is { } v && key.Col >= v.C0 && key.Col <= v.C1 && key.Row >= v.R0 && key.Row <= v.R1;
         foreach (var key in _tileImages.Keys.ToList())
         {
-            bool inView = key.Col >= c0 && key.Col <= c1 && key.Row >= r0 && key.Row <= r1;
-            if (key.Col < c0 - 1 || key.Col > c1 + 1 || key.Row < r0 - 1 || key.Row > r1 + 1 || (!inView && _staleTiles.Contains(key))) DropTile(key);
+            if (key.Col < near.C0 || key.Col > near.C1 || key.Row < near.R0 || key.Row > near.R1 || (!InView(key) && _staleTiles.Contains(key))) DropTile(key);
         }
-        // Batches still partly in view finish; ones that scrolled away entirely stop.
+        // Batches still partly near the view finish; ones that scrolled away entirely stop.
         foreach (var batch in _pendingTiles.Values.Distinct().ToList())
         {
-            if (batch.Overlaps(c0, r0, c1, r1)) continue;
+            if (batch.Overlaps(near.C0, near.R0, near.C1, near.R1)) continue;
             batch.Cts.Cancel();
             foreach (var key in batch.Keys) _pendingTiles.Remove(key);
         }
 
-        foreach (var (bc0, br0, bc1, br1) in MissingTileRects(c0, r0, c1, r1))
+        void Start(int c0, int r0, int c1, int r1, WorkPriority priority)
         {
-            var batch = new TileBatch(bc0, br0, bc1, br1);
-            foreach (var key in batch.Keys) _pendingTiles[key] = batch;
-            RenderTiles(batch, pxPerPoint, pixelScale, inverted, maxW, maxH);
+            foreach (var (bc0, br0, bc1, br1) in MissingTileRects(c0, r0, c1, r1))
+            {
+                var batch = new TileBatch(bc0, br0, bc1, br1);
+                foreach (var key in batch.Keys) _pendingTiles[key] = batch;
+                RenderTiles(batch, pxPerPoint, pixelScale, inverted, maxW, maxH, priority);
+            }
         }
+        // The view first; the tiles around it then fill in what it left, as they aren't needed yet.
+        if (_visibleTiles is { } view) Start(view.C0, view.R0, view.C1, view.R1, WorkPriority.Visible);
+        Start(near.C0, near.R0, near.C1, near.R1, WorkPriority.Normal);
+        if (inView) PrunePreviousTiles(visible, pixelScale);
+        OnTilesChanged();
         OnRedrawn();
+    }
+
+    private bool BaseIsCurrent(double scale) =>
+        _base.Source is not null && _baseVersion == _version && Math.Abs(scale - _shownBaseScale) / scale <= 0.02;
+
+    /// <summary>Makes the current tiles previous ones, for a new zoom or for the untiled bitmap to replace.</summary>
+    private void RetireTiles()
+    {
+        CancelPendingTiles();
+        if (_tileImages.Count == 0) return;
+        if (_staleTiles.Count > 0) _previousStale = true;
+        // Tiles are added to the canvas as they arrive, so these are over the earlier previous ones and under the new ones.
+        double pixelScale = _tileScale / LayoutScale;
+        foreach (var image in _tileImages.Values) _previousTiles.Add((image, image.Width * image.Height * pixelScale * pixelScale));
+        _tileImages.Clear();
+        _staleTiles.Clear();
+    }
+
+    /// <summary>
+    /// Drops the previous tiles out of view, then the oldest ones while they add up to more than a couple of
+    /// screens: zooming on and on before tiles arrive would pile them up.
+    /// </summary>
+    private void PrunePreviousTiles(Rect visible, double pixelScale)
+    {
+        for (int i = _previousTiles.Count - 1; i >= 0; i--)
+        {
+            var image = _previousTiles[i].Image;
+            double x = GetLeft(image), y = GetTop(image);
+            if (x < visible.Right && x + image.Width > visible.Left && y < visible.Bottom && y + image.Height > visible.Top) continue;
+            RemovePreviousTile(i);
+        }
+        double budget = Math.Max(MaxFullPagePixels, 2 * visible.Width * visible.Height * pixelScale * pixelScale);
+        double total = _previousTiles.Sum(t => t.Pixels);
+        while (_previousTiles.Count > 0 && total > budget)
+        {
+            total -= _previousTiles[0].Pixels;
+            RemovePreviousTile(0);
+        }
+    }
+
+    private void RemovePreviousTile(int index)
+    {
+        var image = _previousTiles[index].Image;
+        _previousTiles.RemoveAt(index);
+        _tiles.Children.Remove(image);
+        Free(image);
+    }
+
+    private void ClearPreviousTiles()
+    {
+        for (int i = _previousTiles.Count - 1; i >= 0; i--) RemovePreviousTile(i);
+        _previousStale = false;
+    }
+
+    /// <summary>Whether tiles at the current zoom, of this version of the page or an older one, cover the view.</summary>
+    private bool TilesCoverView()
+    {
+        if (_visibleTiles is not { } v) return true;
+        for (int r = v.R0; r <= v.R1; r++)
+            for (int c = v.C0; c <= v.C1; c++)
+                if (!_tileImages.ContainsKey((c, r))) return false;
+        return true;
+    }
+
+    /// <summary>Once the tiles cover the view, takes down what stood in for them.</summary>
+    private void OnTilesChanged()
+    {
+        if (!TilesCoverView()) return;
+        ClearPreviousTiles();
+        if (_heldBase is { } held)
+        {
+            _heldBase = null;
+            if (held.Version == _version) ShowBase(held.Source, held.Width, held.Height, held.Version, held.Scale);
+            else held.Source.Dispose();
+        }
+    }
+
+    private void DiscardHeldBase()
+    {
+        _heldBase?.Source.Dispose();
+        _heldBase = null;
     }
 
     private bool IsMissing(int c, int r) => (!_tileImages.ContainsKey((c, r)) || _staleTiles.Contains((c, r))) && !_pendingTiles.ContainsKey((c, r));
@@ -366,6 +484,7 @@ internal sealed partial class PageView : Canvas
     private async void RenderBase(double scale, bool inverted, bool isVisible)
     {
         _baseCts?.Cancel();
+        DiscardHeldBase();
         var cts = _baseCts = new CancellationTokenSource();
         _baseScale = scale;
         _renderedInverted = inverted;
@@ -386,13 +505,15 @@ internal sealed partial class PageView : Canvas
                 return;
             }
             // Size the image to its exact pixel dimensions so it maps 1:1 onto the screen.
-            _base.Width = buffer.Width * LayoutScale / scale;
-            _base.Height = buffer.Height * LayoutScale / scale;
-            var old = _base.Source;
-            _base.Source = source;
-            (old as IDisposable)?.Dispose();
-            _baseVersion = version;
-            OnRedrawn();
+            double width = buffer.Width * LayoutScale / scale, height = buffer.Height * LayoutScale / scale;
+            // Zooming in past where the page gets tiled draws it at a much lower resolution, which would show
+            // over the view until the tiles arrive, so the sharper bitmap stays up until then.
+            if (_tiled && _base.Source is not null && _baseVersion == version && scale * 1.02 < _shownBaseScale && !TilesCoverView())
+            {
+                _heldBase = (source, width, height, version, scale);
+                return;
+            }
+            ShowBase(source, width, height, version, scale);
         }
         catch (OperationCanceledException)
         {
@@ -412,14 +533,28 @@ internal sealed partial class PageView : Canvas
         }
     }
 
-    private async void RenderTiles(TileBatch batch, double pxPerPoint, double pixelScale, bool inverted, int maxW, int maxH)
+    private void ShowBase(SoftwareBitmapSource source, double width, double height, int version, double scale)
+    {
+        _base.Width = width;
+        _base.Height = height;
+        var old = _base.Source;
+        _base.Source = source;
+        (old as IDisposable)?.Dispose();
+        _baseVersion = version;
+        _shownBaseScale = scale;
+        // Tiles on an untiled page were only left up until this arrived.
+        if (!_tiled) ClearTiles();
+        OnRedrawn();
+    }
+
+    private async void RenderTiles(TileBatch batch, double pxPerPoint, double pixelScale, bool inverted, int maxW, int maxH, WorkPriority priority)
     {
         int version = _version;
         int x0 = batch.C0 * TileSize, y0 = batch.R0 * TileSize;
         var region = new RectInt32(x0, y0, Math.Min((batch.C1 + 1) * TileSize, maxW) - x0, Math.Min((batch.R1 + 1) * TileSize, maxH) - y0);
         try
         {
-            using var buffer = await _document.RenderAsync(PageIndex, pxPerPoint, PageRotation, region, inverted, WorkPriority.Visible, batch.Cts.Token, without: _leftOut);
+            using var buffer = await _document.RenderAsync(PageIndex, pxPerPoint, PageRotation, region, inverted, priority, batch.Cts.Token, without: _leftOut);
             bool IsStale() => batch.Cts.IsCancellationRequested || version != _version || Math.Abs(_tileScale - pxPerPoint) > 1e-9;
             if (buffer is null || IsStale())
             {
@@ -445,6 +580,7 @@ internal sealed partial class PageView : Canvas
                 _tileImages[key] = image;
                 _tiles.Children.Add(image);
             }
+            OnTilesChanged();
             OnRedrawn();
         }
         catch (OperationCanceledException)
@@ -488,12 +624,15 @@ internal sealed partial class PageView : Canvas
         CancelPendingTiles();
         _tileImages.Clear();
         _staleTiles.Clear();
+        _previousTiles.Clear();
+        _previousStale = false;
         Clear(_tiles);
     }
 
     public void Release()
     {
         _baseCts?.Cancel();
+        DiscardHeldBase();
         ClearTiles();
         Free(_base);
         foreach (var (action, _) in _whenRedrawn) action();
@@ -750,7 +889,7 @@ internal sealed partial class PageView : Canvas
     /// <summary>Takes down what stood in for a change once the page shows it: on the bitmap, with no older tiles over it.</summary>
     private void OnRedrawn()
     {
-        if (_staleTiles.Count > 0) return;
+        if (_staleTiles.Count > 0 || (_previousStale && _previousTiles.Count > 0)) return;
         foreach (var (line, _) in _strokes.Where(s => s.Version < _baseVersion).ToList()) RemoveStroke(line);
         foreach (var call in _whenRedrawn.Where(c => c.Version < _baseVersion).ToList())
         {
