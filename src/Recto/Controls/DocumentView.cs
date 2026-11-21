@@ -59,6 +59,8 @@ public sealed partial class DocumentView : UserControl
     private int _currentPage;
     private int _currentRow;
     private double _lastZoom = 1;
+    /// <summary>The zoom pages were last rendered for.</summary>
+    private double _renderedZoom;
     private float? _pendingZoom;
     /// <summary>Position (in unzoomed content coordinates) of a scroll request that hasn't been applied yet.</summary>
     private double? _pendingContentX, _pendingContentY;
@@ -915,8 +917,10 @@ public sealed partial class DocumentView : UserControl
             PlaceOverlays();
             ZoomChanged?.Invoke(this, EventArgs.Empty);
         }
-        // The wheel zoom changes the view every frame, and renders the pages once it gets where it's going.
-        UpdateRealization(!e.IsIntermediate && _wheelTarget is null);
+        // The wheel zoom changes the view every frame, and renders the pages once it gets where it's going. A scroll at the
+        // zoom the pages were drawn for draws what it brings into view as it goes, or that would stay blurry until it stops.
+        bool scrolling = _pendingZoom is null && Math.Abs(zoom - _renderedZoom) <= 0.0001;
+        UpdateRealization(_wheelTarget is null && (!e.IsIntermediate || scrolling));
         UpdateCurrentPage();
     }
 
@@ -989,6 +993,10 @@ public sealed partial class DocumentView : UserControl
         }
 
         double pixelScale = Zoom * XamlRoot.RasterizationScale;
+        if (allowRescale) _renderedZoom = Zoom;
+        // Tiles a tile's width past the view are drawn too, so scrolling a little shows them sharp from the start.
+        double margin = PageView.TileSize / pixelScale;
+        var ahead = new Rect(visible.X - margin, visible.Y - margin, visible.Width + 2 * margin, visible.Height + 2 * margin);
         foreach (var index in wanted)
         {
             if (!_views.TryGetValue(index, out var view))
@@ -1008,7 +1016,9 @@ public sealed partial class DocumentView : UserControl
             var inter = RectHelper.Intersect(rect, visible);
             bool isVisible = !inter.IsEmpty && inter.Width > 0 && inter.Height > 0;
             var local = isVisible ? new Rect(inter.X - rect.X, inter.Y - rect.Y, inter.Width, inter.Height) : Rect.Empty;
-            if (allowRescale || !HasBitmap(view)) view.Render(pixelScale, local, _inverted, isVisible);
+            var near = RectHelper.Intersect(rect, ahead);
+            var localAhead = !near.IsEmpty && near.Width > 0 && near.Height > 0 ? new Rect(near.X - rect.X, near.Y - rect.Y, near.Width, near.Height) : Rect.Empty;
+            if (allowRescale || !HasBitmap(view)) view.Render(pixelScale, local, localAhead, _inverted, isVisible);
             // A page drawn while off screen queued its text behind the pages around it; now it's in view, that can't wait.
             if (isVisible && !_texts.ContainsKey(index) && HasBitmap(view)) EnsureText(index);
         }

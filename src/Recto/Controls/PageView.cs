@@ -35,7 +35,8 @@ internal enum OverlayLayer
 /// </summary>
 internal sealed partial class PageView : Canvas
 {
-    private const int TileSize = 512;
+    /// <summary>In device pixels.</summary>
+    public const int TileSize = 512;
     private const double MaxFullPagePixels = 6_000_000;
     private const double LowResPixels = 1_500_000;
     private const double MaxBitmapSide = 8192;
@@ -262,9 +263,10 @@ internal sealed partial class PageView : Canvas
 
     /// <summary>
     /// Ensures the bitmaps match the current zoom. <paramref name="pixelScale"/> is device pixels per
-    /// layout DIP; <paramref name="visible"/> is the visible part of the page in page-local layout DIPs.
+    /// layout DIP; <paramref name="visible"/> is the visible part of the page in page-local layout DIPs, and
+    /// <paramref name="ahead"/> the part around the view to have tiles ready for, in case it scrolls into it.
     /// </summary>
-    public void Render(double pixelScale, Rect visible, bool inverted, bool isVisible)
+    public void Render(double pixelScale, Rect visible, Rect ahead, bool inverted, bool isVisible)
     {
         if (Math.Abs(pixelScale - _framePixelScale) > 1e-6)
         {
@@ -303,9 +305,11 @@ internal sealed partial class PageView : Canvas
             RetireTiles();
             _tileScale = pxPerPoint;
         }
-        if (!isVisible || visible.IsEmpty)
+        bool inView = isVisible && !visible.IsEmpty;
+        if (!inView) _visibleTiles = null;
+        if (ahead.IsEmpty)
         {
-            _visibleTiles = null;
+            CancelPendingTiles();
             foreach (var key in _staleTiles.ToList()) DropTile(key);
             OnTilesChanged();
             OnRedrawn();
@@ -313,32 +317,40 @@ internal sealed partial class PageView : Canvas
         }
 
         int maxW = (int)Math.Ceiling(pw), maxH = (int)Math.Ceiling(ph);
-        int c0 = Math.Max(0, (int)(visible.Left * pixelScale) / TileSize);
-        int r0 = Math.Max(0, (int)(visible.Top * pixelScale) / TileSize);
-        int c1 = Math.Min((maxW - 1) / TileSize, (int)(visible.Right * pixelScale) / TileSize);
-        int r1 = Math.Min((maxH - 1) / TileSize, (int)(visible.Bottom * pixelScale) / TileSize);
-        _visibleTiles = (c0, r0, c1, r1);
+        (int C0, int R0, int C1, int R1) TilesIn(Rect area) => (
+            Math.Max(0, (int)(area.Left * pixelScale) / TileSize),
+            Math.Max(0, (int)(area.Top * pixelScale) / TileSize),
+            Math.Min((maxW - 1) / TileSize, (int)(area.Right * pixelScale) / TileSize),
+            Math.Min((maxH - 1) / TileSize, (int)(area.Bottom * pixelScale) / TileSize));
+        var near = TilesIn(ahead);
+        if (inView) _visibleTiles = TilesIn(visible);
 
+        bool InView((int Col, int Row) key) => _visibleTiles is { } v && key.Col >= v.C0 && key.Col <= v.C1 && key.Row >= v.R0 && key.Row <= v.R1;
         foreach (var key in _tileImages.Keys.ToList())
         {
-            bool inView = key.Col >= c0 && key.Col <= c1 && key.Row >= r0 && key.Row <= r1;
-            if (key.Col < c0 - 1 || key.Col > c1 + 1 || key.Row < r0 - 1 || key.Row > r1 + 1 || (!inView && _staleTiles.Contains(key))) DropTile(key);
+            if (key.Col < near.C0 || key.Col > near.C1 || key.Row < near.R0 || key.Row > near.R1 || (!InView(key) && _staleTiles.Contains(key))) DropTile(key);
         }
-        // Batches still partly in view finish; ones that scrolled away entirely stop.
+        // Batches still partly near the view finish; ones that scrolled away entirely stop.
         foreach (var batch in _pendingTiles.Values.Distinct().ToList())
         {
-            if (batch.Overlaps(c0, r0, c1, r1)) continue;
+            if (batch.Overlaps(near.C0, near.R0, near.C1, near.R1)) continue;
             batch.Cts.Cancel();
             foreach (var key in batch.Keys) _pendingTiles.Remove(key);
         }
 
-        foreach (var (bc0, br0, bc1, br1) in MissingTileRects(c0, r0, c1, r1))
+        void Start(int c0, int r0, int c1, int r1, WorkPriority priority)
         {
-            var batch = new TileBatch(bc0, br0, bc1, br1);
-            foreach (var key in batch.Keys) _pendingTiles[key] = batch;
-            RenderTiles(batch, pxPerPoint, pixelScale, inverted, maxW, maxH);
+            foreach (var (bc0, br0, bc1, br1) in MissingTileRects(c0, r0, c1, r1))
+            {
+                var batch = new TileBatch(bc0, br0, bc1, br1);
+                foreach (var key in batch.Keys) _pendingTiles[key] = batch;
+                RenderTiles(batch, pxPerPoint, pixelScale, inverted, maxW, maxH, priority);
+            }
         }
-        PrunePreviousTiles(visible, pixelScale);
+        // The view first; the tiles around it then fill in what it left, as they aren't needed yet.
+        if (_visibleTiles is { } view) Start(view.C0, view.R0, view.C1, view.R1, WorkPriority.Visible);
+        Start(near.C0, near.R0, near.C1, near.R1, WorkPriority.Normal);
+        if (inView) PrunePreviousTiles(visible, pixelScale);
         OnTilesChanged();
         OnRedrawn();
     }
@@ -535,14 +547,14 @@ internal sealed partial class PageView : Canvas
         OnRedrawn();
     }
 
-    private async void RenderTiles(TileBatch batch, double pxPerPoint, double pixelScale, bool inverted, int maxW, int maxH)
+    private async void RenderTiles(TileBatch batch, double pxPerPoint, double pixelScale, bool inverted, int maxW, int maxH, WorkPriority priority)
     {
         int version = _version;
         int x0 = batch.C0 * TileSize, y0 = batch.R0 * TileSize;
         var region = new RectInt32(x0, y0, Math.Min((batch.C1 + 1) * TileSize, maxW) - x0, Math.Min((batch.R1 + 1) * TileSize, maxH) - y0);
         try
         {
-            using var buffer = await _document.RenderAsync(PageIndex, pxPerPoint, PageRotation, region, inverted, WorkPriority.Visible, batch.Cts.Token, without: _leftOut);
+            using var buffer = await _document.RenderAsync(PageIndex, pxPerPoint, PageRotation, region, inverted, priority, batch.Cts.Token, without: _leftOut);
             bool IsStale() => batch.Cts.IsCancellationRequested || version != _version || Math.Abs(_tileScale - pxPerPoint) > 1e-9;
             if (buffer is null || IsStale())
             {
