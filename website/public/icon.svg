@@ -1,0 +1,43 @@
+<!-- The app icon, used from 64 px up. AppIcon-medium.svg and AppIcon-small.svg are the same
+     design with less detail, for the sizes where these text lines would blur.
+     After editing, rebuild the icon files with the icon tool; see docs/tools.md. -->
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="page-fill" x1="0" y1="12" x2="0" y2="244" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#E0F1FF"/>
+      <stop offset="1" stop-color="#A3D3FF"/>
+    </linearGradient>
+    <!-- The page's top edge: the page minus a copy moved 2.5 units down. -->
+    <mask id="page-edge" maskUnits="userSpaceOnUse" x="-64" y="-64" width="384" height="384">
+      <path d="M64 12H192A32 32 0 0 1 224 44V212A32 32 0 0 1 192 244H64A32 32 0 0 1 32 212V44A32 32 0 0 1 64 12Z" fill="white"/>
+      <path d="M64 12H192A32 32 0 0 1 224 44V212A32 32 0 0 1 192 244H64A32 32 0 0 1 32 212V44A32 32 0 0 1 64 12Z" fill="black" transform="translate(0 2.5)"/>
+    </mask>
+    <linearGradient id="page-highlight" x1="0" y1="12" x2="0" y2="132" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#BFE3FF" stop-opacity="1"/>
+      <stop offset="1" stop-color="#BFE3FF" stop-opacity="0"/>
+    </linearGradient>
+    <clipPath id="page-clip">
+      <path d="M64 12H192A32 32 0 0 1 224 44V212A32 32 0 0 1 192 244H64A32 32 0 0 1 32 212V44A32 32 0 0 1 64 12Z"/>
+    </clipPath>
+    <filter id="ribbon-blur" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="6"/>
+      <feOffset dx="4" dy="6"/>
+    </filter>
+    <linearGradient id="ribbon-fill" x1="0" y1="12" x2="0" y2="122" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3A8DF0"/>
+      <stop offset="1" stop-color="#1663C7"/>
+    </linearGradient>
+  </defs>
+  <!-- Page, with a highlight along its top edge -->
+  <path d="M64 12H192A32 32 0 0 1 224 44V212A32 32 0 0 1 192 244H64A32 32 0 0 1 32 212V44A32 32 0 0 1 64 12Z" fill="url(#page-fill)"/>
+  <rect x="-64" y="-64" width="384" height="384" fill="url(#page-highlight)" mask="url(#page-edge)"/>
+  <!-- Text lines -->
+  <rect x="64" y="148" width="104" height="12" rx="6" fill="#0B3A8A" opacity="0.14"/>
+  <rect x="64" y="174" width="136" height="12" rx="6" fill="#0B3A8A" opacity="0.14"/>
+  <rect x="64" y="200" width="80" height="12" rx="6" fill="#0B3A8A" opacity="0.14"/>
+  <!-- Bookmark ribbon, with its shadow on the page -->
+  <g clip-path="url(#page-clip)">
+    <path d="M124 12H188V116C188 120 184 122 181 120L156 100L131 120C128 122 124 120 124 116Z" fill="#041B44" opacity="0.35" style="mix-blend-mode:multiply" filter="url(#ribbon-blur)"/>
+  </g>
+  <path d="M124 12H188V116C188 120 184 122 181 120L156 100L131 120C128 122 124 120 124 116Z" fill="url(#ribbon-fill)"/>
+</svg>

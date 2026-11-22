@@ -1,0 +1,107 @@
+---
+import { links } from '../lib/links';
+import GitHubMark from './GitHubMark.astro';
+
+const year = new Date().getFullYear();
+---
+
+<footer class="footer">
+  <div class="container inner">
+    <div class="about">
+      <a class="brand" href="#top">
+        <img src="/icon.svg" alt="" width="28" height="28" />
+        <span>Recto</span>
+      </a>
+      <p class="caption">
+        A simple PDF viewer for Windows 11. Inspired by <a href={links.papers}>GNOME Papers</a>,
+        rendered by <a href={links.pdfium}>PDFium</a>.
+      </p>
+      <p class="caption">© {year} ZTL-UwU</p>
+    </div>
+    <nav aria-label="Project">
+      <h2>Project</h2>
+      <a href={links.repo}><GitHubMark /> GitHub</a>
+      <a href={links.issues}>Report a bug</a>
+      <a href={links.features}>Feature list</a>
+    </nav>
+    <nav aria-label="Legal">
+      <h2>Legal</h2>
+      <a href={links.privacy}>Privacy policy</a>
+      <a href={links.license}>MIT License</a>
+      <a href={links.notices}>Third-party notices</a>
+    </nav>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    padding: 48px 0 56px;
+    background: var(--layer);
+    border-top: 1px solid var(--divider);
+  }
+
+  .inner {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr));
+    gap: 32px;
+  }
+
+  .about {
+    display: grid;
+    gap: 10px;
+    align-content: start;
+    max-width: 380px;
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font: 600 17px/1 var(--font-display);
+    color: var(--text-1);
+    margin-bottom: 4px;
+  }
+
+  .brand:hover {
+    text-decoration: none;
+  }
+
+  nav {
+    display: grid;
+    gap: 8px;
+    align-content: start;
+  }
+
+  h2 {
+    margin-bottom: 4px;
+    font: 600 14px/1.4 var(--font-text);
+  }
+
+  nav a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    color: var(--text-2);
+    width: fit-content;
+  }
+
+  nav a:hover {
+    color: var(--text-1);
+  }
+
+  nav svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  @media (max-width: 640px) {
+    .inner {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .about {
+      grid-column: 1 / -1;
+    }
+  }
+</style>

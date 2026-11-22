@@ -1,0 +1,90 @@
+---
+import { links } from '../lib/links';
+import GitHubMark from './GitHubMark.astro';
+---
+
+<header class="nav">
+  <div class="container nav-inner">
+    <a class="brand" href="#top" aria-label="Recto, back to top">
+      <img src="/icon.svg" alt="" width="24" height="24" />
+      <span>Recto</span>
+    </a>
+    <nav aria-label="Sections">
+      <a class="btn btn-subtle" href="#features">Features</a>
+      <a class="btn btn-subtle" href="#performance">Performance</a>
+      <a class="btn btn-subtle" href="#download">Download</a>
+    </nav>
+    <div class="actions">
+      <a class="btn btn-subtle icon-only" href={links.repo} aria-label="Recto on GitHub">
+        <GitHubMark />
+      </a>
+      <a class="btn btn-accent" href={links.store}>Get Recto</a>
+    </div>
+  </div>
+</header>
+
+<style>
+  /*
+    Acrylic, as on a WinUI title bar flyout: blurred and tinted, over whatever scrolls beneath. Fixed rather than
+    sticky, so it takes no room at the top of the page and the feature tour is pinned from the first pixel of scroll.
+  */
+  .nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    height: var(--nav-height);
+    background: var(--acrylic);
+    backdrop-filter: blur(30px) saturate(1.4);
+    -webkit-backdrop-filter: blur(30px) saturate(1.4);
+    border-bottom: 1px solid var(--acrylic-stroke);
+  }
+
+  .nav-inner {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    height: 100%;
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font: 600 15px/1 var(--font-display);
+    color: var(--text-1);
+    text-decoration: none;
+    margin-right: auto;
+  }
+
+  nav {
+    display: flex;
+    gap: 2px;
+  }
+
+  nav .btn {
+    color: var(--text-2);
+  }
+
+  nav .btn:hover {
+    color: var(--text-1);
+  }
+
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: 8px;
+  }
+
+  .icon-only {
+    padding-inline: 8px;
+  }
+
+  @media (max-width: 720px) {
+    nav {
+      display: none;
+    }
+  }
+</style>

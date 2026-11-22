@@ -1,0 +1,496 @@
+---
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+import start from '../assets/screens/start.png';
+import read from '../assets/screens/read.png';
+import search from '../assets/screens/search.png';
+import annotate from '../assets/screens/annotate.png';
+import print from '../assets/screens/print.png';
+import { links } from '../lib/links';
+import Icon from './Icon.astro';
+import GitHubMark from './GitHubMark.astro';
+
+interface Feature {
+  title: string;
+  /** The first panel: the app's name, its tagline and download buttons instead of a feature title. */
+  lead?: boolean;
+  subtitle?: string;
+  /** The panel's color. Each screenshot was taken with Mica tinted to match it. */
+  color: string;
+  image: ImageMetadata;
+  alt: string;
+}
+
+const features: Feature[] = [
+  {
+    title: 'Recto',
+    subtitle: 'A PDF viewer that feels like Windows',
+    lead: true,
+    color: '#CDD9E9',
+    image: read,
+    alt: 'A paper open in Recto at fit-width zoom, with page thumbnails in the sidebar.',
+  },
+  {
+    title: 'Pick up where you left off',
+    color: '#CCD9CD',
+    image: start,
+    alt: 'The Recto start page, with a grid of recent documents shown as first-page thumbnails.',
+  },
+  {
+    title: 'Find it on any page',
+    color: '#D1CDE4',
+    image: search,
+    alt: 'Searching for “multi-head attention”: eight results with snippets in the sidebar, the current match highlighted on the page.',
+  },
+  {
+    title: 'Mark it up',
+    color: '#EAE4C2',
+    image: annotate,
+    alt: 'A page with highlights, a sticky note, pen drawings and a text box, listed in the Annotations sidebar, with the drawing toolbar open.',
+  },
+  {
+    title: 'Printing, done properly',
+    color: '#ECE2EB',
+    image: print,
+    alt: 'Recto’s print dialog, with a preview of the first page and printer, copies, pages, orientation and color settings.',
+  },
+];
+---
+
+<section class="features" id="features">
+  <div class="stack" data-mode="static" style={`--n: ${features.length}`}>
+    <div class="stage">
+      {features.map((f, i) => <div class="panel" style={`--i: ${i}; --panel: ${f.color}; z-index: ${i + 1}`} />)}
+      {/*
+        The titles are a layer of their own too, above the colors and below the windows. They stay put in the
+        space above the resting window and fade from one to the next, rather than riding up with the colors.
+      */}
+      {
+        features.map((f, i) => (
+          <div
+            class:list={['panel-title', { lead: f.lead }]}
+            style={`--i: ${i}; z-index: ${features.length + 1}`}
+          >
+            {f.lead ? (
+              <>
+                <h1>
+                  <img class="logo" src="/icon.svg" alt="" width="56" height="56" />
+                  {f.title}
+                </h1>
+                <p class="subtitle-line">{f.subtitle}</p>
+                <div class="cta">
+                  <a class="btn btn-accent btn-large" href={links.store}>
+                    <Icon name="storeMicrosoft" />
+                    Get it from Microsoft Store
+                  </a>
+                  <a class="btn btn-large" href={links.repo}>
+                    <GitHubMark />
+                    View on GitHub
+                  </a>
+                </div>
+              </>
+            ) : (
+              <h2>{f.title}</h2>
+            )}
+          </div>
+        ))
+      }
+      {/*
+        The windows are a layer of their own, in front of every panel, so a color moving never covers one. Later
+        features are further forward in the pile, as in a stack of windows where the first one opened is at the back.
+      */}
+      {
+        features.map((f, i) => (
+          <div
+            class:list={['window shot', { lead: f.lead }]}
+            style={`--i: ${i}; z-index: ${features.length + i + 2}`}
+          >
+            <Image
+              src={f.image}
+              alt={f.alt}
+              widths={[640, 960, 1346]}
+              sizes="(max-width: 900px) 92vw, 1100px"
+              loading={i < 2 ? 'eager' : 'lazy'}
+            />
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  /*
+    Each feature is a band of its color across the page with its title, and the app window in front. The colors,
+    the titles and the windows are separate layers in one stage: windows in front, then titles, then colors.
+  */
+  .stack {
+    --aspect: 1.6556; /* the screenshots' width / height */
+  }
+
+  .panel {
+    position: relative;
+    margin: 0;
+    background: var(--panel);
+  }
+
+  .panel-title {
+    position: absolute;
+    left: var(--gutter);
+    right: var(--gutter);
+    /* The panels are light in both themes, so their text is always dark. */
+    color: #1a1a1a;
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 24px;
+    text-align: center;
+  }
+
+  .panel-title h1,
+  .panel-title h2 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(26px, 3.4vw, 48px);
+    line-height: 1.2;
+    text-wrap: balance;
+  }
+
+  .panel-title.lead {
+    gap: 0;
+  }
+
+  /* The app icon beside its name, as in the README's hero image. */
+  .panel-title.lead h1 {
+    display: flex;
+    align-items: center;
+    gap: 0.3em;
+    font-size: clamp(36px, 4.4vw, 56px);
+    line-height: 1.15;
+  }
+
+  .subtitle-line {
+    margin: 4px 0 20px;
+    font-size: clamp(17px, 1.6vw, 22px);
+    line-height: 1.4;
+    color: rgb(0 0 0 / 0.65);
+  }
+
+  .logo {
+    flex: none;
+    width: 1.15em;
+    height: auto;
+    filter: drop-shadow(0 6px 12px rgb(0 60 140 / 0.18));
+  }
+
+  .cta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+  }
+
+  /* The panel is light in either theme, so the buttons keep their light-theme look. */
+  .cta .btn-accent {
+    color: #fff;
+    background: #005fb8;
+  }
+
+  .cta .btn-accent:hover {
+    background: rgb(0 95 184 / 0.9);
+  }
+
+  .cta .btn:not(.btn-accent) {
+    color: #1a1a1a;
+    background: rgb(255 255 255 / 0.7);
+    border-color: rgb(0 0 0 / 0.0578);
+    border-bottom-color: rgb(0 0 0 / 0.1622);
+  }
+
+  .cta .btn:not(.btn-accent):hover {
+    background: rgb(249 249 249 / 0.5);
+  }
+
+  .shot {
+    /* Lighter than the page's window shadow, against the flat color. */
+    box-shadow: 0 16px 48px rgb(0 0 0 / 0.14), 0 2px 8px rgb(0 0 0 / 0.08);
+    outline-color: rgb(0 0 0 / 0.1);
+  }
+
+  /* ---- Static: one band after another, for reduced motion and before the script runs. ---- */
+
+  [data-mode='static'] .stage {
+    --cell: min(100vh, 860px, 60vw + 180px);
+    position: relative;
+    --w: min(100vw - 2 * var(--gutter), var(--page-width), (var(--cell) - 200px) * var(--aspect));
+    display: grid;
+    grid-template-columns: 100%;
+    grid-auto-rows: var(--cell);
+    overflow-x: clip;
+  }
+
+  [data-mode='static'] .panel {
+    grid-row: calc(var(--i) + 1);
+    grid-column: 1;
+  }
+
+  [data-mode='static'] .panel-title {
+    grid-row: calc(var(--i) + 1);
+    grid-column: 1;
+    top: 0;
+    height: calc(var(--cell) - var(--w) / var(--aspect) - 56px);
+  }
+
+  /* The first panel starts at the top of the page, under the nav bar. */
+  [data-mode='static'] .panel-title.lead {
+    top: var(--nav-height);
+    height: calc(var(--cell) - var(--w) / var(--aspect) - 56px - var(--nav-height));
+  }
+
+  [data-mode='static'] .shot {
+    grid-row: calc(var(--i) + 1);
+    grid-column: 1;
+    align-self: end;
+    justify-self: center;
+    width: var(--w);
+    margin-bottom: 56px;
+  }
+
+  /* ---- Stack: a pile of windows; scrolling pulls each one up out of the top of it. ---- */
+
+  /*
+    The section is as tall as one screen plus a stretch of scrolling per feature. The stage sticks to the top of
+    the window (under the nav bar, whose acrylic picks up the panel's color) for all of it, and the script sets --p,
+    how far through the features the reader is: i + 1 has feature i's window pulled out of the pile.
+
+    It starts at 0 with just the first panel: its window low, showing only the top three quarters, and the pile out
+    of sight below. The first step brings that window up to its resting place and the pile into view; each step
+    after pulls the next window out.
+
+    The pile sits at the bottom of the stage with only the windows' title bars showing, the first feature at the
+    back and top. The pulled-out window rests above it, as large as fits between the title and the pile.
+  */
+  [data-mode='stack'] {
+    --segment: 90vh;
+    --p: 0;
+    height: calc(100vh + var(--n) * var(--segment));
+  }
+
+  [data-mode='stack'] .stage {
+    --top: var(--nav-height);
+    /* How much of the front window shows, how far each one behind shows above it, and how much smaller it is. */
+    --pile-show: 44px;
+    --peek: 26px;
+    --shrink: 0.04;
+    --pile-height: calc(var(--pile-show) + (var(--n) - 1) * var(--peek));
+    --gap: 28px;
+    --title-height: 216px;
+    --w: min(
+      100cqw - 2 * var(--gutter),
+      var(--page-width),
+      (100cqh - var(--top) - var(--title-height) - var(--pile-height) - var(--gap)) * var(--aspect)
+    );
+    --h: calc(var(--w) / var(--aspect));
+    --rest-top: calc(100cqh - var(--pile-height) - var(--gap) - var(--h));
+    /* On arrival the first window shows only its top three quarters, and the pile is pushed out of sight. */
+    --enter-top: calc(100cqh - var(--h) * 0.75);
+    --intro: clamp(0, calc(1 - var(--p)), 1);
+    --lead-top: calc(var(--rest-top) + var(--intro) * (var(--enter-top) - var(--rest-top)));
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow: clip;
+    container-type: size;
+  }
+
+  [data-mode='stack'] .panel,
+  [data-mode='stack'] .shot {
+    /*
+      Each step, in order: the old title fades out (first 30%), the old window leaves and the new color covers the
+      page (first 60%), the new window comes out of the pile (all of it), and the new title fades in (last 35%),
+      on clear color and with nothing passing over it.
+      pulled: how far this feature's window is out of the pile. gone: how far it has left for the next one.
+    */
+    --pulled: clamp(0, calc(var(--p) - var(--i)), 1);
+    --gone: clamp(0, calc((var(--p) - var(--i) - 1) / 0.6), 1);
+    --cover: clamp(0, calc((var(--p) - var(--i)) / 0.6), 1);
+    position: absolute;
+    will-change: transform;
+  }
+
+  /* Each feature's color comes up from below with its window, over the last one's. */
+  [data-mode='stack'] .panel {
+    inset: 0;
+    transform: translateY(calc((1 - var(--cover)) * 100cqh));
+  }
+
+  /* The first color is there from the start. */
+  [data-mode='stack'] .panel:first-child {
+    transform: none;
+  }
+
+  /*
+    Titles stay in the space above the resting window. The old one fades up and out as its window leaves; the new
+    one fades in from just below once that window is clear of the space, as its own comes to rest.
+  */
+  [data-mode='stack'] .panel-title {
+    --in: clamp(0, calc((var(--p) - var(--i) - 0.65) / 0.35), 1);
+    --out: clamp(0, calc((var(--p) - var(--i) - 1) / 0.3), 1);
+    top: var(--top);
+    height: calc(var(--rest-top) - var(--top));
+    opacity: calc(var(--in) * (1 - var(--out)));
+    transform: translateY(calc((1 - var(--in)) * 24px - var(--out) * 32px));
+    will-change: opacity, transform;
+  }
+
+  /* The first title is there from the start, and stays centered above its window as the window rises. */
+  [data-mode='stack'] .panel-title.lead {
+    --in: 1;
+    height: calc(var(--lead-top) - var(--top));
+  }
+
+  /* Once it has faded, its buttons shouldn't take clicks or focus. */
+  [data-mode='stack'][data-past-lead] .panel-title.lead {
+    visibility: hidden;
+  }
+
+  [data-mode='stack'] .shot {
+    /* Place in the pile: 0 for the front window (the last feature's), n - 1 for the back one (the first's). */
+    --depth: calc(var(--n) - 1 - var(--i));
+    --pile-y: calc(100cqh - var(--pile-show) - var(--depth) * var(--peek));
+    --pile-scale: calc(1 - var(--depth) * var(--shrink));
+    --gone-y: calc(-1 * var(--h) - 64px);
+    /* Out of sight below on arrival. */
+    --hidden: calc(var(--intro) * (var(--pile-height) + 64px));
+    left: 50%;
+    top: 0;
+    width: var(--w);
+    margin-left: calc(var(--w) / -2);
+    transform-origin: 50% 0;
+    /*
+      From its place in the pile up to its resting place, growing to full size as it comes; then up and away when
+      the next one is pulled. It keeps its depth in the pile, so it slides out from behind the windows in front.
+    */
+    transform: translateY(
+        calc(
+          var(--pile-y) + var(--pulled) * (var(--rest-top) - var(--pile-y)) + var(--gone) *
+            (var(--gone-y) - var(--rest-top)) + var(--hidden)
+        )
+      )
+      scale(calc(var(--pile-scale) + var(--pulled) * (1 - var(--pile-scale))));
+    /* Windows further back in the pile recede a little, as inactive windows do. */
+    filter: brightness(calc(1 - (1 - var(--pulled)) * var(--depth) * 0.03));
+  }
+
+  /* The first window isn't in the pile: it comes up from its arrival place, already full size. */
+  [data-mode='stack'] .shot.lead {
+    --depth: 0;
+    --pile-y: var(--enter-top);
+    --pile-scale: 1;
+    --hidden: 0px;
+  }
+
+  /*
+    Narrow screens: a window that fit the width would be tiny, so it's shown larger and runs off the right edge
+    instead, with the title above it.
+  */
+  @media (max-width: 720px) {
+    .panel-title {
+      place-content: end start;
+      justify-items: start;
+      gap: 16px;
+      padding-bottom: 20px;
+      text-align: left;
+    }
+
+    .panel-title h1,
+    .panel-title h2 {
+      font-size: clamp(24px, 7.5vw, 32px);
+    }
+
+    .panel-title.lead h1 {
+      font-size: 40px;
+    }
+
+    .subtitle-line {
+      margin-bottom: 16px;
+    }
+
+    .cta {
+      justify-content: start;
+    }
+
+    [data-mode='static'] .stage {
+      --w: 150vw;
+      --cell: calc(150vw / 1.6556 + 180px);
+    }
+
+    [data-mode='static'] .panel-title {
+      height: calc(var(--cell) - var(--w) / var(--aspect) - 32px);
+    }
+
+    [data-mode='static'] .shot {
+      justify-self: start;
+      margin: 0 0 32px var(--gutter);
+    }
+
+    [data-mode='stack'] .stage {
+      --w: 150cqw;
+      --pile-show: 32px;
+      --peek: 16px;
+      --gap: 20px;
+    }
+
+    [data-mode='stack'] .shot {
+      left: var(--gutter);
+      margin-left: 0;
+      /* Shrink toward the middle of the screen, not of the window, which runs off the right edge. */
+      transform-origin: calc(50cqw - var(--gutter)) 0;
+    }
+  }
+</style>
+
+<script>
+  const stack = document.querySelector<HTMLElement>('.stack');
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  if (stack) {
+    const stage = stack.querySelector<HTMLElement>('.stage')!;
+    // Step 1 brings the first window up and the pile into view; each later feature adds a step.
+    const steps = stack.querySelectorAll('.panel').length;
+    let frame = 0;
+
+    // Rest at each step for a while before the next window starts to come out.
+    const settle = (raw: number) => {
+      const index = Math.floor(raw);
+      const t = Math.min(Math.max((raw - index - 0.18) / 0.64, 0), 1);
+      return Math.min(index + t * t * (3 - 2 * t), steps);
+    };
+
+    const update = () => {
+      frame = 0;
+      if (stack.dataset.mode !== 'stack') return;
+      const range = Math.max(stack.offsetHeight - stage.offsetHeight, 1);
+      const scrolled = -stack.getBoundingClientRect().top;
+      const raw = Math.min(Math.max(scrolled / range, 0), 1) * steps;
+      const p = settle(raw);
+      stack.style.setProperty('--p', p.toFixed(4));
+      stack.toggleAttribute('data-past-lead', p >= 1.3);
+    };
+
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+
+    const applyMode = () => {
+      stack.dataset.mode = reduced.matches ? 'static' : 'stack';
+      update();
+    };
+
+    reduced.addEventListener('change', applyMode);
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    applyMode();
+  }
+</script>

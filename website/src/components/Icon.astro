@@ -1,0 +1,24 @@
+---
+import { icons, type IconName } from '../lib/icons';
+
+interface Props {
+  name: IconName;
+  size?: number;
+  class?: string;
+}
+
+const { name, size = 20, class: className } = Astro.props;
+// Fluent's SVGs come with fixed width and height; size them here and hide them from screen readers.
+const svg = icons[name].replace('<svg ', `<svg aria-hidden="true" focusable="false" fill="currentColor" `)
+  .replace(/width="\d+"/, `width="${size}"`)
+  .replace(/height="\d+"/, `height="${size}"`);
+---
+
+<span class:list={['icon', className]} set:html={svg} />
+
+<style>
+  .icon {
+    display: inline-flex;
+    flex: none;
+  }
+</style>
