@@ -1,0 +1,152 @@
+---
+import { links } from '../lib/links';
+import Icon from './Icon.astro';
+import GitHubMark from './GitHubMark.astro';
+---
+
+<section class="section download" id="download" aria-labelledby="download-title">
+  <div class="container">
+    <div class="section-head">
+      <h2 class="title-large" id="download-title">Get Recto</h2>
+      <p class="body-large">Free, for Windows 11 on x64 and Arm.</p>
+    </div>
+
+    <div class="options">
+      <article class="card option store">
+        <span class="badge">Recommended</span>
+        <img src="/icon.svg" alt="" width="56" height="56" />
+        <h3 class="subtitle">Microsoft Store</h3>
+        <ul>
+          <li><Icon name="checkmark" size={16} />Updates install automatically</li>
+          <li><Icon name="checkmark" size={16} />PDF thumbnails in File Explorer</li>
+          <li><Icon name="checkmark" size={16} />Installs and uninstalls in one click</li>
+        </ul>
+        <a class="btn btn-accent btn-large" href={links.store}>
+          <Icon name="storeMicrosoft" />
+          Get it from Microsoft Store
+        </a>
+      </article>
+
+      <article class="card option">
+        <span class="option-icon"><Icon name="code" size={24} /></span>
+        <h3 class="subtitle">Build from source</h3>
+        <p>Needs the .NET 10 SDK. Recto is MIT licensed, and issues and pull requests are welcome.</p>
+        <pre><code>git clone {links.repo}
+dotnet build src/Recto/Recto.csproj -c Release</code></pre>
+        <div class="row">
+          <a class="btn btn-large" href={links.repo}>
+            <GitHubMark />
+            Source on GitHub
+          </a>
+          <a class="btn btn-large btn-subtle" href={links.building}>
+            Build docs
+            <Icon name="chevronRight" size={16} />
+          </a>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<style>
+  .options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
+    gap: 16px;
+    max-width: 920px;
+    margin: 0 auto;
+  }
+
+  .option {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+    padding: clamp(24px, 4vw, 36px);
+  }
+
+  .store {
+    background: var(--card);
+    outline: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+    outline-offset: -1px;
+  }
+
+  /* InfoBadge-like tag. */
+  .badge {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    padding: 2px 8px;
+    font: 600 12px/18px var(--font-text);
+    color: var(--accent-text);
+    background: var(--accent-soft);
+    border-radius: 10px;
+  }
+
+  .option-icon {
+    display: grid;
+    place-items: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    color: var(--accent-text);
+    background: var(--accent-soft);
+  }
+
+  ul {
+    list-style: none;
+    margin: 0 0 8px;
+    padding: 0;
+    display: grid;
+    gap: 8px;
+    color: var(--text-2);
+  }
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  li :global(.icon) {
+    color: var(--accent-text);
+  }
+
+  p {
+    color: var(--text-2);
+  }
+
+  pre {
+    width: 100%;
+    margin: 0 0 8px;
+    padding: 12px 14px;
+    overflow-x: auto;
+    font: 13px/1.6 var(--font-mono);
+    color: var(--text-1);
+    background: var(--layer);
+    border: 1px solid var(--card-stroke);
+    border-radius: 6px;
+  }
+
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: auto;
+  }
+
+  .store .btn {
+    margin-top: auto;
+  }
+
+  @media (max-width: 480px) {
+    .option .btn {
+      width: 100%;
+    }
+
+    .row {
+      width: 100%;
+    }
+  }
+</style>

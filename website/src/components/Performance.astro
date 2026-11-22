@@ -1,0 +1,442 @@
+---
+import { links } from '../lib/links';
+
+// Medians from the benchmark in the repository (README chart, Recto 1.0).
+interface Row {
+  app: string;
+  version: string;
+  value: number;
+}
+interface Metric {
+  id: string;
+  label: string;
+  unit: string;
+  scale: number;
+  ticks: number[];
+  groups: { label: string; rows: Row[] }[];
+}
+
+const small = '2 pages of text';
+const large = '1,000 pages with a map, photos and charts';
+
+const metrics: Metric[] = [
+  {
+    id: 'page',
+    label: 'Time to first page',
+    unit: 'ms',
+    scale: 1500,
+    ticks: [0, 500, 1000, 1500],
+    groups: [
+      {
+        label: small,
+        rows: [
+          { app: 'Recto', version: '1.0', value: 383 },
+          { app: 'Edge', version: '155.0', value: 585 },
+          { app: 'Acrobat', version: '26.2', value: 605 },
+          { app: 'SumatraPDF', version: '3.6', value: 403 },
+        ],
+      },
+      {
+        label: large,
+        rows: [
+          { app: 'Recto', version: '1.0', value: 584 },
+          { app: 'Edge', version: '155.0', value: 1458 },
+          { app: 'Acrobat', version: '26.2', value: 1004 },
+          { app: 'SumatraPDF', version: '3.6', value: 741 },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'memory',
+    label: 'Memory',
+    unit: 'MB',
+    scale: 1000,
+    ticks: [0, 250, 500, 750, 1000],
+    groups: [
+      {
+        label: small,
+        rows: [
+          { app: 'Recto', version: '1.0', value: 113 },
+          { app: 'Edge', version: '155.0', value: 264 },
+          { app: 'Acrobat', version: '26.2', value: 594 },
+          { app: 'SumatraPDF', version: '3.6', value: 7 },
+        ],
+      },
+      {
+        label: large,
+        rows: [
+          { app: 'Recto', version: '1.0', value: 134 },
+          { app: 'Edge', version: '155.0', value: 325 },
+          { app: 'Acrobat', version: '26.2', value: 842 },
+          { app: 'SumatraPDF', version: '3.6', value: 25 },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'thumbnail',
+    label: 'File Explorer thumbnail',
+    unit: 'ms',
+    scale: 2000,
+    ticks: [0, 500, 1000, 1500, 2000],
+    groups: [
+      {
+        label: small,
+        rows: [
+          { app: 'Recto', version: '1.0', value: 4 },
+          { app: 'Acrobat', version: '26.2', value: 343 },
+          { app: 'SumatraPDF', version: '3.6', value: 15 },
+          { app: 'PowerToys', version: '0.102', value: 294 },
+        ],
+      },
+      {
+        label: large,
+        rows: [
+          { app: 'Recto', version: '1.0', value: 183 },
+          { app: 'Acrobat', version: '26.2', value: 1771 },
+          { app: 'SumatraPDF', version: '3.6', value: 406 },
+          { app: 'PowerToys', version: '0.102', value: 850 },
+        ],
+      },
+    ],
+  },
+];
+
+const format = (n: number) => n.toLocaleString('en-US');
+---
+
+<section class="section performance" id="performance" aria-labelledby="performance-title">
+  <div class="container">
+    <div class="section-head">
+      <h2 class="title-large" id="performance-title">Quick to open, light to keep open</h2>
+      <p class="body-large">
+        Recto is compiled ahead of time and draws pages with PDFium, so the first page shows up sooner than in Edge,
+        Acrobat or SumatraPDF, using less than half the memory Edge does.
+      </p>
+    </div>
+
+    <div class="card panel">
+      <div class="tabs" role="tablist" aria-label="Measurement">
+        {
+          metrics.map((m, i) => (
+            <button
+              class="tab"
+              type="button"
+              role="tab"
+              id={`tab-${m.id}`}
+              aria-controls={`panel-${m.id}`}
+              aria-selected={i === 0 ? 'true' : 'false'}
+              tabindex={i === 0 ? 0 : -1}
+            >
+              {m.label}
+            </button>
+          ))
+        }
+      </div>
+
+      {
+        metrics.map((m, i) => (
+          <div class="metric" role="tabpanel" id={`panel-${m.id}`} aria-labelledby={`tab-${m.id}`} data-first={i === 0}>
+            <p class="metric-label caption">
+              {m.label}, in {m.unit}. Lower is better.
+            </p>
+            <div class="groups">
+              {m.groups.map((g) => (
+                <table class="chart" style={`--scale: ${m.scale}; --intervals: ${m.ticks.length - 1}`}>
+                  <caption>{g.label}</caption>
+                  <colgroup>
+                    <col class="col-app" />
+                    <col />
+                  </colgroup>
+                  <thead class="visually-hidden">
+                    <tr>
+                      <th scope="col">App</th>
+                      <th scope="col">{m.label} ({m.unit})</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {g.rows.map((r) => (
+                      <tr class:list={{ self: r.app === 'Recto' }}>
+                        <th scope="row">
+                          {r.app}
+                          <span class="version">{r.version}</span>
+                        </th>
+                        <td>
+                          <span class="track">
+                            <span class="bar" style={`--value: ${r.value}`} />
+                            <span class="value">
+                              {format(r.value)} {m.unit}
+                            </span>
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot aria-hidden="true">
+                    <tr>
+                      <td />
+                      <td>
+                        <span class="axis">
+                          {m.ticks.map((t) => (
+                            <span style={`--at: ${t / m.scale}`}>{format(t)}</span>
+                          ))}
+                        </span>
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              ))}
+            </div>
+          </div>
+        ))
+      }
+    </div>
+
+    <p class="note caption">
+      Warm starts, measured with the <a href={links.benchmark}>benchmark tool</a> in the repository.
+      The tool has to watch the screen for the first page, so take the times as approximate.
+    </p>
+  </div>
+</section>
+
+<style>
+  .panel {
+    padding: clamp(16px, 3vw, 32px);
+  }
+
+  /* SelectorBar: text items with an accent pill under the selected one. */
+  .tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 20px;
+  }
+
+  .tab {
+    position: relative;
+    padding: 8px 12px 10px;
+    font: 400 14px/20px var(--font-text);
+    color: var(--text-2);
+    background: none;
+    border: 0;
+    border-radius: var(--radius-control);
+    cursor: pointer;
+  }
+
+  .tab:hover {
+    color: var(--text-1);
+    background: var(--subtle-hover);
+  }
+
+  .tab[aria-selected='true'] {
+    color: var(--text-1);
+    font-weight: 600;
+  }
+
+  .tab::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: 2px;
+    width: 16px;
+    height: 3px;
+    margin-left: -8px;
+    border-radius: 2px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transition: transform 167ms cubic-bezier(0.1, 0.9, 0.2, 1);
+  }
+
+  .tab[aria-selected='true']::after {
+    transform: scaleX(1);
+  }
+
+  .metric[hidden] {
+    display: none;
+  }
+
+  .metric + .metric {
+    margin-top: 32px;
+  }
+
+  .metric-label {
+    margin-bottom: 16px;
+  }
+
+  .groups {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+    gap: 32px 48px;
+  }
+
+  /* Each panel is a real table, drawn as a bar chart. */
+  .chart {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+
+  .chart caption {
+    text-align: left;
+    font: 600 14px/1.4 var(--font-text);
+    color: var(--text-2);
+    padding-bottom: 12px;
+  }
+
+  .col-app {
+    width: 112px;
+  }
+
+  .chart th {
+    padding: 6px 16px 6px 0;
+    font: 400 14px/1.2 var(--font-text);
+    color: var(--text-2);
+    text-align: right;
+    vertical-align: middle;
+  }
+
+  .version {
+    display: block;
+    font-size: 11px;
+    color: var(--text-3);
+  }
+
+  .self th {
+    color: var(--text-1);
+    font-weight: 600;
+  }
+
+  .chart td {
+    padding: 6px 0;
+    vertical-align: middle;
+  }
+
+  .track {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 24px;
+    /* Recessive gridlines at each tick, and one closing the range at the last. */
+    background:
+      linear-gradient(var(--divider), var(--divider)) calc(100% - 64px) 0 / 1px 100% no-repeat,
+      repeating-linear-gradient(90deg, var(--divider) 0 1px, transparent 1px calc(100% / var(--intervals) - 0.01px))
+        0 0 / calc(100% - 64px) 100% no-repeat;
+  }
+
+  .bar {
+    flex: none;
+    width: max(3px, calc((100% - 64px) * var(--value) / var(--scale)));
+    height: 14px;
+    border-radius: 0 4px 4px 0;
+    background: var(--bar-other);
+    transform-origin: left;
+    transition: transform 400ms cubic-bezier(0.1, 0.9, 0.2, 1);
+  }
+
+  .self .bar {
+    background: var(--accent);
+  }
+
+  .value {
+    flex: none;
+    font: 400 13px/1 var(--font-text);
+    font-variant-numeric: tabular-nums;
+    color: var(--text-2);
+  }
+
+  .self .value {
+    font-weight: 600;
+    color: var(--text-1);
+  }
+
+  tbody tr:hover th,
+  tbody tr:hover .value {
+    color: var(--text-1);
+  }
+
+  tbody tr:hover .bar {
+    filter: brightness(0.92);
+  }
+
+  tfoot td {
+    padding: 4px 0 0;
+  }
+
+  .axis {
+    position: relative;
+    display: block;
+    height: 16px;
+    width: calc(100% - 64px);
+  }
+
+  .axis span {
+    position: absolute;
+    left: calc(var(--at) * 100%);
+    transform: translateX(-50%);
+    font-size: 11px;
+    color: var(--text-3);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .axis span:first-child {
+    transform: none;
+  }
+
+  .note {
+    max-width: 720px;
+    margin: 20px auto 0;
+    text-align: center;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .metric.entering .bar {
+      transform: scaleX(0);
+      transition: none;
+    }
+  }
+
+  @media (max-width: 520px) {
+    .col-app {
+      width: 92px;
+    }
+
+    .chart th {
+      padding-right: 10px;
+    }
+  }
+</style>
+
+<script>
+  // Tabs, with arrow keys as in WinUI. Without the script, all three charts show.
+  const tabs = [...document.querySelectorAll<HTMLButtonElement>('.performance .tab')];
+  const panels = tabs.map((t) => document.getElementById(t.getAttribute('aria-controls')!)!);
+
+  const select = (index: number, focus = false) => {
+    tabs.forEach((tab, i) => {
+      const on = i === index;
+      tab.setAttribute('aria-selected', String(on));
+      tab.tabIndex = on ? 0 : -1;
+      panels[i].hidden = !on;
+    });
+    // Grow the bars in from the axis.
+    const panel = panels[index];
+    panel.classList.add('entering');
+    requestAnimationFrame(() => requestAnimationFrame(() => panel.classList.remove('entering')));
+    if (focus) tabs[index].focus();
+  };
+
+  tabs.forEach((tab, i) => {
+    tab.addEventListener('click', () => select(i));
+    tab.addEventListener('keydown', (e) => {
+      const step = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+      if (step) {
+        e.preventDefault();
+        select((i + step + tabs.length) % tabs.length, true);
+      }
+    });
+  });
+
+  panels.forEach((panel, i) => (panel.hidden = i !== 0));
+</script>

@@ -1,0 +1,21 @@
+---
+import Base from '../layouts/Base.astro';
+import Nav from '../components/Nav.astro';
+import FeatureStack from '../components/FeatureStack.astro';
+import Performance from '../components/Performance.astro';
+import Download from '../components/Download.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Base
+  title="Recto · A PDF viewer for Windows 11"
+  description="Recto is a simple, fast PDF viewer for Windows 11, with search, highlights, a pen, text boxes and a print dialog with live preview. Free and open source."
+>
+  <Nav />
+  <main>
+    <FeatureStack />
+    <Performance />
+    <Download />
+  </main>
+  <Footer />
+</Base>
