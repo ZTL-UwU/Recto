@@ -15,6 +15,8 @@ interface Feature {
   /** The first panel: the app's name, its tagline and download buttons instead of a feature title. */
   lead?: boolean;
   subtitle?: string;
+  /** A line or two under the title, saying what the feature does. */
+  text?: string;
   /** The panel's color. Each screenshot was taken with Mica tinted to match it. */
   color: string;
   image: ImageMetadata;
@@ -32,24 +34,28 @@ const features: Feature[] = [
   },
   {
     title: 'Pick up where you left off',
+    text: 'Recent documents wait on the start page, and each one reopens at the page, zoom and view you left it on.',
     color: '#CCD9CD',
     image: start,
     alt: 'The Recto start page, with a grid of recent documents shown as first-page thumbnails.',
   },
   {
     title: 'Find it on any page',
+    text: 'Every match is listed with its context. Words broken across lines and curly quotes are found too, and searching again is instant.',
     color: '#D1CDE4',
     image: search,
     alt: 'Searching for “multi-head attention”: eight results with snippets in the sidebar, the current match highlighted on the page.',
   },
   {
     title: 'Mark it up',
+    text: 'Highlights, notes, a pen and text boxes, saved as standard annotations to a copy, so other viewers show them and the original stays intact.',
     color: '#EAE4C2',
     image: annotate,
     alt: 'A page with highlights, a sticky note, pen drawings and a text box, listed in the Annotations sidebar, with the drawing toolbar open.',
   },
   {
     title: 'Printing, done properly',
+    text: 'A live preview, page ranges, several pages per sheet and two-sided printing, sent to the printer as vector output so text prints sharp.',
     color: '#ECE2EB',
     image: print,
     alt: 'Recto’s print dialog, with a preview of the first page and printer, copies, pages, orientation and color settings.',
@@ -90,7 +96,10 @@ const features: Feature[] = [
                 </div>
               </>
             ) : (
-              <h2>{f.title}</h2>
+              <>
+                <h2>{f.title}</h2>
+                {f.text && <p class="text">{f.text}</p>}
+              </>
             )}
           </div>
         ))
@@ -108,8 +117,8 @@ const features: Feature[] = [
             <Image
               src={f.image}
               alt={f.alt}
-              widths={[640, 960, 1346]}
-              sizes="(max-width: 900px) 92vw, 1100px"
+              widths={[640, 960, 1346, 1700, 2022]}
+              sizes="(max-width: 720px) 150vw, min(92vw, 1180px)"
               loading={i < 2 ? 'eager' : 'lazy'}
             />
           </div>
@@ -143,7 +152,7 @@ const features: Feature[] = [
     display: grid;
     place-content: center;
     justify-items: center;
-    gap: 24px;
+    gap: 12px;
     text-align: center;
   }
 
@@ -157,6 +166,14 @@ const features: Feature[] = [
     text-wrap: balance;
   }
 
+  .text {
+    max-width: 36em;
+    font-size: clamp(16px, 1.3vw, 19px);
+    line-height: 1.5;
+    color: rgb(0 0 0 / 0.66);
+    text-wrap: pretty;
+  }
+
   .panel-title.lead {
     gap: 0;
   }
@@ -166,13 +183,13 @@ const features: Feature[] = [
     display: flex;
     align-items: center;
     gap: 0.3em;
-    font-size: clamp(36px, 4.4vw, 56px);
+    font-size: clamp(40px, 4.8vw, 62px);
     line-height: 1.15;
   }
 
   .subtitle-line {
-    margin: 4px 0 20px;
-    font-size: clamp(17px, 1.6vw, 22px);
+    margin: 6px 0 24px;
+    font-size: clamp(19px, 1.9vw, 25px);
     line-height: 1.4;
     color: rgb(0 0 0 / 0.65);
   }
@@ -189,6 +206,12 @@ const features: Feature[] = [
     flex-wrap: wrap;
     justify-content: center;
     gap: 12px;
+  }
+
+  .cta .btn {
+    min-height: 44px;
+    padding: 10px 22px 11px;
+    font-size: 16px;
   }
 
   /* The panel is light in either theme, so the buttons keep their light-theme look. */
@@ -222,10 +245,13 @@ const features: Feature[] = [
 
   [data-mode='static'] .stage {
     --cell: min(100vh, 860px, 60vw + 180px);
+    /* The first band also holds the nav bar and the lead's buttons. */
+    --lead-cell: calc(var(--cell) + var(--nav-height) + 120px);
     position: relative;
-    --w: min(100vw - 2 * var(--gutter), var(--page-width), (var(--cell) - 200px) * var(--aspect));
+    --w: min(100vw - 2 * var(--gutter), var(--page-width), (var(--cell) - 240px) * var(--aspect));
     display: grid;
     grid-template-columns: 100%;
+    grid-template-rows: var(--lead-cell);
     grid-auto-rows: var(--cell);
     overflow-x: clip;
   }
@@ -245,7 +271,7 @@ const features: Feature[] = [
   /* The first panel starts at the top of the page, under the nav bar. */
   [data-mode='static'] .panel-title.lead {
     top: var(--nav-height);
-    height: calc(var(--cell) - var(--w) / var(--aspect) - 56px - var(--nav-height));
+    height: calc(var(--lead-cell) - var(--w) / var(--aspect) - 56px - var(--nav-height));
   }
 
   [data-mode='static'] .shot {
@@ -284,8 +310,8 @@ const features: Feature[] = [
     --peek: 26px;
     --shrink: 0.04;
     --pile-height: calc(var(--pile-show) + (var(--n) - 1) * var(--peek));
-    --gap: 28px;
-    --title-height: 216px;
+    --gap: 32px;
+    --title-height: 224px;
     --w: min(
       100cqw - 2 * var(--gutter),
       var(--page-width),
@@ -342,6 +368,12 @@ const features: Feature[] = [
     opacity: calc(var(--in) * (1 - var(--out)));
     transform: translateY(calc((1 - var(--in)) * 24px - var(--out) * 32px));
     will-change: opacity, transform;
+    /* The titles all share the space above the window, so a faded-out one would sit over the lead's buttons. */
+    pointer-events: none;
+  }
+
+  [data-mode='stack'] .panel-title.lead .cta {
+    pointer-events: auto;
   }
 
   /* The first title is there from the start, and stays centered above its window as the window rises. */
@@ -410,7 +442,17 @@ const features: Feature[] = [
     }
 
     .panel-title.lead h1 {
-      font-size: 40px;
+      font-size: 36px;
+    }
+
+    /* The lead has the whole screen above its window on arrival; keep it in the middle of that, not at the foot. */
+    .panel-title.lead {
+      place-content: center start;
+      padding-bottom: 0;
+    }
+
+    .text {
+      font-size: 15px;
     }
 
     .subtitle-line {
@@ -423,11 +465,15 @@ const features: Feature[] = [
 
     [data-mode='static'] .stage {
       --w: 150vw;
-      --cell: calc(150vw / 1.6556 + 180px);
+      --cell: calc(150vw / 1.6556 + 240px);
     }
 
     [data-mode='static'] .panel-title {
       height: calc(var(--cell) - var(--w) / var(--aspect) - 32px);
+    }
+
+    [data-mode='static'] .panel-title.lead {
+      height: calc(var(--lead-cell) - var(--w) / var(--aspect) - 32px - var(--nav-height));
     }
 
     [data-mode='static'] .shot {
@@ -436,7 +482,12 @@ const features: Feature[] = [
     }
 
     [data-mode='stack'] .stage {
-      --w: 150cqw;
+      /* Smaller on short screens, to leave room for the title. */
+      --title-height: 216px;
+      --w: min(
+        150cqw,
+        (100cqh - var(--top) - var(--title-height) - var(--pile-height) - var(--gap)) * var(--aspect)
+      );
       --pile-show: 32px;
       --peek: 16px;
       --gap: 20px;
@@ -470,6 +521,9 @@ const features: Feature[] = [
 
     const update = () => {
       frame = 0;
+      // The panels are light in either theme; the nav bar takes its light look while it's over them.
+      const navHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-height'));
+      document.documentElement.toggleAttribute('data-nav-light', stack.getBoundingClientRect().bottom > navHeight);
       if (stack.dataset.mode !== 'stack') return;
       const range = Math.max(stack.offsetHeight - stage.offsetHeight, 1);
       const scrolled = -stack.getBoundingClientRect().top;

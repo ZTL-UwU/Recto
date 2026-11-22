@@ -278,6 +278,11 @@ kbd {
   padding: clamp(72px, 10vw, 120px) 0;
 }
 
+/* Back-to-back sections share their spacing rather than doubling it. */
+.section + .section {
+  padding-top: clamp(24px, 4vw, 48px);
+}
+
 .section-head {
   max-width: 680px;
   margin: 0 auto clamp(40px, 6vw, 64px);

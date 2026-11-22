@@ -318,10 +318,11 @@ const format = (n: number) => n.toLocaleString('en-US');
     align-items: center;
     gap: 8px;
     height: 24px;
-    /* Recessive gridlines at each tick. */
-    background: repeating-linear-gradient(90deg, var(--divider) 0 1px, transparent 1px calc(100% / var(--intervals) - 0.01px));
-    background-size: calc(100% - 64px) 100%;
-    background-repeat: no-repeat;
+    /* Recessive gridlines at each tick, and one closing the range at the last. */
+    background:
+      linear-gradient(var(--divider), var(--divider)) calc(100% - 64px) 0 / 1px 100% no-repeat,
+      repeating-linear-gradient(90deg, var(--divider) 0 1px, transparent 1px calc(100% / var(--intervals) - 0.01px))
+        0 0 / calc(100% - 64px) 100% no-repeat;
   }
 
   .bar {

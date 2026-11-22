@@ -6,7 +6,7 @@ import GitHubMark from './GitHubMark.astro';
 <header class="nav">
   <div class="container nav-inner">
     <a class="brand" href="#top" aria-label="Recto, back to top">
-      <img src="/icon.svg" alt="" width="24" height="24" />
+      <img src="/icon.svg" alt="" width="32" height="32" />
       <span>Recto</span>
     </a>
     <nav aria-label="Sections">
@@ -39,6 +39,27 @@ import GitHubMark from './GitHubMark.astro';
     backdrop-filter: blur(30px) saturate(1.4);
     -webkit-backdrop-filter: blur(30px) saturate(1.4);
     border-bottom: 1px solid var(--acrylic-stroke);
+    transition: background-color 167ms linear, border-color 167ms linear;
+  }
+
+  /*
+    Over the feature tour, whose colors are light in either theme, the bar takes its light-theme look in dark mode
+    too, rather than a gray smear over pastel. (In light mode these are the values it has anyway.)
+  */
+  :global(:root[data-nav-light]) .nav {
+    --acrylic: rgb(252 252 252 / 0.72);
+    --acrylic-stroke: rgb(0 0 0 / 0.0578);
+    --text-1: rgb(0 0 0 / 0.896);
+    --text-2: rgb(0 0 0 / 0.606);
+    --text-on-accent: #fff;
+    --accent: #005fb8;
+    --accent-hover: rgb(0 95 184 / 0.9);
+    --accent-press: rgb(0 95 184 / 0.8);
+    --accent-stroke-top: rgb(255 255 255 / 0.08);
+    --accent-stroke-bottom: rgb(0 0 0 / 0.4);
+    --subtle-hover: rgb(0 0 0 / 0.0373);
+    --subtle-press: rgb(0 0 0 / 0.0241);
+    color-scheme: light;
   }
 
   .nav-inner {
@@ -51,8 +72,8 @@ import GitHubMark from './GitHubMark.astro';
   .brand {
     display: inline-flex;
     align-items: center;
-    gap: 10px;
-    font: 600 15px/1 var(--font-display);
+    gap: 12px;
+    font: 600 20px/1 var(--font-display);
     color: var(--text-1);
     text-decoration: none;
     margin-right: auto;
